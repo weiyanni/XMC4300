@@ -1,0 +1,153 @@
+/* ============================================================================
+ * 文件名: bsp_485.h
+ * 描述: RS485 通信控制接口
+ * ============================================================================ */
+#ifndef BSP_485_H_
+#define BSP_485_H_
+
+#include <stdint.h>
+
+#define RS485_FRAME_HEADER  0xA5  // 帧头
+#define RS485_MAX_DATA_LEN  8    //  DATA 最大长度
+/** 默认设备 ID */
+#define RS485_DEFAULT_DEV_ID      254
+
+#define RS485_RX_BUF_SIZE  256     // 必须与 DAVE 配置或调用时一致
+#define RS485_IDLE_THRESHOLD 1     // 5ms 无数据则判定一帧结束
+
+
+#define CMD_HEADER 0
+#define CMD_ID     1
+#define CMD_LEN    2
+#define CMD_DATA   3
+#define CMD_CRC    4
+
+typedef enum {
+    STATE_WAIT_HEADER, // 等待帧头 0xA5
+    STATE_WAIT_ID,     // 等待 ID
+    STATE_WAIT_LEN,    // 等待长度 LEN
+    STATE_WAIT_DATA,   // 接收 DATA
+    STATE_WAIT_CHECK   // 验证校验和
+} RS485_RxState_t;
+#define CMD_MAX_DAT_LEN   64
+
+#pragma pack(1)
+typedef struct
+{
+
+// "按如下格式对《嵌入式功能模块通信协议》进入可变长封包：
+// |  1byte   |  2byte   |    1byte |     n byte |  1byte  |
+// |  header  |    id    |    len   |    data[]  |  Check  |
+// |  0xA5    |    x     |     n    |     ...    |   x     |"
+
+	uint8_t 	header;
+  uint16_t 	id;
+  uint8_t 	len;
+  uint8_t   Data[64];
+	uint8_t  	check;
+
+}Frame_t;
+#pragma pack()
+
+
+typedef struct
+{
+    char month[5];
+    int y, m, d;
+    uint8_t v[4];
+}Date_t;
+
+#pragma anon_unions
+typedef struct
+{
+	union {
+	uint8_t Data[64];
+	uint64_t a64;
+	};
+	uint16_t id;
+	uint8_t len;
+	uint8_t check;
+	uint8_t bus;
+
+} CanMsg;
+
+
+
+#define RxMessLength 8
+#define BUS_NUM 			6
+#define BUS_CAN  	0
+#define BUS_TTL   1
+#define BUS_485   2
+#define BUS_232   3
+#define BUS_BISS    6
+#define BUS_NONE    6
+
+extern CanMsg RxMessage[BUS_NUM][RxMessLength];
+extern volatile uint8_t RxMessRead[BUS_NUM];
+extern volatile uint8_t RxMessWrite[BUS_NUM];
+extern uint8_t LastActionBus;
+extern unsigned char CanRxLength;
+extern uint16_t  RxCanId;
+
+/**
+ * @brief 初始化 RS485 (切换到485模式 + 默认接收)
+ */
+extern void BSP_485_Init(void);
+
+/**
+ * @brief 切换到 485 模式 (CTRLB_H_A=LOW, CTRLA_L_B=LOW)
+ */
+extern void BSP_485_ModeSelect(void);
+
+/**
+ * @brief RS485 发送模式 (DE=High)
+ */
+extern void BSP_485_TxEnable(void);
+
+uint16_t BSP_RS485_ParseDevID(const char *dev_id_str);
+
+/**
+ * @brief RS485 接收模式 (DE=Low)
+ */
+extern void BSP_485_RxEnable(void);
+
+extern void rs485_set_can_baud(uint32_t BR_canfd_ctrl,uint32_t BR_canfd_data);
+extern void rs485_set_rs485_baud(uint32_t BR_485);
+extern void RS485_SendProtocolFrame(int id, uint8_t *cmd_data, uint8_t cmd_len);
+
+/* ==============================================================
+ * RS485 波特率切换 (仅 App 项目)
+ * ============================================================== */
+
+/** RS485 操作状态 */
+typedef enum {
+    BSP_485_OK = 0,
+    BSP_485_ERROR_INVALID_BAUDRATE,
+    BSP_485_ERROR_HW_FAILED
+} BSP_485_STATUS_t;
+
+/**
+ * @brief 检查 RS485 波特率是否有效
+ * @param baudrate 波特率 (bps)
+ * @return 1=有效, 0=无效
+ */
+extern uint8_t BSP_485_IsBaudrateValid(uint32_t baudrate);
+
+/**
+ * @brief 设置 RS485 波特率
+ * @param baudrate 波特率 (bps)
+ * @param save_to_eeprom 1=保存到EEPROM, 0=仅切换硬件
+ * @return BSP_485_OK=成功, 其他=失败
+ */
+extern BSP_485_STATUS_t BSP_485_SetBaudrate(uint32_t baudrate, uint8_t save_to_eeprom);
+
+/**
+ * @brief 设置 RS485 波特率
+ * @param baudrate 波特率 (bps)
+ * @return BSP_485_OK=成功, 其他=失败
+ */
+extern BSP_485_STATUS_t BSP_RS485_UpdateBaudrate(uint32_t baudrate);
+
+extern void BSP_RS485_ApplyConfig();
+#endif /* BSP_485_H_ */
+

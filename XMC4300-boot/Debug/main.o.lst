@@ -1,0 +1,1066 @@
+   1              	 .syntax unified
+   2              	 .cpu cortex-m4
+   3              	 .eabi_attribute 27,3
+   4              	 .fpu fpv4-sp-d16
+   5              	 .eabi_attribute 20,1
+   6              	 .eabi_attribute 21,1
+   7              	 .eabi_attribute 23,3
+   8              	 .eabi_attribute 24,1
+   9              	 .eabi_attribute 25,1
+  10              	 .eabi_attribute 26,1
+  11              	 .eabi_attribute 30,6
+  12              	 .eabi_attribute 34,1
+  13              	 .eabi_attribute 18,4
+  14              	 .thumb
+  15              	 .file "main.c"
+  16              	 .text
+  17              	.Ltext0:
+  18              	 .cfi_sections .debug_frame
+  19              	 .section .text.XMC_GPIO_SetOutputLow,"ax",%progbits
+  20              	 .align 2
+  21              	 .thumb
+  22              	 .thumb_func
+  24              	XMC_GPIO_SetOutputLow:
+  25              	.LFB136:
+  26              	 .file 1 "D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc/xmc_gpio.h"
+   1:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** /**
+   2:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * @file xmc_gpio.h
+   3:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * @date 2015-06-20
+   4:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  *
+   5:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * @cond
+   6:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  *****************************************************************************
+   7:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * XMClib v2.2.0 - XMC Peripheral Driver Library
+   8:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  *
+   9:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * Copyright (c) 2015-2020, Infineon Technologies AG
+  10:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * All rights reserved.
+  11:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  *
+  12:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * Boost Software License - Version 1.0 - August 17th, 2003
+  13:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  *
+  14:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * Permission is hereby granted, free of charge, to any person or organization
+  15:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * obtaining a copy of the software and accompanying documentation covered by
+  16:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * this license (the "Software") to use, reproduce, display, distribute,
+  17:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * execute, and transmit the Software, and to prepare derivative works of the
+  18:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * Software, and to permit third-parties to whom the Software is furnished to
+  19:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * do so, all subject to the following:
+  20:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  *
+  21:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * The copyright notices in the Software and this entire statement, including
+  22:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * the above license grant, this restriction and the following disclaimer,
+  23:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * must be included in all copies of the Software, in whole or in part, and
+  24:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * all derivative works of the Software, unless such copies or derivative
+  25:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * works are solely in the form of machine-executable object code generated by
+  26:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * a source language processor.
+  27:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  *
+  28:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  29:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  30:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * FITNESS FOR A PARTICULAR PURPOSE, TITLE AND NON-INFRINGEMENT. IN NO EVENT
+  31:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * SHALL THE COPYRIGHT HOLDERS OR ANYONE DISTRIBUTING THE SOFTWARE BE LIABLE
+  32:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * FOR ANY DAMAGES OR OTHER LIABILITY, WHETHER IN CONTRACT, TORT OR OTHERWISE,
+  33:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+  34:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * DEALINGS IN THE SOFTWARE.
+  35:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  *
+  36:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * To improve the quality of the software, users are encouraged to share
+  37:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * modifications, enhancements or bug fixes with Infineon Technologies AG
+  38:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * at XMCSupport@infineon.com.
+  39:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  *****************************************************************************
+  40:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  *
+  41:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * Change History
+  42:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * --------------
+  43:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  *
+  44:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * 2015-02-20:
+  45:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  *     - Initial draft<br>
+  46:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  *     - Documentation improved <br>
+  47:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  *
+  48:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * 2015-06-20:
+  49:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  *     - Removed version macros and declaration of GetDriverVersion API
+  50:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  *
+  51:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * @endcond
+  52:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  *
+  53:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  */
+  54:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** 
+  55:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** #ifndef XMC_GPIO_H
+  56:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** #define XMC_GPIO_H
+  57:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** 
+  58:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** /**************************************************************************************************
+  59:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * HEADER FILES
+  60:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  **************************************************************************************************
+  61:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** 
+  62:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** #include "xmc_common.h"
+  63:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** 
+  64:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** /**
+  65:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * @addtogroup XMClib XMC Peripheral Library
+  66:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * @{
+  67:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  */
+  68:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** 
+  69:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** /**
+  70:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * @addtogroup GPIO
+  71:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * @brief General Purpose Input Output (GPIO) driver for the XMC microcontroller family.
+  72:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  *
+  73:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * GPIO driver provide a generic and very flexible software interface for all standard digital I/O 
+  74:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * Each port slice has individual interfaces for the operation as General Purpose I/O and it furthe
+  75:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * connectivity to the on-chip periphery and the control for the pad characteristics.
+  76:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  *
+  77:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * The driver is divided into Input and Output mode.
+  78:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  *
+  79:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * Input mode features:
+  80:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * -# Configuration structure XMC_GPIO_CONFIG_t and initialization function XMC_GPIO_Init()
+  81:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * -# Allows the selection of weak pull-up or pull-down device. Configuration structure XMC_GPIO_MO
+  82:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * \if XMC1
+  83:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * -# Allows the selection of input hysteresis. XMC_GPIO_SetInputHysteresis()
+  84:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * \endif
+  85:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  *
+  86:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  *
+  87:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * Output mode features:
+  88:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * -# Allows the selection of push pull/open drain and Alternate output. Configuration structure XM
+  89:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * \if XMC4
+  90:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * -# Allows the selection of pad driver strength. Configuration structure XMC_GPIO_OUTPUT_STRENGTH
+  91:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * \endif
+  92:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  *
+  93:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * -# Allows the selection of initial output level. Configuration structure XMC_GPIO_OUTPUT_LEVEL_t
+  94:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  *
+  95:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  *@{
+  96:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  */
+  97:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** 
+  98:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** /**************************************************************************************************
+  99:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * MACROS
+ 100:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  **************************************************************************************************
+ 101:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** 
+ 102:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** #define PORT_IOCR_PC_Pos PORT0_IOCR0_PC0_Pos
+ 103:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** #define PORT_IOCR_PC_Msk PORT0_IOCR0_PC0_Msk
+ 104:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** 
+ 105:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** #define PORT_IOCR_PC_Size 				(8U)
+ 106:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** 
+ 107:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** 
+ 108:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** #define XMC_GPIO_CHECK_OUTPUT_LEVEL(level) ((level == XMC_GPIO_OUTPUT_LEVEL_LOW) || \
+ 109:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****                                             (level == XMC_GPIO_OUTPUT_LEVEL_HIGH))
+ 110:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** 
+ 111:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** #define XMC_GPIO_CHECK_HWCTRL(hwctrl) ((hwctrl == XMC_GPIO_HWCTRL_DISABLED) || \
+ 112:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****                                        (hwctrl == XMC_GPIO_HWCTRL_PERIPHERAL1) || \
+ 113:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****                                        (hwctrl == XMC_GPIO_HWCTRL_PERIPHERAL2))
+ 114:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** 
+ 115:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** /**************************************************************************************************
+ 116:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * ENUMS
+ 117:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  **************************************************************************************************
+ 118:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** 
+ 119:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** 
+ 120:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** /**
+ 121:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * Defines output level of a pin. Use type \a XMC_GPIO_OUTPUT_LEVEL_t for this enum.
+ 122:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  */
+ 123:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** typedef enum XMC_GPIO_OUTPUT_LEVEL
+ 124:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** {
+ 125:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****   XMC_GPIO_OUTPUT_LEVEL_LOW  = 0x10000U, /**<  Reset bit */
+ 126:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****   XMC_GPIO_OUTPUT_LEVEL_HIGH = 0x1U, 	/**< Set bit  */
+ 127:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** } XMC_GPIO_OUTPUT_LEVEL_t;
+ 128:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** 
+ 129:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** /**
+ 130:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * Defines direct hardware control characteristics of the pin . Use type \a XMC_GPIO_HWCTRL_t for t
+ 131:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  */
+ 132:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** typedef enum XMC_GPIO_HWCTRL
+ 133:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** {
+ 134:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****   XMC_GPIO_HWCTRL_DISABLED     = 0x0U, /**<  Software control only */
+ 135:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****   XMC_GPIO_HWCTRL_PERIPHERAL1  = 0x1U, /**<  HWI0/HWO0 control path can override the software confi
+ 136:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****   XMC_GPIO_HWCTRL_PERIPHERAL2  = 0x2U  /**<  HWI1/HWO1 control path can override the software confi
+ 137:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** } XMC_GPIO_HWCTRL_t;
+ 138:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** 
+ 139:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** /**************************************************************************************************
+ 140:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * DEVICE FAMILY EXTENSIONS
+ 141:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  **************************************************************************************************
+ 142:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** 
+ 143:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** #if UC_FAMILY == XMC1
+ 144:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** #include "xmc1_gpio.h"
+ 145:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** #elif UC_FAMILY == XMC4
+ 146:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** #include "xmc4_gpio.h"
+ 147:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** #else
+ 148:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** #error "xmc_gpio.h: family device not supported"
+ 149:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** #endif
+ 150:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** 
+ 151:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** /**************************************************************************************************
+ 152:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * API PROTOTYPES
+ 153:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  **************************************************************************************************
+ 154:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** 
+ 155:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** #ifdef __cplusplus
+ 156:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** extern "C" {
+ 157:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** #endif
+ 158:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** 
+ 159:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** 
+ 160:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** /**
+ 161:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * @param  port	  Constant pointer pointing to GPIO port, to access port registers like Pn_OUT,Pn_O
+ 162:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * @param  pin	  Port pin number.
+ 163:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * @param  config GPIO configuration data structure. Refer data structure @ref XMC_GPIO_CONFIG_t fo
+ 164:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  *
+ 165:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * @return None
+ 166:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  *
+ 167:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * \par<b>Description:</b><br>
+ 168:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * \if XMC1
+ 169:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * Initializes input / output mode settings like, pull up / pull down devices,hysteresis, push pull
+ 170:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * Also configures alternate function outputs and clears hardware port control for a selected \a po
+ 171:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * \a config provides selected I/O settings. It configures hardware registers Pn_IOCR,Pn_OUT, Pn_OM
+ 172:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * \endif
+ 173:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * \if XMC4
+ 174:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * Initializes input / output mode settings like, pull up / pull down devices,push pull /open drain
+ 175:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * Also configures alternate function outputs and clears hardware port control for selected \a port
+ 176:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * It configures hardware registers Pn_IOCR,Pn_OUT,Pn_OMR,Pn_PDISC and Pn_PDR.\n
+ 177:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * \endif
+ 178:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  *
+ 179:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * \par<b>Related APIs:</b><BR>
+ 180:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  *  None
+ 181:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  *
+ 182:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * \par<b>Note:</b><br>
+ 183:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * This API is called in definition of DAVE_init by code generation and therefore should not be exp
+ 184:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * for the normal operation. Use other APIs only after DAVE_init is called successfully (returns DA
+ 185:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  *
+ 186:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  *
+ 187:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  */
+ 188:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** 
+ 189:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** 
+ 190:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** void XMC_GPIO_Init(XMC_GPIO_PORT_t *const port, const uint8_t pin, const XMC_GPIO_CONFIG_t *const c
+ 191:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** 
+ 192:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** /**
+ 193:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  *
+ 194:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * @param  port	Constant pointer pointing to GPIO port, to access hardware register Pn_IOCR.
+ 195:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * @param  pin	Port pin number.
+ 196:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * @param  mode input / output functionality selection. Refer @ref XMC_GPIO_MODE_t for valid values
+ 197:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  *
+ 198:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * @return None
+ 199:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  *
+ 200:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * \par<b>Description:</b><br>
+ 201:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * Sets digital input and output driver functionality and characteristics of a GPIO port pin. It co
+ 202:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * registers Pn_IOCR. \a mode is initially configured during initialization in XMC_GPIO_Init(). Cal
+ 203:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * the port direction functionality as needed later in the program.
+ 204:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  *
+ 205:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * \par<b>Related APIs:</b><BR>
+ 206:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  *  None
+ 207:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  *
+ 208:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  */
+ 209:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** 
+ 210:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** void XMC_GPIO_SetMode(XMC_GPIO_PORT_t *const port, const uint8_t pin, const XMC_GPIO_MODE_t mode);
+ 211:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** 
+ 212:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** 
+ 213:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** /**
+ 214:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  *
+ 215:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * @param  port	 Constant pointer pointing to GPIO port, to access hardware register Pn_OMR.
+ 216:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * @param  pin	 Port pin number.
+ 217:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * @param  level output level selection. Refer @ref XMC_GPIO_OUTPUT_LEVEL_t for valid values.
+ 218:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  *
+ 219:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * @return None
+ 220:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  *
+ 221:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * \par<b>Description:</b><br>
+ 222:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * Set port pin output level to high or low.It configures hardware registers Pn_OMR.\a level is ini
+ 223:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * configured during initialization in XMC_GPIO_Init(). Call this API to alter output level as need
+ 224:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  *
+ 225:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * \par<b>Related APIs:</b><BR>
+ 226:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  *  XMC_GPIO_SetOutputHigh(), XMC_GPIO_SetOutputLow().
+ 227:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  *
+ 228:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * \par<b>Note:</b><br>
+ 229:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * Prior to this api, user has to configure port pin to output mode using XMC_GPIO_SetMode().
+ 230:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  *
+ 231:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  */
+ 232:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** 
+ 233:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** 
+ 234:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** __STATIC_INLINE void XMC_GPIO_SetOutputLevel(XMC_GPIO_PORT_t *const port, const uint8_t pin, const 
+ 235:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** {
+ 236:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****   XMC_ASSERT("XMC_GPIO_SetOutputLevel: Invalid port", XMC_GPIO_CHECK_OUTPUT_PORT(port));
+ 237:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****   XMC_ASSERT("XMC_GPIO_SetOutputLevel: Invalid output level", XMC_GPIO_CHECK_OUTPUT_LEVEL(level));
+ 238:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** 
+ 239:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****   port->OMR = (uint32_t)level << pin;
+ 240:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** }
+ 241:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** 
+ 242:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** 
+ 243:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** /**
+ 244:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * @param  port constant pointer pointing to GPIO port, to access hardware register Pn_OMR.
+ 245:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * @param  pin	Port pin number.
+ 246:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  *
+ 247:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * @return None
+ 248:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  *
+ 249:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * \par<b>Description:</b><br>
+ 250:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  *  Sets port pin output to high. It configures hardware registers Pn_OMR.
+ 251:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  *
+ 252:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  *  \par<b>Related APIs:</b><BR>
+ 253:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  *  XMC_GPIO_SetOutputLow()
+ 254:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  *
+ 255:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * \par<b>Note:</b><br>
+ 256:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * Prior to this api, user has to configure port pin to output mode using XMC_GPIO_SetMode().\n
+ 257:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * Register Pn_OMR is virtual and does not contain any flip-flop. A read action delivers the value 
+ 258:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  *
+ 259:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  */
+ 260:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** 
+ 261:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** __STATIC_INLINE void XMC_GPIO_SetOutputHigh(XMC_GPIO_PORT_t *const port, const uint8_t pin)
+ 262:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** {
+ 263:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****   XMC_ASSERT("XMC_GPIO_SetOutputHigh: Invalid port", XMC_GPIO_CHECK_OUTPUT_PORT(port));
+ 264:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** 
+ 265:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****   port->OMR = (uint32_t)0x1U << pin;
+ 266:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** }
+ 267:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** 
+ 268:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** /**
+ 269:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  *
+ 270:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * @param  port	constant pointer pointing to GPIO port, to access hardware register Pn_OMR.
+ 271:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * @param  pin	port pin number.
+ 272:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  *
+ 273:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * @return  None
+ 274:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  *
+ 275:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  *\par<b>Description:</b><br>
+ 276:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * Sets port pin output to low. It configures hardware registers Pn_OMR.\n
+ 277:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  *
+ 278:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * \par<b>Related APIs:</b><BR>>
+ 279:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * XMC_GPIO_SetOutputHigh()
+ 280:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  *
+ 281:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  *\par<b>Note:</b><br>
+ 282:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * Prior to this api, user has to configure port pin to output mode using XMC_GPIO_SetMode().
+ 283:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  * Register Pn_OMR is virtual and does not contain any flip-flop. A read action delivers the value 
+ 284:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  *
+ 285:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****  */
+ 286:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** 
+ 287:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** __STATIC_INLINE void XMC_GPIO_SetOutputLow(XMC_GPIO_PORT_t *const port, const uint8_t pin)
+ 288:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** {
+  27              	 .loc 1 288 0
+  28              	 .cfi_startproc
+  29              	 
+  30              	 
+  31              	 
+  32 0000 80B4     	 push {r7}
+  33              	.LCFI0:
+  34              	 .cfi_def_cfa_offset 4
+  35              	 .cfi_offset 7,-4
+  36 0002 83B0     	 sub sp,sp,#12
+  37              	.LCFI1:
+  38              	 .cfi_def_cfa_offset 16
+  39 0004 00AF     	 add r7,sp,#0
+  40              	.LCFI2:
+  41              	 .cfi_def_cfa_register 7
+  42 0006 7860     	 str r0,[r7,#4]
+  43 0008 0B46     	 mov r3,r1
+  44 000a FB70     	 strb r3,[r7,#3]
+ 289:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****   XMC_ASSERT("XMC_GPIO_SetOutputLow: Invalid port", XMC_GPIO_CHECK_OUTPUT_PORT(port));
+ 290:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** 
+ 291:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h ****   port->OMR = 0x10000U << pin;
+  45              	 .loc 1 291 0
+  46 000c FB78     	 ldrb r3,[r7,#3]
+  47 000e 4FF48032 	 mov r2,#65536
+  48 0012 9A40     	 lsls r2,r2,r3
+  49 0014 7B68     	 ldr r3,[r7,#4]
+  50 0016 5A60     	 str r2,[r3,#4]
+ 292:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc\xmc_gpio.h **** }
+  51              	 .loc 1 292 0
+  52 0018 0C37     	 adds r7,r7,#12
+  53              	.LCFI3:
+  54              	 .cfi_def_cfa_offset 4
+  55 001a BD46     	 mov sp,r7
+  56              	.LCFI4:
+  57              	 .cfi_def_cfa_register 13
+  58              	 
+  59 001c 5DF8047B 	 ldr r7,[sp],#4
+  60              	.LCFI5:
+  61              	 .cfi_restore 7
+  62              	 .cfi_def_cfa_offset 0
+  63 0020 7047     	 bx lr
+  64              	 .cfi_endproc
+  65              	.LFE136:
+  67 0022 00BF     	 .section .text.DIGITAL_IO_SetOutputLow,"ax",%progbits
+  68              	 .align 2
+  69              	 .thumb
+  70              	 .thumb_func
+  72              	DIGITAL_IO_SetOutputLow:
+  73              	.LFB144:
+  74              	 .file 2 "D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO/digital_io.h"
+   1:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** /*
+   2:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  *
+   3:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  * @file digital_io.h
+   4:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  * @date 2021-01-08
+   5:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  *
+   6:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  * NOTE:
+   7:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  * This file is generated by DAVE. Any manual modification done to this file will be lost when the 
+   8:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  *
+   9:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  * @cond
+  10:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  **************************************************************************************************
+  11:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  * DIGITAL_IO v4.0.18 - The DIGITAL_IO APP is used to configure a port pin as digital Input/Output.
+  12:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  *
+  13:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  * Copyright (c) 2015-2020, Infineon Technologies AG
+  14:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  * All rights reserved.
+  15:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  *
+  16:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  * Redistribution and use in source and binary forms, with or without modification,are permitted pr
+  17:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  * following conditions are met:
+  18:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  *
+  19:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  *   Redistributions of source code must retain the above copyright notice, this list of conditions
+  20:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  *   disclaimer.
+  21:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  *
+  22:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  *   Redistributions in binary form must reproduce the above copyright notice, this list of conditi
+  23:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  *   following disclaimer in the documentation and/or other materials provided with the distributio
+  24:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  *
+  25:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  *   Neither the name of the copyright holders nor the names of its contributors may be used to end
+  26:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  *   products derived from this software without specific prior written permission.
+  27:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  *
+  28:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR I
+  29:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTI
+  30:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE  FOR ANY DIRECT, IN
+  31:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBS
+  32:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THE
+  33:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  * WHETHER IN CONTRACT, STRICT LIABILITY,OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY
+  34:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  * USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+  35:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  *
+  36:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  * To improve the quality of the software, users are encouraged to share modifications, enhancement
+  37:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  * with Infineon Technologies AG (dave@infineon.com).
+  38:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  **************************************************************************************************
+  39:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  *
+  40:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  * Change History
+  41:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  * --------------
+  42:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  *
+  43:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  * 2015-02-16
+  44:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  *     - Initial version
+  45:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  *
+  46:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  * 2015-04-22
+  47:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  *     - XMC_ASSERT is added in static inline functions.<br>
+  48:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  *
+  49:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  * 2015-06-20
+  50:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  *     - Version check added for XMCLib dependency.<br>
+  51:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  *
+  52:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  * 2015-12-22
+  53:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  *     - Added hardware controlled IO feature.
+  54:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  * 2016-07-08:
+  55:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  *     - Fixed incorrect case for an included header.<br>
+  56:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  * 2021-01-08:
+  57:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  *     - Modified check for minimum XMCLib version
+  58:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  *
+  59:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  * @endcond
+  60:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  *
+  61:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  */
+  62:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** 
+  63:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** /**************************************************************************************************
+  64:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  * HEADER FILES
+  65:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  **************************************************************************************************
+  66:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** 
+  67:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** #ifndef DIGITAL_IO_H
+  68:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** #define DIGITAL_IO_H
+  69:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** 
+  70:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** #include "xmc_gpio.h"
+  71:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** #include "DAVE_Common.h"
+  72:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** #include "digital_io_conf.h"
+  73:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** 
+  74:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** /**************************************************************************************************
+  75:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  * MACROS
+  76:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  **************************************************************************************************
+  77:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** #define DIGITAL_IO_XMC_LIB_MAJOR_VERSION 2
+  78:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** #define DIGITAL_IO_XMC_LIB_MINOR_VERSION 0
+  79:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** #define DIGITAL_IO_XMC_LIB_PATCH_VERSION 0
+  80:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** 
+  81:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** #if !((XMC_LIB_MAJOR_VERSION > DIGITAL_IO_XMC_LIB_MAJOR_VERSION) ||\
+  82:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****       ((XMC_LIB_MAJOR_VERSION == DIGITAL_IO_XMC_LIB_MAJOR_VERSION) && (XMC_LIB_MINOR_VERSION > DIGI
+  83:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****       ((XMC_LIB_MAJOR_VERSION == DIGITAL_IO_XMC_LIB_MAJOR_VERSION) && (XMC_LIB_MINOR_VERSION == DIG
+  84:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** #error "DIGITAL_IO requires XMC Peripheral Library v2.0.0 or higher"
+  85:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** #endif
+  86:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** 
+  87:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  /*************************************************************************************************
+  88:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  * ENUMS
+  89:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  **************************************************************************************************
+  90:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** 
+  91:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** /**
+  92:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** * @ingroup DIGITAL_IO_enumerations
+  93:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** * @{
+  94:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** */
+  95:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** 
+  96:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** /**
+  97:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** * @brief Initialization status of DIGITAL_IO APP.
+  98:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** */
+  99:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** typedef enum DIGITAL_IO_STATUS
+ 100:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** {
+ 101:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****   DIGITAL_IO_STATUS_OK = 0U,/**< 0=Status OK */
+ 102:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****   DIGITAL_IO_STATUS_FAILURE = 1U/**< 1=Status Failed */
+ 103:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** } DIGITAL_IO_STATUS_t;
+ 104:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** 
+ 105:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** /**
+ 106:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** * @}
+ 107:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** */
+ 108:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** 
+ 109:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** /**************************************************************************************************
+ 110:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  * DATA STRUCTURES
+ 111:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  **************************************************************************************************
+ 112:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** /**
+ 113:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** * @ingroup DIGITAL_IO_datastructures
+ 114:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** * @{
+ 115:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** */
+ 116:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** 
+ 117:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** /**
+ 118:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** * @brief Initialization data structure of DIGITAL_IO APP
+ 119:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** */
+ 120:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** typedef struct DIGITAL_IO
+ 121:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** {
+ 122:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****   XMC_GPIO_PORT_t *const gpio_port;             /**< port number */
+ 123:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****   const XMC_GPIO_CONFIG_t gpio_config;          /**< mode, initial output level and pad driver stre
+ 124:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****   const uint8_t gpio_pin;                       /**< pin number */
+ 125:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****   const XMC_GPIO_HWCTRL_t hwctrl;               /**< Hardware port control */
+ 126:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** } DIGITAL_IO_t;
+ 127:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** 
+ 128:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** 
+ 129:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** /**
+ 130:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** * @}
+ 131:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** */
+ 132:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** 
+ 133:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** 
+ 134:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** /**************************************************************************************************
+ 135:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  * API Prototypes
+ 136:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****  **************************************************************************************************
+ 137:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** 
+ 138:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** 
+ 139:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** #ifdef __cplusplus
+ 140:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** extern "C" {
+ 141:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** #endif
+ 142:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** 
+ 143:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** /**
+ 144:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** * @ingroup DIGITAL_IO_apidoc
+ 145:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** * @{
+ 146:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** */
+ 147:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** 
+ 148:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** 
+ 149:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** 
+ 150:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** /**
+ 151:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** * @brief Get DIGITAL_IO APP version
+ 152:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** * @return DAVE_APP_VERSION_t APP version information (major, minor and patch number)
+ 153:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *
+ 154:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** * \par<b>Description: </b><br>
+ 155:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** * The function can be used to check application software compatibility with a
+ 156:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** * specific version of the APP.
+ 157:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *
+ 158:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** * Example Usage:
+ 159:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *
+ 160:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** * @code
+ 161:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** * #include "DAVE.h"
+ 162:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *
+ 163:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** * int main(void)
+ 164:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** * {
+ 165:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *   DAVE_STATUS_t init_status;
+ 166:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *   DAVE_APP_VERSION_t version;
+ 167:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *
+ 168:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *   // Initialize DIGITAL_IO APP:
+ 169:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *   // DIGITAL_IO_Init() is called from within DAVE_Init().
+ 170:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *   init_status = DAVE_Init();
+ 171:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *   if(init_status == DAVE_STATUS_SUCCESS)
+ 172:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *   {
+ 173:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *     version = DIGITAL_IO_GetAppVersion();
+ 174:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *     if (version.major != 4U) {
+ 175:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *     // Probably, not the right version.
+ 176:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *     }
+ 177:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *   }
+ 178:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *
+ 179:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *     // More code here
+ 180:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *     while(1) {
+ 181:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *
+ 182:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *     }
+ 183:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *     return (1);
+ 184:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *  }
+ 185:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** * @endcode<BR>
+ 186:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** */
+ 187:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** 
+ 188:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** DAVE_APP_VERSION_t DIGITAL_IO_GetAppVersion(void);
+ 189:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** 
+ 190:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** /**
+ 191:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *
+ 192:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** * @brief Function to initialize the port pin as per UI settings.
+ 193:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** * @param handler Pointer pointing to APP data structure. Refer @ref DIGITAL_IO_t for details.
+ 194:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** * @return DIGITAL_IO_STATUS_t DIGITAL_IO APP status. Refer @ref DIGITAL_IO_STATUS_t structure for d
+ 195:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *
+ 196:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** * \par<b>Description:</b><br>
+ 197:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** * This function initializes GPIO port registers IOCR,PDISC,OMR,PDR/PHCR to configure pin direction,
+ 198:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** * and pad driver strength/hysteresis.
+ 199:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *
+ 200:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** * \par<b>Related APIs:</b><BR>
+ 201:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** * None
+ 202:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *
+ 203:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** * Example Usage:
+ 204:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** * @code
+ 205:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** * #include "DAVE.h" //Declarations from DAVE Code Generation (includes SFR declaration)
+ 206:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *
+ 207:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** * int main(void)
+ 208:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** * {
+ 209:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *   DAVE_STATUS_t status;
+ 210:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *   status = DAVE_Init();  //(DAVE_STATUS_t)DIGITAL_IO_Init(&DIGITAL_IO_0) is called within DAVE_In
+ 211:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *   if(status == DAVE_STATUS_SUCCESS)
+ 212:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *   {
+ 213:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *     XMC_DEBUG("DAVE Apps initialization success\n");
+ 214:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *   }
+ 215:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *   else
+ 216:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *   {
+ 217:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *     XMC_DEBUG(("DAVE Apps initialization failed with status %d\n", status));
+ 218:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *     while(1U)
+ 219:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *     {
+ 220:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *     }
+ 221:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *   }
+ 222:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *   //Placeholder for user application code. The while loop below can be replaced with user applica
+ 223:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *   while(1U)
+ 224:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *   {
+ 225:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *   }
+ 226:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *   return 1U;
+ 227:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *  }
+ 228:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *  @endcode
+ 229:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** */
+ 230:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** 
+ 231:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** DIGITAL_IO_STATUS_t DIGITAL_IO_Init(const DIGITAL_IO_t *const handler);
+ 232:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** 
+ 233:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** /**
+ 234:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *
+ 235:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** * @brief Function to set port pin high.
+ 236:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** * @param handler Pointer pointing to APP data structure. Refer @ref DIGITAL_IO_t for details.
+ 237:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** * @return None
+ 238:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *
+ 239:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** * \par<b>Description:</b><br>
+ 240:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** * This function configures port output modification register Pn_OMR, to make port pin to high level
+ 241:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *
+ 242:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** * \par<b>Related APIs:</b><BR>
+ 243:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *  DIGITAL_IO_SetOutputLow()
+ 244:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *
+ 245:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** * Example Usage:
+ 246:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** * @code
+ 247:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** * #include "DAVE.h" //Declarations from DAVE Code Generation (includes SFR declaration)
+ 248:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *
+ 249:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** * int main(void)
+ 250:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** * {
+ 251:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *   DAVE_STATUS_t status;
+ 252:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *   status = DAVE_Init();  //(DAVE_STATUS_t)DIGITAL_IO_Init(&DIGITAL_IO_0) is called within DAVE_In
+ 253:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *   if(status == DAVE_STATUS_SUCCESS)
+ 254:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *   {
+ 255:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *     XMC_DEBUG("DAVE Apps initialization success\n");
+ 256:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *   }
+ 257:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *   else
+ 258:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *   {
+ 259:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *     XMC_DEBUG(("DAVE Apps initialization failed with status %d\n", status));
+ 260:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *     while(1U)
+ 261:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *     {
+ 262:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *     }
+ 263:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *   }
+ 264:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *   //Placeholder for user application code. The while loop below can be replaced with user applica
+ 265:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *   DIGITAL_IO_SetOutputHigh(&DIGITAL_IO_0);
+ 266:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *   while(1U)
+ 267:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *   {
+ 268:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *     // Add application code here
+ 269:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *   }
+ 270:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *
+ 271:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *   return (1);
+ 272:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** * }
+ 273:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *  @endcode
+ 274:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** */
+ 275:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** 
+ 276:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** __STATIC_INLINE void DIGITAL_IO_SetOutputHigh(const DIGITAL_IO_t *const handler)
+ 277:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** {
+ 278:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****   XMC_ASSERT("DIGITAL_IO_SetOutputHigh: handler null pointer", handler != NULL);
+ 279:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****   XMC_GPIO_SetOutputHigh(handler->gpio_port, handler->gpio_pin);
+ 280:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** }
+ 281:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** 
+ 282:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** /**
+ 283:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** * @brief Function to reset port pin.
+ 284:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** * @param handler Pointer pointing to APP data structure. Refer @ref DIGITAL_IO_t for details.
+ 285:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** * @return None
+ 286:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *
+ 287:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** * \par<b>Description:</b><br>
+ 288:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** * This function configures port output modification register Pn_OMR, to make port pin to low level.
+ 289:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *
+ 290:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** * \par<b>Related APIs:</b><BR>
+ 291:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** * DIGITAL_IO_SetOutputHigh()
+ 292:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *
+ 293:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** * Example Usage:
+ 294:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** * @code
+ 295:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *  #include "DAVE.h" //Declarations from DAVE Code Generation (includes SFR declaration)
+ 296:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *
+ 297:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *  int main(void)
+ 298:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *  {
+ 299:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *    DAVE_STATUS_t status;
+ 300:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *    status = DAVE_Init();  //(DAVE_STATUS_t)DIGITAL_IO_Init(&DIGITAL_IO_0) is called within DAVE_I
+ 301:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *    if(status == DAVE_STATUS_SUCCESS)
+ 302:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *    {
+ 303:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *      XMC_DEBUG("DAVE Apps initialization success\n");
+ 304:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *    }
+ 305:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *    else
+ 306:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *    {
+ 307:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *      XMC_DEBUG(("DAVE Apps initialization failed with status %d\n", status));
+ 308:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *      while(1U)
+ 309:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *      {
+ 310:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *      }
+ 311:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *    }
+ 312:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *    //Placeholder for user application code. The while loop below can be replaced with user applic
+ 313:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *    DIGITAL_IO_SetOutputLow(&DIGITAL_IO_0);
+ 314:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *    while(1U)
+ 315:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *    {
+ 316:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *      // Add application code here
+ 317:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *    }
+ 318:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *
+ 319:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *   return (1);
+ 320:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** * }
+ 321:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** *  @endcode
+ 322:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** */
+ 323:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** 
+ 324:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** __STATIC_INLINE void DIGITAL_IO_SetOutputLow(const DIGITAL_IO_t *const handler)
+ 325:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** {
+  75              	 .loc 2 325 0
+  76              	 .cfi_startproc
+  77              	 
+  78              	 
+  79 0000 80B5     	 push {r7,lr}
+  80              	.LCFI6:
+  81              	 .cfi_def_cfa_offset 8
+  82              	 .cfi_offset 7,-8
+  83              	 .cfi_offset 14,-4
+  84 0002 82B0     	 sub sp,sp,#8
+  85              	.LCFI7:
+  86              	 .cfi_def_cfa_offset 16
+  87 0004 00AF     	 add r7,sp,#0
+  88              	.LCFI8:
+  89              	 .cfi_def_cfa_register 7
+  90 0006 7860     	 str r0,[r7,#4]
+ 326:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****   XMC_ASSERT("DIGITAL_IO_SetOutputLow: handler null pointer", handler != NULL);
+ 327:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h ****   XMC_GPIO_SetOutputLow(handler->gpio_port,handler->gpio_pin);
+  91              	 .loc 2 327 0
+  92 0008 7B68     	 ldr r3,[r7,#4]
+  93 000a 1A68     	 ldr r2,[r3]
+  94 000c 7B68     	 ldr r3,[r7,#4]
+  95 000e 1B7C     	 ldrb r3,[r3,#16]
+  96 0010 1046     	 mov r0,r2
+  97 0012 1946     	 mov r1,r3
+  98 0014 FFF7FEFF 	 bl XMC_GPIO_SetOutputLow
+ 328:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO\digital_io.h **** }
+  99              	 .loc 2 328 0
+ 100 0018 0837     	 adds r7,r7,#8
+ 101              	.LCFI9:
+ 102              	 .cfi_def_cfa_offset 8
+ 103 001a BD46     	 mov sp,r7
+ 104              	.LCFI10:
+ 105              	 .cfi_def_cfa_register 13
+ 106              	 
+ 107 001c 80BD     	 pop {r7,pc}
+ 108              	 .cfi_endproc
+ 109              	.LFE144:
+ 111              	 .global g_RamMagicFlag
+ 112 001e 00BF     	 .section .no_init,"aw",%progbits
+ 113              	 .align 2
+ 116              	g_RamMagicFlag:
+ 117 0000 00000000 	 .space 4
+ 118              	 .section .text.main,"ax",%progbits
+ 119              	 .align 2
+ 120              	 .global main
+ 121              	 .thumb
+ 122              	 .thumb_func
+ 124              	main:
+ 125              	.LFB479:
+ 126              	 .file 3 "../main.c"
+   1:../main.c     ****     /* ================= Bootloader main.c ================= */
+   2:../main.c     **** #include "DAVE.h"
+   3:../main.c     **** #include "BSP/boot_init.h"
+   4:../main.c     **** #include "BSP/systick.h"
+   5:../main.c     **** #include "BSP/shared_conf.h"
+   6:../main.c     **** #include "SSC/Src/ryhand.h"
+   7:../main.c     **** #include <string.h>
+   8:../main.c     **** #include "firmwareupdate_SSC.h"
+   9:../main.c     **** #include "bsp_485.h"
+  10:../main.c     **** 
+  11:../main.c     **** /* .no_init 段变量：软件复位时不清零，断电后丢失 */
+  12:../main.c     **** /* 注意：段名是 .no_init（带下划线），与链接脚本一致 */
+  13:../main.c     **** uint32_t g_RamMagicFlag __attribute__((section(".no_init")));
+  14:../main.c     **** 
+  15:../main.c     **** /* 外部变量 (来自 User_FoE_Impl.c) */
+  16:../main.c     **** extern volatile uint8_t  g_bResetRequest;
+  17:../main.c     **** extern volatile uint32_t g_u32ResetStartTime;
+  18:../main.c     **** 
+  19:../main.c     **** /* ==============================================================
+  20:../main.c     ****  * 主函数
+  21:../main.c     ****  * ============================================================== */
+  22:../main.c     **** int main(void)
+  23:../main.c     **** {
+ 127              	 .loc 3 23 0
+ 128              	 .cfi_startproc
+ 129              	 
+ 130              	 
+ 131 0000 80B5     	 push {r7,lr}
+ 132              	.LCFI11:
+ 133              	 .cfi_def_cfa_offset 8
+ 134              	 .cfi_offset 7,-8
+ 135              	 .cfi_offset 14,-4
+ 136 0002 82B0     	 sub sp,sp,#8
+ 137              	.LCFI12:
+ 138              	 .cfi_def_cfa_offset 16
+ 139 0004 00AF     	 add r7,sp,#0
+ 140              	.LCFI13:
+ 141              	 .cfi_def_cfa_register 7
+  24:../main.c     ****     /* =========================================================
+  25:../main.c     ****      * 1. 读取 RAM 标志 (必须在 DAVE_Init 之前!)
+  26:../main.c     ****      *    因为 DAVE_Init 可能会初始化某些 RAM 区域
+  27:../main.c     ****      * ========================================================= */
+  28:../main.c     ****     uint32_t ramMagic = g_RamMagicFlag;
+ 142              	 .loc 3 28 0
+ 143 0006 494B     	 ldr r3,.L9
+ 144 0008 1B68     	 ldr r3,[r3]
+ 145 000a 3B60     	 str r3,[r7]
+  29:../main.c     **** 
+  30:../main.c     ****     /* 读取后立即清除，防止下次复位时误判 */
+  31:../main.c     ****     g_RamMagicFlag = 0x00000000;
+ 146              	 .loc 3 31 0
+ 147 000c 474B     	 ldr r3,.L9
+ 148 000e 0022     	 movs r2,#0
+ 149 0010 1A60     	 str r2,[r3]
+  32:../main.c     **** 
+  33:../main.c     ****     /* 初始化 DAVE */
+  34:../main.c     ****     DAVE_Init();
+ 150              	 .loc 3 34 0
+ 151 0012 FFF7FEFF 	 bl DAVE_Init
+  35:../main.c     **** 
+  36:../main.c     ****     /* 初始化 SysTick */
+  37:../main.c     ****     SysTick_Init();
+ 152              	 .loc 3 37 0
+ 153 0016 FFF7FEFF 	 bl SysTick_Init
+  38:../main.c     **** 
+  39:../main.c     ****     /* 加载波特率配置并初始化 CAN (重要: 启用 CAN 接收中断) */
+  40:../main.c     ****     BSP_LoadBaudrateConfig();
+ 154              	 .loc 3 40 0
+ 155 001a FFF7FEFF 	 bl BSP_LoadBaudrateConfig
+  41:../main.c     **** 
+  42:../main.c     ****     /* Boot 模式: LED 常亮 */
+  43:../main.c     ****     DIGITAL_IO_SetOutputLow(&LED);
+ 156              	 .loc 3 43 0
+ 157 001e 4448     	 ldr r0,.L9+4
+ 158 0020 FFF7FEFF 	 bl DIGITAL_IO_SetOutputLow
+  44:../main.c     **** 
+  45:../main.c     ****     /* =========================================================
+  46:../main.c     ****      * 2. 判断是否进入 Boot 模式
+  47:../main.c     ****      * ========================================================= */
+  48:../main.c     ****     if (ramMagic != RAM_MAGIC_VAL)
+ 159              	 .loc 3 48 0
+ 160 0024 3B68     	 ldr r3,[r7]
+ 161 0026 434A     	 ldr r2,.L9+8
+ 162 0028 9342     	 cmp r3,r2
+ 163 002a 06D0     	 beq .L4
+  49:../main.c     ****     {
+  50:../main.c     ****         /* RAM 标志不匹配 (断电重启 或 普通上电) */
+  51:../main.c     ****         /* 检查 App 是否有效，有效就跳转 */
+  52:../main.c     **** 
+  53:../main.c     ****         if (Check_Can_Jump_To_App())
+ 164              	 .loc 3 53 0
+ 165 002c FFF7FEFF 	 bl Check_Can_Jump_To_App
+ 166 0030 0346     	 mov r3,r0
+ 167 0032 002B     	 cmp r3,#0
+ 168 0034 01D0     	 beq .L4
+  54:../main.c     ****         {
+  55:../main.c     ****             Jump_To_App();
+ 169              	 .loc 3 55 0
+ 170 0036 FFF7FEFF 	 bl Jump_To_App
+ 171              	.L4:
+  56:../main.c     ****         }
+  57:../main.c     ****         /* App 无效，留在 Boot 模式 */
+  58:../main.c     ****     }
+  59:../main.c     ****     /* else: RAM 标志匹配，说明是 App 请求进入 Boot 模式，留在 Boot */
+  60:../main.c     **** 
+  61:../main.c     ****     /* Bootloader 主循环 */
+  62:../main.c     ****     while (1U)
+  63:../main.c     ****     {
+  64:../main.c     ****         /* EtherCAT 主循环 */
+  65:../main.c     ****         MainLoop();
+ 172              	 .loc 3 65 0
+ 173 003a FFF7FEFF 	 bl MainLoop
+  66:../main.c     **** 
+  67:../main.c     ****         /* FoE 升级完成后复位 */
+  68:../main.c     ****         FOE_CheckAndPerformReset();
+ 174              	 .loc 3 68 0
+ 175 003e FFF7FEFF 	 bl FOE_CheckAndPerformReset
+  69:../main.c     **** 
+  70:../main.c     ****         /* 擦除app扇区  */
+  71:../main.c     ****         FOE_ProcessEraseState();
+ 176              	 .loc 3 71 0
+ 177 0042 FFF7FEFF 	 bl FOE_ProcessEraseState
+ 178              	.LBB2:
+  72:../main.c     **** 
+  73:../main.c     ****         // 总线数据解析
+  74:../main.c     ****         for(int i = 0; i < BUS_NUM; i++)
+ 179              	 .loc 3 74 0
+ 180 0046 0023     	 movs r3,#0
+ 181 0048 7B60     	 str r3,[r7,#4]
+ 182 004a 6BE0     	 b .L5
+ 183              	.L8:
+  75:../main.c     ****         {
+  76:../main.c     ****           if(RxMessRead[i] != RxMessWrite[i])
+ 184              	 .loc 3 76 0
+ 185 004c 3A4A     	 ldr r2,.L9+12
+ 186 004e 7B68     	 ldr r3,[r7,#4]
+ 187 0050 1344     	 add r3,r3,r2
+ 188 0052 1B78     	 ldrb r3,[r3]
+ 189 0054 DAB2     	 uxtb r2,r3
+ 190 0056 3949     	 ldr r1,.L9+16
+ 191 0058 7B68     	 ldr r3,[r7,#4]
+ 192 005a 0B44     	 add r3,r3,r1
+ 193 005c 1B78     	 ldrb r3,[r3]
+ 194 005e DBB2     	 uxtb r3,r3
+ 195 0060 9A42     	 cmp r2,r3
+ 196 0062 5CD0     	 beq .L6
+ 197              	.LBB3:
+  77:../main.c     ****           {
+  78:../main.c     ****             LastActionBus =  i;
+ 198              	 .loc 3 78 0
+ 199 0064 7B68     	 ldr r3,[r7,#4]
+ 200 0066 DAB2     	 uxtb r2,r3
+ 201 0068 354B     	 ldr r3,.L9+20
+ 202 006a 1A70     	 strb r2,[r3]
+  79:../main.c     ****             RxCanId = RxMessage[i][RxMessRead[i]].id;
+ 203              	 .loc 3 79 0
+ 204 006c 324A     	 ldr r2,.L9+12
+ 205 006e 7B68     	 ldr r3,[r7,#4]
+ 206 0070 1344     	 add r3,r3,r2
+ 207 0072 1B78     	 ldrb r3,[r3]
+ 208 0074 DBB2     	 uxtb r3,r3
+ 209 0076 3348     	 ldr r0,.L9+24
+ 210 0078 7968     	 ldr r1,[r7,#4]
+ 211 007a 1A46     	 mov r2,r3
+ 212 007c D200     	 lsls r2,r2,#3
+ 213 007e 1A44     	 add r2,r2,r3
+ 214 0080 D300     	 lsls r3,r2,#3
+ 215 0082 1A46     	 mov r2,r3
+ 216 0084 0B46     	 mov r3,r1
+ 217 0086 DB00     	 lsls r3,r3,#3
+ 218 0088 0B44     	 add r3,r3,r1
+ 219 008a 9B02     	 lsls r3,r3,#10
+ 220 008c 1344     	 add r3,r3,r2
+ 221 008e 0344     	 add r3,r3,r0
+ 222 0090 4033     	 adds r3,r3,#64
+ 223 0092 1B88     	 ldrh r3,[r3]
+ 224 0094 1A46     	 mov r2,r3
+ 225 0096 2C4B     	 ldr r3,.L9+28
+ 226 0098 1A60     	 str r2,[r3]
+  80:../main.c     ****             CanRxLength = RxMessage[i][RxMessRead[i]].len;
+ 227              	 .loc 3 80 0
+ 228 009a 274A     	 ldr r2,.L9+12
+ 229 009c 7B68     	 ldr r3,[r7,#4]
+ 230 009e 1344     	 add r3,r3,r2
+ 231 00a0 1B78     	 ldrb r3,[r3]
+ 232 00a2 DBB2     	 uxtb r3,r3
+ 233 00a4 2748     	 ldr r0,.L9+24
+ 234 00a6 7968     	 ldr r1,[r7,#4]
+ 235 00a8 1A46     	 mov r2,r3
+ 236 00aa D200     	 lsls r2,r2,#3
+ 237 00ac 1A44     	 add r2,r2,r3
+ 238 00ae D300     	 lsls r3,r2,#3
+ 239 00b0 1A46     	 mov r2,r3
+ 240 00b2 0B46     	 mov r3,r1
+ 241 00b4 DB00     	 lsls r3,r3,#3
+ 242 00b6 0B44     	 add r3,r3,r1
+ 243 00b8 9B02     	 lsls r3,r3,#10
+ 244 00ba 1344     	 add r3,r3,r2
+ 245 00bc 0344     	 add r3,r3,r0
+ 246 00be 4033     	 adds r3,r3,#64
+ 247 00c0 9A78     	 ldrb r2,[r3,#2]
+ 248 00c2 224B     	 ldr r3,.L9+32
+ 249 00c4 1A70     	 strb r2,[r3]
+  81:../main.c     **** //            CommandParse(RxMessage[i][RxMessRead[i]].Data, i);
+  82:../main.c     ****             RS485_Protocol_HandleCommand(RxMessage[i][RxMessRead[i]].Data,CanRxLength);
+ 250              	 .loc 3 82 0
+ 251 00c6 1C4A     	 ldr r2,.L9+12
+ 252 00c8 7B68     	 ldr r3,[r7,#4]
+ 253 00ca 1344     	 add r3,r3,r2
+ 254 00cc 1B78     	 ldrb r3,[r3]
+ 255 00ce DBB2     	 uxtb r3,r3
+ 256 00d0 1A46     	 mov r2,r3
+ 257 00d2 D200     	 lsls r2,r2,#3
+ 258 00d4 1A44     	 add r2,r2,r3
+ 259 00d6 D300     	 lsls r3,r2,#3
+ 260 00d8 1A46     	 mov r2,r3
+ 261 00da 7968     	 ldr r1,[r7,#4]
+ 262 00dc 0B46     	 mov r3,r1
+ 263 00de DB00     	 lsls r3,r3,#3
+ 264 00e0 0B44     	 add r3,r3,r1
+ 265 00e2 9B02     	 lsls r3,r3,#10
+ 266 00e4 1344     	 add r3,r3,r2
+ 267 00e6 174A     	 ldr r2,.L9+24
+ 268 00e8 1A44     	 add r2,r2,r3
+ 269 00ea 184B     	 ldr r3,.L9+32
+ 270 00ec 1B78     	 ldrb r3,[r3]
+ 271 00ee 1046     	 mov r0,r2
+ 272 00f0 1946     	 mov r1,r3
+ 273 00f2 FFF7FEFF 	 bl RS485_Protocol_HandleCommand
+  83:../main.c     ****             RxMessRead[i] = (RxMessRead[i] + 1) % RxMessLength;
+ 274              	 .loc 3 83 0
+ 275 00f6 104A     	 ldr r2,.L9+12
+ 276 00f8 7B68     	 ldr r3,[r7,#4]
+ 277 00fa 1344     	 add r3,r3,r2
+ 278 00fc 1B78     	 ldrb r3,[r3]
+ 279 00fe DBB2     	 uxtb r3,r3
+ 280 0100 5A1C     	 adds r2,r3,#1
+ 281 0102 134B     	 ldr r3,.L9+36
+ 282 0104 1340     	 ands r3,r3,r2
+ 283 0106 002B     	 cmp r3,#0
+ 284 0108 03DA     	 bge .L7
+ 285 010a 013B     	 subs r3,r3,#1
+ 286 010c 63F07F03 	 orn r3,r3,#127
+ 287 0110 0133     	 adds r3,r3,#1
+ 288              	.L7:
+ 289 0112 D9B2     	 uxtb r1,r3
+ 290 0114 084A     	 ldr r2,.L9+12
+ 291 0116 7B68     	 ldr r3,[r7,#4]
+ 292 0118 1344     	 add r3,r3,r2
+ 293 011a 0A46     	 mov r2,r1
+ 294 011c 1A70     	 strb r2,[r3]
+ 295              	.L6:
+ 296              	.LBE3:
+  74:../main.c     **** t_init.h"
+ 297              	 .loc 3 74 0 discriminator 2
+ 298 011e 7B68     	 ldr r3,[r7,#4]
+ 299 0120 0133     	 adds r3,r3,#1
+ 300 0122 7B60     	 str r3,[r7,#4]
+ 301              	.L5:
+  74:../main.c     **** t_init.h"
+ 302              	 .loc 3 74 0 is_stmt 0 discriminator 1
+ 303 0124 7B68     	 ldr r3,[r7,#4]
+ 304 0126 062B     	 cmp r3,#6
+ 305 0128 90DD     	 ble .L8
+ 306              	.LBE2:
+  84:../main.c     ****           }
+  85:../main.c     ****         }
+  86:../main.c     **** 
+  87:../main.c     ****     }
+ 307              	 .loc 3 87 0 is_stmt 1
+ 308 012a 86E7     	 b .L4
+ 309              	.L10:
+ 310              	 .align 2
+ 311              	.L9:
+ 312 012c 00000000 	 .word g_RamMagicFlag
+ 313 0130 00000000 	 .word LED
+ 314 0134 07B007B0 	 .word -1341673465
+ 315 0138 00000000 	 .word RxMessRead
+ 316 013c 00000000 	 .word RxMessWrite
+ 317 0140 00000000 	 .word LastActionBus
+ 318 0144 00000000 	 .word RxMessage
+ 319 0148 00000000 	 .word RxCanId
+ 320 014c 00000000 	 .word CanRxLength
+ 321 0150 7F000080 	 .word -2147483521
+ 322              	 .cfi_endproc
+ 323              	.LFE479:
+ 325              	 .text
+ 326              	.Letext0:
+ 327              	 .file 4 "d:\\infineon\\tools\\dave ide\\4.5.0.202105191637\\eclipse\\arm-gcc-49\\arm-none-eabi\\include\\machine\\_default_types.h"
+ 328              	 .file 5 "d:\\infineon\\tools\\dave ide\\4.5.0.202105191637\\eclipse\\arm-gcc-49\\arm-none-eabi\\include\\stdint.h"
+ 329              	 .file 6 "D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc/xmc4_gpio.h"
+ 330              	 .file 7 "D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc/xmc_usic.h"
+ 331              	 .file 8 "D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP/bsp_485.h"
+ 332              	 .file 9 "D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/CMSIS/Include/cmsis_gcc.h"
+ 333              	 .file 10 "D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/CMSIS/Include/core_cm4.h"
+ 334              	 .file 11 "D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/CMSIS/Infineon/XMC4300_series/Include/system_XMC4300.h"
+ 335              	 .file 12 "D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/DIGITAL_IO/digital_io_extern.h"
+DEFINED SYMBOLS
+                            *ABS*:00000000 main.c
+    {standard input}:20     .text.XMC_GPIO_SetOutputLow:00000000 $t
+    {standard input}:24     .text.XMC_GPIO_SetOutputLow:00000000 XMC_GPIO_SetOutputLow
+    {standard input}:68     .text.DIGITAL_IO_SetOutputLow:00000000 $t
+    {standard input}:72     .text.DIGITAL_IO_SetOutputLow:00000000 DIGITAL_IO_SetOutputLow
+    {standard input}:116    .no_init:00000000 g_RamMagicFlag
+    {standard input}:113    .no_init:00000000 $d
+    {standard input}:119    .text.main:00000000 $t
+    {standard input}:124    .text.main:00000000 main
+    {standard input}:312    .text.main:0000012c $d
+                     .debug_frame:00000010 $d
+
+UNDEFINED SYMBOLS
+DAVE_Init
+SysTick_Init
+BSP_LoadBaudrateConfig
+Check_Can_Jump_To_App
+Jump_To_App
+MainLoop
+FOE_CheckAndPerformReset
+FOE_ProcessEraseState
+RS485_Protocol_HandleCommand
+LED
+RxMessRead
+RxMessWrite
+LastActionBus
+RxMessage
+RxCanId
+CanRxLength

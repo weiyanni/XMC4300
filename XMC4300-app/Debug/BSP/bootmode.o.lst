@@ -1,0 +1,218 @@
+   1              	 .syntax unified
+   2              	 .cpu cortex-m4
+   3              	 .eabi_attribute 27,3
+   4              	 .fpu fpv4-sp-d16
+   5              	 .eabi_attribute 20,1
+   6              	 .eabi_attribute 21,1
+   7              	 .eabi_attribute 23,3
+   8              	 .eabi_attribute 24,1
+   9              	 .eabi_attribute 25,1
+  10              	 .eabi_attribute 26,1
+  11              	 .eabi_attribute 30,6
+  12              	 .eabi_attribute 34,1
+  13              	 .eabi_attribute 18,4
+  14              	 .thumb
+  15              	 .file "bootmode.c"
+  16              	 .text
+  17              	.Ltext0:
+  18              	 .cfi_sections .debug_frame
+  19              	 .section .text.BL_Start,"ax",%progbits
+  20              	 .align 2
+  21              	 .global BL_Start
+  22              	 .thumb
+  23              	 .thumb_func
+  25              	BL_Start:
+  26              	.LFB133:
+  27              	 .file 1 "../BSP/bootmode.c"
+   1:../BSP/bootmode.c **** /* ============================================================================
+   2:../BSP/bootmode.c ****  * BSP/bootmode.c - App 的 Bootmode 实现
+   3:../BSP/bootmode.c ****  * 排除 SSC/Src/bootmode.c，使用此文件
+   4:../BSP/bootmode.c ****  * ============================================================================ */
+   5:../BSP/bootmode.c **** #include "ecat_def.h"
+   6:../BSP/bootmode.c **** #include "bootmode.h"
+   7:../BSP/bootmode.c **** #include "ecatfoe.h"
+   8:../BSP/bootmode.c **** #include "app_init.h"
+   9:../BSP/bootmode.c **** 
+  10:../BSP/bootmode.c **** /* SSC 协议栈在 INIT → BOOT 转换时调用 */
+  11:../BSP/bootmode.c **** void BL_Start(UINT8 State)
+  12:../BSP/bootmode.c **** {
+  28              	 .loc 1 12 0
+  29              	 .cfi_startproc
+  30              	 
+  31              	 
+  32 0000 80B5     	 push {r7,lr}
+  33              	.LCFI0:
+  34              	 .cfi_def_cfa_offset 8
+  35              	 .cfi_offset 7,-8
+  36              	 .cfi_offset 14,-4
+  37 0002 82B0     	 sub sp,sp,#8
+  38              	.LCFI1:
+  39              	 .cfi_def_cfa_offset 16
+  40 0004 00AF     	 add r7,sp,#0
+  41              	.LCFI2:
+  42              	 .cfi_def_cfa_register 7
+  43 0006 0346     	 mov r3,r0
+  44 0008 FB71     	 strb r3,[r7,#7]
+  13:../BSP/bootmode.c ****     /* 跳转到 Bootloader */
+  14:../BSP/bootmode.c ****     Handle_Bootstrap_Request();
+  45              	 .loc 1 14 0
+  46 000a FFF7FEFF 	 bl Handle_Bootstrap_Request
+  15:../BSP/bootmode.c **** }
+  47              	 .loc 1 15 0
+  48 000e 0837     	 adds r7,r7,#8
+  49              	.LCFI3:
+  50              	 .cfi_def_cfa_offset 8
+  51 0010 BD46     	 mov sp,r7
+  52              	.LCFI4:
+  53              	 .cfi_def_cfa_register 13
+  54              	 
+  55 0012 80BD     	 pop {r7,pc}
+  56              	 .cfi_endproc
+  57              	.LFE133:
+  59              	 .section .text.BL_Stop,"ax",%progbits
+  60              	 .align 2
+  61              	 .global BL_Stop
+  62              	 .thumb
+  63              	 .thumb_func
+  65              	BL_Stop:
+  66              	.LFB134:
+  16:../BSP/bootmode.c **** 
+  17:../BSP/bootmode.c **** /* BOOT → INIT 转换时调用 (App 不会进入此状态) */
+  18:../BSP/bootmode.c **** void BL_Stop(void)
+  19:../BSP/bootmode.c **** {
+  67              	 .loc 1 19 0
+  68              	 .cfi_startproc
+  69              	 
+  70              	 
+  71              	 
+  72 0000 80B4     	 push {r7}
+  73              	.LCFI5:
+  74              	 .cfi_def_cfa_offset 4
+  75              	 .cfi_offset 7,-4
+  76 0002 00AF     	 add r7,sp,#0
+  77              	.LCFI6:
+  78              	 .cfi_def_cfa_register 7
+  20:../BSP/bootmode.c **** }
+  79              	 .loc 1 20 0
+  80 0004 BD46     	 mov sp,r7
+  81              	.LCFI7:
+  82              	 .cfi_def_cfa_register 13
+  83              	 
+  84 0006 5DF8047B 	 ldr r7,[sp],#4
+  85              	.LCFI8:
+  86              	 .cfi_restore 7
+  87              	 .cfi_def_cfa_offset 0
+  88 000a 7047     	 bx lr
+  89              	 .cfi_endproc
+  90              	.LFE134:
+  92              	 .section .text.BL_StartDownload,"ax",%progbits
+  93              	 .align 2
+  94              	 .global BL_StartDownload
+  95              	 .thumb
+  96              	 .thumb_func
+  98              	BL_StartDownload:
+  99              	.LFB135:
+  21:../BSP/bootmode.c **** 
+  22:../BSP/bootmode.c **** /* FoE 相关占位函数 */
+  23:../BSP/bootmode.c **** void BL_StartDownload(UINT32 password)
+  24:../BSP/bootmode.c **** {
+ 100              	 .loc 1 24 0
+ 101              	 .cfi_startproc
+ 102              	 
+ 103              	 
+ 104              	 
+ 105 0000 80B4     	 push {r7}
+ 106              	.LCFI9:
+ 107              	 .cfi_def_cfa_offset 4
+ 108              	 .cfi_offset 7,-4
+ 109 0002 83B0     	 sub sp,sp,#12
+ 110              	.LCFI10:
+ 111              	 .cfi_def_cfa_offset 16
+ 112 0004 00AF     	 add r7,sp,#0
+ 113              	.LCFI11:
+ 114              	 .cfi_def_cfa_register 7
+ 115 0006 7860     	 str r0,[r7,#4]
+  25:../BSP/bootmode.c **** }
+ 116              	 .loc 1 25 0
+ 117 0008 0C37     	 adds r7,r7,#12
+ 118              	.LCFI12:
+ 119              	 .cfi_def_cfa_offset 4
+ 120 000a BD46     	 mov sp,r7
+ 121              	.LCFI13:
+ 122              	 .cfi_def_cfa_register 13
+ 123              	 
+ 124 000c 5DF8047B 	 ldr r7,[sp],#4
+ 125              	.LCFI14:
+ 126              	 .cfi_restore 7
+ 127              	 .cfi_def_cfa_offset 0
+ 128 0010 7047     	 bx lr
+ 129              	 .cfi_endproc
+ 130              	.LFE135:
+ 132 0012 00BF     	 .section .text.BL_Data,"ax",%progbits
+ 133              	 .align 2
+ 134              	 .global BL_Data
+ 135              	 .thumb
+ 136              	 .thumb_func
+ 138              	BL_Data:
+ 139              	.LFB136:
+  26:../BSP/bootmode.c **** 
+  27:../BSP/bootmode.c **** UINT16 BL_Data(UINT16 *pData, UINT16 Size)
+  28:../BSP/bootmode.c **** {
+ 140              	 .loc 1 28 0
+ 141              	 .cfi_startproc
+ 142              	 
+ 143              	 
+ 144              	 
+ 145 0000 80B4     	 push {r7}
+ 146              	.LCFI15:
+ 147              	 .cfi_def_cfa_offset 4
+ 148              	 .cfi_offset 7,-4
+ 149 0002 83B0     	 sub sp,sp,#12
+ 150              	.LCFI16:
+ 151              	 .cfi_def_cfa_offset 16
+ 152 0004 00AF     	 add r7,sp,#0
+ 153              	.LCFI17:
+ 154              	 .cfi_def_cfa_register 7
+ 155 0006 7860     	 str r0,[r7,#4]
+ 156 0008 0B46     	 mov r3,r1
+ 157 000a 7B80     	 strh r3,[r7,#2]
+  29:../BSP/bootmode.c ****     return 0;
+ 158              	 .loc 1 29 0
+ 159 000c 0023     	 movs r3,#0
+  30:../BSP/bootmode.c **** }
+ 160              	 .loc 1 30 0
+ 161 000e 1846     	 mov r0,r3
+ 162 0010 0C37     	 adds r7,r7,#12
+ 163              	.LCFI18:
+ 164              	 .cfi_def_cfa_offset 4
+ 165 0012 BD46     	 mov sp,r7
+ 166              	.LCFI19:
+ 167              	 .cfi_def_cfa_register 13
+ 168              	 
+ 169 0014 5DF8047B 	 ldr r7,[sp],#4
+ 170              	.LCFI20:
+ 171              	 .cfi_restore 7
+ 172              	 .cfi_def_cfa_offset 0
+ 173 0018 7047     	 bx lr
+ 174              	 .cfi_endproc
+ 175              	.LFE136:
+ 177 001a 00BF     	 .text
+ 178              	.Letext0:
+ 179              	 .file 2 "d:\\infineon\\tools\\dave ide\\4.5.0.202105191637\\eclipse\\arm-gcc-49\\arm-none-eabi\\include\\machine\\_default_types.h"
+ 180              	 .file 3 "d:\\infineon\\tools\\dave ide\\4.5.0.202105191637\\eclipse\\arm-gcc-49\\arm-none-eabi\\include\\stdint.h"
+ 181              	 .file 4 "D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-app/Libraries/CMSIS/Include/cmsis_gcc.h"
+ 182              	 .file 5 "D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-app/Libraries/CMSIS/Include/core_cm4.h"
+DEFINED SYMBOLS
+                            *ABS*:00000000 bootmode.c
+    {standard input}:20     .text.BL_Start:00000000 $t
+    {standard input}:25     .text.BL_Start:00000000 BL_Start
+    {standard input}:60     .text.BL_Stop:00000000 $t
+    {standard input}:65     .text.BL_Stop:00000000 BL_Stop
+    {standard input}:93     .text.BL_StartDownload:00000000 $t
+    {standard input}:98     .text.BL_StartDownload:00000000 BL_StartDownload
+    {standard input}:133    .text.BL_Data:00000000 $t
+    {standard input}:138    .text.BL_Data:00000000 BL_Data
+                     .debug_frame:00000010 $d
+
+UNDEFINED SYMBOLS
+Handle_Bootstrap_Request

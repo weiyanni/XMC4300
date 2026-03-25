@@ -1,0 +1,626 @@
+   1              	 .syntax unified
+   2              	 .cpu cortex-m4
+   3              	 .eabi_attribute 27,3
+   4              	 .fpu fpv4-sp-d16
+   5              	 .eabi_attribute 20,1
+   6              	 .eabi_attribute 21,1
+   7              	 .eabi_attribute 23,3
+   8              	 .eabi_attribute 24,1
+   9              	 .eabi_attribute 25,1
+  10              	 .eabi_attribute 26,1
+  11              	 .eabi_attribute 30,6
+  12              	 .eabi_attribute 34,1
+  13              	 .eabi_attribute 18,4
+  14              	 .thumb
+  15              	 .file "ecat_callback.c"
+  16              	 .text
+  17              	.Ltext0:
+  18              	 .cfi_sections .debug_frame
+  19              	 .section .text.SharedConfig_CalcChecksum,"ax",%progbits
+  20              	 .align 2
+  21              	 .thumb
+  22              	 .thumb_func
+  24              	SharedConfig_CalcChecksum:
+  25              	.LFB133:
+  26              	 .file 1 "D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP/shared_conf.h"
+   1:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** #ifndef SHARED_CONF_H_
+   2:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** #define SHARED_CONF_H_
+   3:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** 
+   4:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** #include <stdint.h>
+   5:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** 
+   6:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** /* ==============================================================
+   7:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  * 1. Flash 内存地图定义 (Total 256KB Flash)
+   8:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  * 
+   9:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  * XMC4300 Flash 扇区布局 (每扇区 16KB):
+  10:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  *   - S0-S5 (96KB):  Bootloader 代码
+  11:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  *   - S6-S7 (32KB):  EEPROM 仿真区域 (SharedConfig 等)
+  12:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  *   - S8    (128KB): Application 代码
+  13:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  *
+  14:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  * 地址映射:
+  15:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  *   - Cached (0x08...): 用于代码执行和数据读取
+  16:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  *   - Uncached (0x0C...): 用于 Flash 编程/擦除操作
+  17:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  * ============================================================== */
+  18:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** 
+  19:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** /* --- Bootloader 区域 (96KB, S0-S5) --- */
+  20:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** #define BOOT_START_ADDR         0x08000000UL
+  21:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** #define BOOT_START_ADDR_UC      0x0C000000UL
+  22:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** #define BOOT_SIZE               0x00018000UL  // 96 KB (6 sectors * 16KB)
+  23:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** #define BOOT_END_ADDR           (BOOT_START_ADDR + BOOT_SIZE - 1)
+  24:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** 
+  25:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** /* --- EEPROM 仿真区域 (32KB, S6-S7) --- */
+  26:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** #define EEPROM_START_ADDR       0x0C018000UL  // Uncached 地址（用于写入/擦除）
+  27:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** #define EEPROM_START_ADDR_RD    0x08018000UL  // Cached 地址（用于读取）
+  28:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** #define EEPROM_SIZE             0x00008000UL  // 32 KB (2 sectors * 16KB)
+  29:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** #define EEPROM_END_ADDR         (EEPROM_START_ADDR + EEPROM_SIZE - 1)
+  30:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** 
+  31:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** /* --- App 区域 (128KB, S8) --- */
+  32:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** #define APP_START_ADDR          0x0C020000UL  // Uncached 地址（用于写入）
+  33:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** #define APP_START_ADDR_RD       0x08020000UL  // Cached 地址（用于读取/执行）
+  34:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** #define APP_MAX_SIZE            0x00020000UL  // 128 KB
+  35:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** #define APP_END_ADDR            (APP_START_ADDR + APP_MAX_SIZE - 1)
+  36:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** 
+  37:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** /* ==============================================================
+  38:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  * 1.5. RAM 标志位 (用于区分软件复位和断电重启)
+  39:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  * 
+  40:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  * 原理：
+  41:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  *   - 软件复位 (NVIC_SystemReset): RAM 数据保留
+  42:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  *   - 断电重启: RAM 数据丢失 (变成随机值)
+  43:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  * 
+  44:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  * 使用 .noinit 段：
+  45:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  *   - 编译器自动分配地址
+  46:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  *   - 启动代码不会清零这个变量
+  47:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  *   - Boot 和 App 都必须定义这个变量（同名同段）
+  48:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  * ============================================================== */
+  49:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** 
+  50:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** #define RAM_MAGIC_VAL  0xB007B007UL  // "BOOTBOOT" 的数字化表示
+  51:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** 
+  52:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** /* 
+  53:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  * 注意：这个变量在 Boot 和 App 中都需要定义一次（不能只在头文件声明）
+  54:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  * 在各自的 main.c 或 app_init.c / boot_init.c 中添加：
+  55:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  * uint32_t g_RamMagicFlag __attribute__((section(".noinit")));
+  56:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  */
+  57:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** 
+  58:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** /* ==============================================================
+  59:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  * 2. SharedConfig 在 EEPROM 中的存储布局
+  60:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  * 
+  61:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  * E_EEPROM_XMC4 使用块循环计数 + CRC 方式管理数据，
+  62:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  * 我们的 SharedConfig_t (13 字节) 存储在 EEPROM 数据区的开头。
+  63:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  * 
+  64:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  * 数据块布局 (假设 DATA_BLOCK_SIZE = 2048):
+  65:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  *   - Offset 0x00:  SharedConfig_t (13 字节)
+  66:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  *   - Offset 0x10+: 其他用户数据 (可扩展)
+  67:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  * ============================================================== */
+  68:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** 
+  69:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** /* SharedConfig_t 在 E_EEPROM 数据区中的偏移地址 */
+  70:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** /* EtherCAT SII 数据通常占用前 0x800 字节，因此我们将 SharedConfig 移到 0x1000 (4K
+  71:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** #define SHARED_CONFIG_EEPROM_OFFSET    0x1000U
+  72:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** 
+  73:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** /* ==============================================================
+  74:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  * 3. 共享配置结构体定义
+  75:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  * ============================================================== */
+  76:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** 
+  77:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** #define SHARED_MAGIC_VALID      0x5AA5A55AUL  // App 有效标志
+  78:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** #define SHARED_MAGIC_UPDATING   0xEEEEEEEEUL  // 正在升级/损坏状态
+  79:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** 
+  80:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** typedef struct {
+  81:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****     uint32_t MagicHeader;       // 0x00: VALID, REQUEST, 或 0xFFFFFFFF
+  82:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****     uint32_t AppActualSize;     // 0x04: App 实际大小
+  83:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****     uint32_t AppCRC32;          // 0x08: CRC32 校验值
+  84:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****     uint8_t  Checksum;          // 0x0C: 前面所有字节的 8 位累加和
+  85:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** } __attribute__((packed)) SharedConfig_t;
+  86:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** 
+  87:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** /* 计算校验和 (不包含 Checksum 字段本身) */
+  88:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** static inline uint8_t SharedConfig_CalcChecksum(const SharedConfig_t *cfg)
+  89:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** {
+  27              	 .loc 1 89 0
+  28              	 .cfi_startproc
+  29              	 
+  30              	 
+  31              	 
+  32 0000 80B4     	 push {r7}
+  33              	.LCFI0:
+  34              	 .cfi_def_cfa_offset 4
+  35              	 .cfi_offset 7,-4
+  36 0002 85B0     	 sub sp,sp,#20
+  37              	.LCFI1:
+  38              	 .cfi_def_cfa_offset 24
+  39 0004 00AF     	 add r7,sp,#0
+  40              	.LCFI2:
+  41              	 .cfi_def_cfa_register 7
+  42 0006 7860     	 str r0,[r7,#4]
+  90:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****     const uint8_t *p = (const uint8_t *)cfg;
+  43              	 .loc 1 90 0
+  44 0008 7B68     	 ldr r3,[r7,#4]
+  45 000a BB60     	 str r3,[r7,#8]
+  91:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****     uint8_t sum = 0;
+  46              	 .loc 1 91 0
+  47 000c 0023     	 movs r3,#0
+  48 000e FB73     	 strb r3,[r7,#15]
+  49              	.LBB2:
+  92:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****     for (uint16_t i = 0; i < sizeof(SharedConfig_t) - 1; i++) {
+  50              	 .loc 1 92 0
+  51 0010 0023     	 movs r3,#0
+  52 0012 BB81     	 strh r3,[r7,#12]
+  53 0014 09E0     	 b .L2
+  54              	.L3:
+  93:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****         sum += p[i];
+  55              	 .loc 1 93 0 discriminator 3
+  56 0016 BB89     	 ldrh r3,[r7,#12]
+  57 0018 BA68     	 ldr r2,[r7,#8]
+  58 001a 1344     	 add r3,r3,r2
+  59 001c 1A78     	 ldrb r2,[r3]
+  60 001e FB7B     	 ldrb r3,[r7,#15]
+  61 0020 1344     	 add r3,r3,r2
+  62 0022 FB73     	 strb r3,[r7,#15]
+  92:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****     for (uint16_t i = 0; i < sizeof(SharedConfig_t) - 1; i++) {
+  63              	 .loc 1 92 0 discriminator 3
+  64 0024 BB89     	 ldrh r3,[r7,#12]
+  65 0026 0133     	 adds r3,r3,#1
+  66 0028 BB81     	 strh r3,[r7,#12]
+  67              	.L2:
+  92:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****     for (uint16_t i = 0; i < sizeof(SharedConfig_t) - 1; i++) {
+  68              	 .loc 1 92 0 is_stmt 0 discriminator 1
+  69 002a BB89     	 ldrh r3,[r7,#12]
+  70 002c 0B2B     	 cmp r3,#11
+  71 002e F2D9     	 bls .L3
+  72              	.LBE2:
+  94:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****     }
+  95:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****     return sum;
+  73              	 .loc 1 95 0 is_stmt 1
+  74 0030 FB7B     	 ldrb r3,[r7,#15]
+  96:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** }
+  75              	 .loc 1 96 0
+  76 0032 1846     	 mov r0,r3
+  77 0034 1437     	 adds r7,r7,#20
+  78              	.LCFI3:
+  79              	 .cfi_def_cfa_offset 4
+  80 0036 BD46     	 mov sp,r7
+  81              	.LCFI4:
+  82              	 .cfi_def_cfa_register 13
+  83              	 
+  84 0038 5DF8047B 	 ldr r7,[sp],#4
+  85              	.LCFI5:
+  86              	 .cfi_restore 7
+  87              	 .cfi_def_cfa_offset 0
+  88 003c 7047     	 bx lr
+  89              	 .cfi_endproc
+  90              	.LFE133:
+  92 003e 00BF     	 .section .text.DeviceConfig_CalcChecksum,"ax",%progbits
+  93              	 .align 2
+  94              	 .thumb
+  95              	 .thumb_func
+  97              	DeviceConfig_CalcChecksum:
+  98              	.LFB135:
+  97:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** 
+  98:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** /* 校验结构体是否有效 */
+  99:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** static inline uint8_t SharedConfig_IsValid(const SharedConfig_t *cfg)
+ 100:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** {
+ 101:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****     return (cfg->Checksum == SharedConfig_CalcChecksum(cfg));
+ 102:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** }
+ 103:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** 
+ 104:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** /* ==============================================================
+ 105:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  * 4. 设备配置结构体 (0x8000 对象)
+ 106:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  * 
+ 107:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  * 与 SSC 的 TOBJ8000 结构体对应，存储在 EEPROM 中。
+ 108:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  * 通过 TwinCAT CoE 读写时，同步到 EEPROM。
+ 109:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  * ============================================================== */
+ 110:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** 
+ 111:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** #define DEVICE_CONFIG_EEPROM_OFFSET    0x1100U  // SharedConfig 之后 (0x1000 + 256)
+ 112:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** #define DEVICE_CONFIG_MAGIC            0xDE01CF6UL // 魔数标识 "DEV1CFG"
+ 113:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** 
+ 114:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** typedef struct {
+ 115:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****     uint32_t Magic;             // 魔数标识 (DEVICE_CONFIG_MAGIC)
+ 116:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****     char     Name[32];          // SubIndex 1: 设备名称
+ 117:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****     char     Hv[32];            // SubIndex 2: 硬件版本
+ 118:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****     char     Sv[32];            // SubIndex 3: 软件版本
+ 119:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****     char     Sn[32];            // SubIndex 4: 序列号
+ 120:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****     uint32_t BuildTime;         // SubIndex 5: 编译时间
+ 121:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****     uint32_t BR_canfd_ctrl;     // SubIndex 6: CANFD 控制域波特率
+ 122:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****     uint32_t BR_canfd_data;     // SubIndex 7: CANFD 数据域波特率
+ 123:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****     uint32_t BR_485;            // SubIndex 8: RS485 波特率
+ 124:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****     uint8_t  Use120;            // SubIndex 9: 120Ω终端电阻
+ 125:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****     uint8_t  Use485;            // SubIndex 10: 485端口选择
+ 126:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****     uint8_t  UseModbus;         // SubIndex 11: Modbus使能
+ 127:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****     uint8_t  Reserved;          // SubIndex 12: 保留
+ 128:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****     char     DevID[8];          // SubIndex 13: 设备ID (6字节+2对齐)
+ 129:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****     uint8_t  Checksum;          // 校验和
+ 130:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** } __attribute__((packed)) DeviceConfig_t;
+ 131:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** 
+ 132:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** /* 计算 DeviceConfig 校验和 */
+ 133:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** static inline uint8_t DeviceConfig_CalcChecksum(const DeviceConfig_t *cfg)
+ 134:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** {
+  99              	 .loc 1 134 0
+ 100              	 .cfi_startproc
+ 101              	 
+ 102              	 
+ 103              	 
+ 104 0000 80B4     	 push {r7}
+ 105              	.LCFI6:
+ 106              	 .cfi_def_cfa_offset 4
+ 107              	 .cfi_offset 7,-4
+ 108 0002 85B0     	 sub sp,sp,#20
+ 109              	.LCFI7:
+ 110              	 .cfi_def_cfa_offset 24
+ 111 0004 00AF     	 add r7,sp,#0
+ 112              	.LCFI8:
+ 113              	 .cfi_def_cfa_register 7
+ 114 0006 7860     	 str r0,[r7,#4]
+ 135:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****     const uint8_t *p = (const uint8_t *)cfg;
+ 115              	 .loc 1 135 0
+ 116 0008 7B68     	 ldr r3,[r7,#4]
+ 117 000a BB60     	 str r3,[r7,#8]
+ 136:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****     uint8_t sum = 0;
+ 118              	 .loc 1 136 0
+ 119 000c 0023     	 movs r3,#0
+ 120 000e FB73     	 strb r3,[r7,#15]
+ 121              	.LBB3:
+ 137:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****     for (uint16_t i = 0; i < sizeof(DeviceConfig_t) - 1; i++) {
+ 122              	 .loc 1 137 0
+ 123 0010 0023     	 movs r3,#0
+ 124 0012 BB81     	 strh r3,[r7,#12]
+ 125 0014 09E0     	 b .L6
+ 126              	.L7:
+ 138:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****         sum += p[i];
+ 127              	 .loc 1 138 0 discriminator 3
+ 128 0016 BB89     	 ldrh r3,[r7,#12]
+ 129 0018 BA68     	 ldr r2,[r7,#8]
+ 130 001a 1344     	 add r3,r3,r2
+ 131 001c 1A78     	 ldrb r2,[r3]
+ 132 001e FB7B     	 ldrb r3,[r7,#15]
+ 133 0020 1344     	 add r3,r3,r2
+ 134 0022 FB73     	 strb r3,[r7,#15]
+ 137:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****     for (uint16_t i = 0; i < sizeof(DeviceConfig_t) - 1; i++) {
+ 135              	 .loc 1 137 0 discriminator 3
+ 136 0024 BB89     	 ldrh r3,[r7,#12]
+ 137 0026 0133     	 adds r3,r3,#1
+ 138 0028 BB81     	 strh r3,[r7,#12]
+ 139              	.L6:
+ 137:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****     for (uint16_t i = 0; i < sizeof(DeviceConfig_t) - 1; i++) {
+ 140              	 .loc 1 137 0 is_stmt 0 discriminator 1
+ 141 002a BB89     	 ldrh r3,[r7,#12]
+ 142 002c 9F2B     	 cmp r3,#159
+ 143 002e F2D9     	 bls .L7
+ 144              	.LBE3:
+ 139:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****     }
+ 140:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****     return sum;
+ 145              	 .loc 1 140 0 is_stmt 1
+ 146 0030 FB7B     	 ldrb r3,[r7,#15]
+ 141:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** }
+ 147              	 .loc 1 141 0
+ 148 0032 1846     	 mov r0,r3
+ 149 0034 1437     	 adds r7,r7,#20
+ 150              	.LCFI9:
+ 151              	 .cfi_def_cfa_offset 4
+ 152 0036 BD46     	 mov sp,r7
+ 153              	.LCFI10:
+ 154              	 .cfi_def_cfa_register 13
+ 155              	 
+ 156 0038 5DF8047B 	 ldr r7,[sp],#4
+ 157              	.LCFI11:
+ 158              	 .cfi_restore 7
+ 159              	 .cfi_def_cfa_offset 0
+ 160 003c 7047     	 bx lr
+ 161              	 .cfi_endproc
+ 162              	.LFE135:
+ 164 003e 00BF     	 .section .text.DeviceConfig_IsValid,"ax",%progbits
+ 165              	 .align 2
+ 166              	 .thumb
+ 167              	 .thumb_func
+ 169              	DeviceConfig_IsValid:
+ 170              	.LFB136:
+ 142:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** 
+ 143:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** /* 校验 DeviceConfig 是否有效 */
+ 144:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** static inline uint8_t DeviceConfig_IsValid(const DeviceConfig_t *cfg)
+ 145:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** {
+ 171              	 .loc 1 145 0
+ 172              	 .cfi_startproc
+ 173              	 
+ 174              	 
+ 175 0000 90B5     	 push {r4,r7,lr}
+ 176              	.LCFI12:
+ 177              	 .cfi_def_cfa_offset 12
+ 178              	 .cfi_offset 4,-12
+ 179              	 .cfi_offset 7,-8
+ 180              	 .cfi_offset 14,-4
+ 181 0002 83B0     	 sub sp,sp,#12
+ 182              	.LCFI13:
+ 183              	 .cfi_def_cfa_offset 24
+ 184 0004 00AF     	 add r7,sp,#0
+ 185              	.LCFI14:
+ 186              	 .cfi_def_cfa_register 7
+ 187 0006 7860     	 str r0,[r7,#4]
+ 146:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****     return (cfg->Magic == DEVICE_CONFIG_MAGIC) && 
+ 188              	 .loc 1 146 0
+ 189 0008 7B68     	 ldr r3,[r7,#4]
+ 190 000a 1B68     	 ldr r3,[r3]
+ 191 000c 094A     	 ldr r2,.L13
+ 192 000e 9342     	 cmp r3,r2
+ 193 0010 0AD1     	 bne .L10
+ 147:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****            (cfg->Checksum == DeviceConfig_CalcChecksum(cfg));
+ 194              	 .loc 1 147 0 discriminator 1
+ 195 0012 7B68     	 ldr r3,[r7,#4]
+ 196 0014 93F8A040 	 ldrb r4,[r3,#160]
+ 197 0018 7868     	 ldr r0,[r7,#4]
+ 198 001a FFF7FEFF 	 bl DeviceConfig_CalcChecksum
+ 199 001e 0346     	 mov r3,r0
+ 146:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****     return (cfg->Magic == DEVICE_CONFIG_MAGIC) && 
+ 200              	 .loc 1 146 0 discriminator 1
+ 201 0020 9C42     	 cmp r4,r3
+ 202 0022 01D1     	 bne .L10
+ 146:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****     return (cfg->Magic == DEVICE_CONFIG_MAGIC) && 
+ 203              	 .loc 1 146 0 is_stmt 0 discriminator 3
+ 204 0024 0123     	 movs r3,#1
+ 205 0026 00E0     	 b .L11
+ 206              	.L10:
+ 146:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****     return (cfg->Magic == DEVICE_CONFIG_MAGIC) && 
+ 207              	 .loc 1 146 0 discriminator 4
+ 208 0028 0023     	 movs r3,#0
+ 209              	.L11:
+ 146:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****     return (cfg->Magic == DEVICE_CONFIG_MAGIC) && 
+ 210              	 .loc 1 146 0 discriminator 6
+ 211 002a DBB2     	 uxtb r3,r3
+ 148:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** }
+ 212              	 .loc 1 148 0 is_stmt 1 discriminator 6
+ 213 002c 1846     	 mov r0,r3
+ 214 002e 0C37     	 adds r7,r7,#12
+ 215              	.LCFI15:
+ 216              	 .cfi_def_cfa_offset 12
+ 217 0030 BD46     	 mov sp,r7
+ 218              	.LCFI16:
+ 219              	 .cfi_def_cfa_register 13
+ 220              	 
+ 221 0032 90BD     	 pop {r4,r7,pc}
+ 222              	.L14:
+ 223              	 .align 2
+ 224              	.L13:
+ 225 0034 F61CE00D 	 .word 232791286
+ 226              	 .cfi_endproc
+ 227              	.LFE136:
+ 229              	 .comm s_DevConfig,161,4
+ 230              	 .global s_DevConfigValid
+ 231              	 .section .bss.s_DevConfigValid,"aw",%nobits
+ 234              	s_DevConfigValid:
+ 235 0000 00       	 .space 1
+ 236              	 .section .text.FWUPDATE_InvalidateAppFlag,"ax",%progbits
+ 237              	 .align 2
+ 238              	 .global FWUPDATE_InvalidateAppFlag
+ 239              	 .thumb
+ 240              	 .thumb_func
+ 242              	FWUPDATE_InvalidateAppFlag:
+ 243              	.LFB167:
+ 244              	 .file 2 "../Application/ecat_callback.c"
+   1:../Application/ecat_callback.c **** #include "ecat_callback.h"
+   2:../Application/ecat_callback.c **** #include "ryhandObjects.h"      /* 包含 DevInfo0x8000 定义 */
+   3:../Application/ecat_callback.c **** #include "BSP/bsp_485.h"        /* 包含 485 驱动接口 */
+   4:../Application/ecat_callback.c **** #include "Dave/Generated/E_EEPROM_XMC4/e_eeprom_xmc4.h" /* */
+   5:../Application/ecat_callback.c **** #include <string.h>
+   6:../Application/ecat_callback.c **** #include "shared_conf.h"
+   7:../Application/ecat_callback.c **** 
+   8:../Application/ecat_callback.c **** /* 设备配置 (从 EEPROM 读取) */
+   9:../Application/ecat_callback.c **** DeviceConfig_t s_DevConfig;
+  10:../Application/ecat_callback.c **** uint8_t s_DevConfigValid = 0;
+  11:../Application/ecat_callback.c **** /* 假设在 E_EEPROM 中的存储块索引为 0 */
+  12:../Application/ecat_callback.c **** #define STORAGE_BLOCK_DEV_INFO  0
+  13:../Application/ecat_callback.c **** 
+  14:../Application/ecat_callback.c **** uint8_t FWUPDATE_InvalidateAppFlag(void)
+  15:../Application/ecat_callback.c **** {
+ 245              	 .loc 2 15 0
+ 246              	 .cfi_startproc
+ 247              	 
+ 248              	 
+ 249 0000 80B5     	 push {r7,lr}
+ 250              	.LCFI17:
+ 251              	 .cfi_def_cfa_offset 8
+ 252              	 .cfi_offset 7,-8
+ 253              	 .cfi_offset 14,-4
+ 254 0002 84B0     	 sub sp,sp,#16
+ 255              	.LCFI18:
+ 256              	 .cfi_def_cfa_offset 24
+ 257 0004 00AF     	 add r7,sp,#0
+ 258              	.LCFI19:
+ 259              	 .cfi_def_cfa_register 7
+  16:../Application/ecat_callback.c ****     SharedConfig_t cfg;
+  17:../Application/ecat_callback.c ****     E_EEPROM_XMC4_STATUS_t status;
+  18:../Application/ecat_callback.c **** 
+  19:../Application/ecat_callback.c ****     // 1. 读取当前 EEPROM 中的配置
+  20:../Application/ecat_callback.c ****     E_EEPROM_XMC4_ReadArray(SHARED_CONFIG_EEPROM_OFFSET, (uint8_t*)&cfg, sizeof(SharedConfig_t));
+ 260              	 .loc 2 20 0
+ 261 0006 3B46     	 mov r3,r7
+ 262 0008 4FF48050 	 mov r0,#4096
+ 263 000c 1946     	 mov r1,r3
+ 264 000e 0D22     	 movs r2,#13
+ 265 0010 FFF7FEFF 	 bl E_EEPROM_XMC4_ReadArray
+  21:../Application/ecat_callback.c **** 
+  22:../Application/ecat_callback.c ****     // 2. 将 Header 设为无效值 (例如 e)
+  23:../Application/ecat_callback.c ****     cfg.MagicHeader = SHARED_MAGIC_UPDATING;
+ 266              	 .loc 2 23 0
+ 267 0014 4FF0EE33 	 mov r3,#-286331154
+ 268 0018 3B60     	 str r3,[r7]
+  24:../Application/ecat_callback.c **** 
+  25:../Application/ecat_callback.c ****     // 3. 重新计算校验和，否则下次读取时 SharedConfig_IsValid 会报错
+  26:../Application/ecat_callback.c ****     cfg.Checksum = SharedConfig_CalcChecksum(&cfg);
+ 269              	 .loc 2 26 0
+ 270 001a 3B46     	 mov r3,r7
+ 271 001c 1846     	 mov r0,r3
+ 272 001e FFF7FEFF 	 bl SharedConfig_CalcChecksum
+ 273 0022 0346     	 mov r3,r0
+ 274 0024 3B73     	 strb r3,[r7,#12]
+  27:../Application/ecat_callback.c **** 
+  28:../Application/ecat_callback.c ****     // 4. 写回 EEPROM
+  29:../Application/ecat_callback.c ****     status = E_EEPROM_XMC4_WriteArray(SHARED_CONFIG_EEPROM_OFFSET, (uint8_t*)&cfg, sizeof(SharedCon
+ 275              	 .loc 2 29 0
+ 276 0026 3B46     	 mov r3,r7
+ 277 0028 4FF48050 	 mov r0,#4096
+ 278 002c 1946     	 mov r1,r3
+ 279 002e 0D22     	 movs r2,#13
+ 280 0030 FFF7FEFF 	 bl E_EEPROM_XMC4_WriteArray
+ 281 0034 0346     	 mov r3,r0
+ 282 0036 FB73     	 strb r3,[r7,#15]
+  30:../Application/ecat_callback.c ****     if (status != E_EEPROM_XMC4_STATUS_OK) {
+ 283              	 .loc 2 30 0
+ 284 0038 FB7B     	 ldrb r3,[r7,#15]
+ 285 003a 002B     	 cmp r3,#0
+ 286 003c 01D0     	 beq .L16
+  31:../Application/ecat_callback.c ****         return 2;
+ 287              	 .loc 2 31 0
+ 288 003e 0223     	 movs r3,#2
+ 289 0040 02E0     	 b .L18
+ 290              	.L16:
+  32:../Application/ecat_callback.c ****     }
+  33:../Application/ecat_callback.c **** 
+  34:../Application/ecat_callback.c ****     // 5. 强制更新物理 Flash 存储
+  35:../Application/ecat_callback.c ****     E_EEPROM_XMC4_UpdateFlashContents();
+ 291              	 .loc 2 35 0
+ 292 0042 FFF7FEFF 	 bl E_EEPROM_XMC4_UpdateFlashContents
+  36:../Application/ecat_callback.c **** 
+  37:../Application/ecat_callback.c ****     return 0;
+ 293              	 .loc 2 37 0
+ 294 0046 0023     	 movs r3,#0
+ 295              	.L18:
+  38:../Application/ecat_callback.c **** }
+ 296              	 .loc 2 38 0 discriminator 1
+ 297 0048 1846     	 mov r0,r3
+ 298 004a 1037     	 adds r7,r7,#16
+ 299              	.LCFI20:
+ 300              	 .cfi_def_cfa_offset 8
+ 301 004c BD46     	 mov sp,r7
+ 302              	.LCFI21:
+ 303              	 .cfi_def_cfa_register 13
+ 304              	 
+ 305 004e 80BD     	 pop {r7,pc}
+ 306              	 .cfi_endproc
+ 307              	.LFE167:
+ 309              	 .section .text.LoadDeviceConfig,"ax",%progbits
+ 310              	 .align 2
+ 311              	 .global LoadDeviceConfig
+ 312              	 .thumb
+ 313              	 .thumb_func
+ 315              	LoadDeviceConfig:
+ 316              	.LFB168:
+  39:../Application/ecat_callback.c **** 
+  40:../Application/ecat_callback.c **** 
+  41:../Application/ecat_callback.c **** 
+  42:../Application/ecat_callback.c **** /**
+  43:../Application/ecat_callback.c ****  * @brief 从 EEPROM 加载配置并在上电时初始化
+  44:../Application/ecat_callback.c ****  */
+  45:../Application/ecat_callback.c **** void LoadDeviceConfig(void)
+  46:../Application/ecat_callback.c **** {
+ 317              	 .loc 2 46 0
+ 318              	 .cfi_startproc
+ 319              	 
+ 320              	 
+ 321 0000 80B5     	 push {r7,lr}
+ 322              	.LCFI22:
+ 323              	 .cfi_def_cfa_offset 8
+ 324              	 .cfi_offset 7,-8
+ 325              	 .cfi_offset 14,-4
+ 326 0002 00AF     	 add r7,sp,#0
+ 327              	.LCFI23:
+ 328              	 .cfi_def_cfa_register 7
+  47:../Application/ecat_callback.c ****     if (!s_DevConfigValid)
+ 329              	 .loc 2 47 0
+ 330 0004 084B     	 ldr r3,.L21
+ 331 0006 1B78     	 ldrb r3,[r3]
+ 332 0008 002B     	 cmp r3,#0
+ 333 000a 0CD1     	 bne .L19
+  48:../Application/ecat_callback.c ****     {
+  49:../Application/ecat_callback.c ****         E_EEPROM_XMC4_ReadArray(DEVICE_CONFIG_EEPROM_OFFSET,
+ 334              	 .loc 2 49 0
+ 335 000c 4FF48850 	 mov r0,#4352
+ 336 0010 0649     	 ldr r1,.L21+4
+ 337 0012 A122     	 movs r2,#161
+ 338 0014 FFF7FEFF 	 bl E_EEPROM_XMC4_ReadArray
+  50:../Application/ecat_callback.c ****                                 (uint8_t*)&s_DevConfig, sizeof(DeviceConfig_t));
+  51:../Application/ecat_callback.c ****         s_DevConfigValid = DeviceConfig_IsValid(&s_DevConfig);
+ 339              	 .loc 2 51 0
+ 340 0018 0448     	 ldr r0,.L21+4
+ 341 001a FFF7FEFF 	 bl DeviceConfig_IsValid
+ 342 001e 0346     	 mov r3,r0
+ 343 0020 1A46     	 mov r2,r3
+ 344 0022 014B     	 ldr r3,.L21
+ 345 0024 1A70     	 strb r2,[r3]
+ 346              	.L19:
+  52:../Application/ecat_callback.c ****     }
+  53:../Application/ecat_callback.c **** }
+ 347              	 .loc 2 53 0
+ 348 0026 80BD     	 pop {r7,pc}
+ 349              	.L22:
+ 350              	 .align 2
+ 351              	.L21:
+ 352 0028 00000000 	 .word s_DevConfigValid
+ 353 002c 00000000 	 .word s_DevConfig
+ 354              	 .cfi_endproc
+ 355              	.LFE168:
+ 357              	 .section .text.SaveDeviceConfig,"ax",%progbits
+ 358              	 .align 2
+ 359              	 .thumb
+ 360              	 .thumb_func
+ 362              	SaveDeviceConfig:
+ 363              	.LFB169:
+  54:../Application/ecat_callback.c **** 
+  55:../Application/ecat_callback.c **** /**
+  56:../Application/ecat_callback.c ****  * @brief 执行持久化保存
+  57:../Application/ecat_callback.c ****  */
+  58:../Application/ecat_callback.c **** static void SaveDeviceConfig(void)
+  59:../Application/ecat_callback.c **** {
+ 364              	 .loc 2 59 0
+ 365              	 .cfi_startproc
+ 366              	 
+ 367              	 
+ 368 0000 80B5     	 push {r7,lr}
+ 369              	.LCFI24:
+ 370              	 .cfi_def_cfa_offset 8
+ 371              	 .cfi_offset 7,-8
+ 372              	 .cfi_offset 14,-4
+ 373 0002 00AF     	 add r7,sp,#0
+ 374              	.LCFI25:
+ 375              	 .cfi_def_cfa_register 7
+  60:../Application/ecat_callback.c ****     E_EEPROM_XMC4_WriteArray(DEVICE_CONFIG_EEPROM_OFFSET,
+ 376              	 .loc 2 60 0
+ 377 0004 4FF48850 	 mov r0,#4352
+ 378 0008 0249     	 ldr r1,.L24
+ 379 000a A122     	 movs r2,#161
+ 380 000c FFF7FEFF 	 bl E_EEPROM_XMC4_WriteArray
+  61:../Application/ecat_callback.c ****                             (uint8_t*)&s_DevConfig, sizeof(DeviceConfig_t));
+  62:../Application/ecat_callback.c **** }
+ 381              	 .loc 2 62 0
+ 382 0010 80BD     	 pop {r7,pc}
+ 383              	.L25:
+ 384 0012 00BF     	 .align 2
+ 385              	.L24:
+ 386 0014 00000000 	 .word s_DevConfig
+ 387              	 .cfi_endproc
+ 388              	.LFE169:
+ 390              	 .text
+ 391              	.Letext0:
+ 392              	 .file 3 "d:\\infineon\\tools\\dave ide\\4.5.0.202105191637\\eclipse\\arm-gcc-49\\arm-none-eabi\\include\\machine\\_default_types.h"
+ 393              	 .file 4 "d:\\infineon\\tools\\dave ide\\4.5.0.202105191637\\eclipse\\arm-gcc-49\\arm-none-eabi\\include\\stdint.h"
+ 394              	 .file 5 "D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/E_EEPROM_XMC4/e_eeprom_xmc4.h"
+ 395              	 .file 6 "D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/CMSIS/Include/cmsis_gcc.h"
+ 396              	 .file 7 "D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/CMSIS/Include/core_cm4.h"
+DEFINED SYMBOLS
+                            *ABS*:00000000 ecat_callback.c
+    {standard input}:20     .text.SharedConfig_CalcChecksum:00000000 $t
+    {standard input}:24     .text.SharedConfig_CalcChecksum:00000000 SharedConfig_CalcChecksum
+    {standard input}:93     .text.DeviceConfig_CalcChecksum:00000000 $t
+    {standard input}:97     .text.DeviceConfig_CalcChecksum:00000000 DeviceConfig_CalcChecksum
+    {standard input}:165    .text.DeviceConfig_IsValid:00000000 $t
+    {standard input}:169    .text.DeviceConfig_IsValid:00000000 DeviceConfig_IsValid
+    {standard input}:225    .text.DeviceConfig_IsValid:00000034 $d
+                            *COM*:000000a1 s_DevConfig
+    {standard input}:234    .bss.s_DevConfigValid:00000000 s_DevConfigValid
+    {standard input}:235    .bss.s_DevConfigValid:00000000 $d
+    {standard input}:237    .text.FWUPDATE_InvalidateAppFlag:00000000 $t
+    {standard input}:242    .text.FWUPDATE_InvalidateAppFlag:00000000 FWUPDATE_InvalidateAppFlag
+    {standard input}:310    .text.LoadDeviceConfig:00000000 $t
+    {standard input}:315    .text.LoadDeviceConfig:00000000 LoadDeviceConfig
+    {standard input}:352    .text.LoadDeviceConfig:00000028 $d
+    {standard input}:358    .text.SaveDeviceConfig:00000000 $t
+    {standard input}:362    .text.SaveDeviceConfig:00000000 SaveDeviceConfig
+    {standard input}:386    .text.SaveDeviceConfig:00000014 $d
+                     .debug_frame:00000010 $d
+
+UNDEFINED SYMBOLS
+E_EEPROM_XMC4_ReadArray
+E_EEPROM_XMC4_WriteArray
+E_EEPROM_XMC4_UpdateFlashContents

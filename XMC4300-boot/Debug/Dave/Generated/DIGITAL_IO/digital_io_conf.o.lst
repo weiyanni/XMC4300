@@ -1,0 +1,116 @@
+   1              	 .syntax unified
+   2              	 .cpu cortex-m4
+   3              	 .eabi_attribute 27,3
+   4              	 .fpu fpv4-sp-d16
+   5              	 .eabi_attribute 20,1
+   6              	 .eabi_attribute 21,1
+   7              	 .eabi_attribute 23,3
+   8              	 .eabi_attribute 24,1
+   9              	 .eabi_attribute 25,1
+  10              	 .eabi_attribute 26,1
+  11              	 .eabi_attribute 30,6
+  12              	 .eabi_attribute 34,1
+  13              	 .eabi_attribute 18,4
+  14              	 .thumb
+  15              	 .file "digital_io_conf.c"
+  16              	 .text
+  17              	.Ltext0:
+  18              	 .cfi_sections .debug_frame
+  19              	 .global LED
+  20              	 .section .rodata.LED,"a",%progbits
+  21              	 .align 2
+  24              	LED:
+  25 0000 00800248 	 .word 1208123392
+  26 0004 80       	 .byte -128
+  27 0005 000000   	 .space 3
+  28 0008 01000000 	 .word 1
+  29 000c 00000000 	 .space 4
+  30 0010 02       	 .byte 2
+  31 0011 00       	 .byte 0
+  32 0012 0000     	 .space 2
+  33              	 .global UART1_RS485_DE
+  34              	 .section .rodata.UART1_RS485_DE,"a",%progbits
+  35              	 .align 2
+  38              	UART1_RS485_DE:
+  39 0000 00800248 	 .word 1208123392
+  40 0004 80       	 .byte -128
+  41 0005 000000   	 .space 3
+  42 0008 00000100 	 .word 65536
+  43 000c 00000000 	 .space 4
+  44 0010 0A       	 .byte 10
+  45 0011 00       	 .byte 0
+  46 0012 0000     	 .space 2
+  47              	 .global CAN_STB
+  48              	 .section .rodata.CAN_STB,"a",%progbits
+  49              	 .align 2
+  52              	CAN_STB:
+  53 0000 00800248 	 .word 1208123392
+  54 0004 80       	 .byte -128
+  55 0005 000000   	 .space 3
+  56 0008 00000100 	 .word 65536
+  57 000c 00000000 	 .space 4
+  58 0010 06       	 .byte 6
+  59 0011 00       	 .byte 0
+  60 0012 0000     	 .space 2
+  61              	 .global CTRLA_L_B
+  62              	 .section .rodata.CTRLA_L_B,"a",%progbits
+  63              	 .align 2
+  66              	CTRLA_L_B:
+  67 0000 00800248 	 .word 1208123392
+  68 0004 80       	 .byte -128
+  69 0005 000000   	 .space 3
+  70 0008 00000100 	 .word 65536
+  71 000c 00000000 	 .space 4
+  72 0010 05       	 .byte 5
+  73 0011 00       	 .byte 0
+  74 0012 0000     	 .space 2
+  75              	 .global CTRLB_H_A
+  76              	 .section .rodata.CTRLB_H_A,"a",%progbits
+  77              	 .align 2
+  80              	CTRLB_H_A:
+  81 0000 00800248 	 .word 1208123392
+  82 0004 80       	 .byte -128
+  83 0005 000000   	 .space 3
+  84 0008 00000100 	 .word 65536
+  85 000c 00000000 	 .space 4
+  86 0010 04       	 .byte 4
+  87 0011 00       	 .byte 0
+  88 0012 0000     	 .space 2
+  89              	 .global CTRL_120R
+  90              	 .section .rodata.CTRL_120R,"a",%progbits
+  91              	 .align 2
+  94              	CTRL_120R:
+  95 0000 00800248 	 .word 1208123392
+  96 0004 80       	 .byte -128
+  97 0005 000000   	 .space 3
+  98 0008 01000000 	 .word 1
+  99 000c 00000000 	 .space 4
+ 100 0010 03       	 .byte 3
+ 101 0011 00       	 .byte 0
+ 102 0012 0000     	 .space 2
+ 103              	 .text
+ 104              	.Letext0:
+ 105              	 .file 1 "d:\\infineon\\tools\\dave ide\\4.5.0.202105191637\\eclipse\\arm-gcc-49\\arm-none-eabi\\include\\machine\\_default_types.h"
+ 106              	 .file 2 "d:\\infineon\\tools\\dave ide\\4.5.0.202105191637\\eclipse\\arm-gcc-49\\arm-none-eabi\\include\\stdint.h"
+ 107              	 .file 3 "D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc/xmc_gpio.h"
+ 108              	 .file 4 "D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc/xmc4_gpio.h"
+ 109              	 .file 5 "../Dave/Generated/DIGITAL_IO/digital_io.h"
+ 110              	 .file 6 "D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/CMSIS/Include/cmsis_gcc.h"
+ 111              	 .file 7 "D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/CMSIS/Include/core_cm4.h"
+ 112              	 .file 8 "../Dave/Generated/DIGITAL_IO/digital_io_conf.c"
+DEFINED SYMBOLS
+                            *ABS*:00000000 digital_io_conf.c
+    {standard input}:24     .rodata.LED:00000000 LED
+    {standard input}:21     .rodata.LED:00000000 $d
+    {standard input}:38     .rodata.UART1_RS485_DE:00000000 UART1_RS485_DE
+    {standard input}:35     .rodata.UART1_RS485_DE:00000000 $d
+    {standard input}:52     .rodata.CAN_STB:00000000 CAN_STB
+    {standard input}:49     .rodata.CAN_STB:00000000 $d
+    {standard input}:66     .rodata.CTRLA_L_B:00000000 CTRLA_L_B
+    {standard input}:63     .rodata.CTRLA_L_B:00000000 $d
+    {standard input}:80     .rodata.CTRLB_H_A:00000000 CTRLB_H_A
+    {standard input}:77     .rodata.CTRLB_H_A:00000000 $d
+    {standard input}:94     .rodata.CTRL_120R:00000000 CTRL_120R
+    {standard input}:91     .rodata.CTRL_120R:00000000 $d
+
+NO UNDEFINED SYMBOLS

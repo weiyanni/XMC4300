@@ -1,0 +1,47 @@
+################################################################################
+# Automatically-generated file. Do not edit!
+################################################################################
+
+# Add inputs and outputs from these tool invocations to the build variables 
+C_SRCS += \
+../BSP/boot_init.c \
+../BSP/bootmode.c \
+../BSP/bsp_485.c \
+../BSP/bsp_can.c \
+../BSP/can_protocol.c \
+../BSP/dev_config.c \
+../BSP/e_eeprom_xmc4.c \
+../BSP/rs485_protocol.c \
+../BSP/systick.c 
+
+OBJS += \
+./BSP/boot_init.o \
+./BSP/bootmode.o \
+./BSP/bsp_485.o \
+./BSP/bsp_can.o \
+./BSP/can_protocol.o \
+./BSP/dev_config.o \
+./BSP/e_eeprom_xmc4.o \
+./BSP/rs485_protocol.o \
+./BSP/systick.o 
+
+C_DEPS += \
+./BSP/boot_init.d \
+./BSP/bootmode.d \
+./BSP/bsp_485.d \
+./BSP/bsp_can.d \
+./BSP/can_protocol.d \
+./BSP/dev_config.d \
+./BSP/e_eeprom_xmc4.d \
+./BSP/rs485_protocol.d \
+./BSP/systick.d 
+
+
+# Each subdirectory must supply rules for building sources it contributes
+BSP/%.o: ../BSP/%.c
+	@echo 'Building file: $<'
+	@echo 'Invoking: ARM-GCC C Compiler'
+	"$(TOOLCHAIN_ROOT)/bin/arm-none-eabi-gcc" -MMD -MT "$@" -DXMC4300_F100x256 -I"$(PROJECT_LOC)/Libraries/XMCLib/inc" -I"$(PROJECT_LOC)/User/Inc" -I"$(PROJECT_LOC)/Application" -I"$(PROJECT_LOC)/BSP" -I"$(PROJECT_LOC)/SSC/Src" -I"$(PROJECT_LOC)/Libraries/CMSIS/Include" -I"$(PROJECT_LOC)/Libraries/CMSIS/Infineon/XMC4300_series/Include" -I"$(PROJECT_LOC)" -I"$(PROJECT_LOC)/Dave/Generated" -I"$(PROJECT_LOC)/Libraries" -O0 -ffunction-sections -fdata-sections -Wall -std=gnu99 -mfloat-abi=softfp -Wa,-adhlns="$@.lst" -pipe -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d) $@" -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mthumb -g -gdwarf-2 -o "$@" "$<" 
+	@echo 'Finished building: $<'
+	@echo.
+

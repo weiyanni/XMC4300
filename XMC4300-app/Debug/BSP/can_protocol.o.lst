@@ -1,0 +1,1279 @@
+   1              	 .syntax unified
+   2              	 .cpu cortex-m4
+   3              	 .eabi_attribute 27,3
+   4              	 .fpu fpv4-sp-d16
+   5              	 .eabi_attribute 20,1
+   6              	 .eabi_attribute 21,1
+   7              	 .eabi_attribute 23,3
+   8              	 .eabi_attribute 24,1
+   9              	 .eabi_attribute 25,1
+  10              	 .eabi_attribute 26,1
+  11              	 .eabi_attribute 30,6
+  12              	 .eabi_attribute 34,1
+  13              	 .eabi_attribute 18,4
+  14              	 .thumb
+  15              	 .file "can_protocol.c"
+  16              	 .text
+  17              	.Ltext0:
+  18              	 .cfi_sections .debug_frame
+  19              	 .section .text.CAN_Protocol_CalcPassword,"ax",%progbits
+  20              	 .align 2
+  21              	 .global CAN_Protocol_CalcPassword
+  22              	 .thumb
+  23              	 .thumb_func
+  25              	CAN_Protocol_CalcPassword:
+  26              	.LFB133:
+  27              	 .file 1 "../BSP/can_protocol.c"
+   1:../BSP/can_protocol.c **** /* ============================================================================
+   2:../BSP/can_protocol.c ****  * 文件名: can_protocol.c
+   3:../BSP/can_protocol.c ****  * 描述: CAN 协议处理实现 (App 版本)
+   4:../BSP/can_protocol.c ****  * 
+   5:../BSP/can_protocol.c ****  * App 职责:
+   6:../BSP/can_protocol.c ****  *   - 0xF0: 返回软件版本
+   7:../BSP/can_protocol.c ****  *   - 0xF1: 验证密码，密码正确后跳转到 Boot
+   8:../BSP/can_protocol.c ****  *   - 0xF2/0xF3: 不处理（由 Boot 处理）
+   9:../BSP/can_protocol.c ****  * 
+  10:../BSP/can_protocol.c ****  * 多字节数据使用小端格式传输
+  11:../BSP/can_protocol.c ****  * ============================================================================ */
+  12:../BSP/can_protocol.c **** #include "can_protocol.h"
+  13:../BSP/can_protocol.c **** #include "bsp_can.h"
+  14:../BSP/can_protocol.c **** #include "app_init.h"
+  15:../BSP/can_protocol.c **** #include "SSC/Src/ecat_def.h"        /* 必须在 ryhandObjects.h 之前，提供 UINT16 等类型�
+  16:../BSP/can_protocol.c **** #include "SSC/Src/ryhandObjects.h"
+  17:../BSP/can_protocol.c **** #include <string.h>
+  18:../BSP/can_protocol.c **** 
+  19:../BSP/can_protocol.c **** /* 外部 SSC 对象 */
+  20:../BSP/can_protocol.c **** extern TOBJ8000 DevInfo0x8000;
+  21:../BSP/can_protocol.c **** 
+  22:../BSP/can_protocol.c **** /* ==============================================================
+  23:../BSP/can_protocol.c ****  * 密码计算 (基于设备ID)
+  24:../BSP/can_protocol.c ****  * 算法: password = (dev_id * 0x1234) ^ 0xABCD
+  25:../BSP/can_protocol.c ****  * ============================================================== */
+  26:../BSP/can_protocol.c **** uint16_t CAN_Protocol_CalcPassword(uint8_t dev_id)
+  27:../BSP/can_protocol.c **** {
+  28              	 .loc 1 27 0
+  29              	 .cfi_startproc
+  30              	 
+  31              	 
+  32              	 
+  33 0000 80B4     	 push {r7}
+  34              	.LCFI0:
+  35              	 .cfi_def_cfa_offset 4
+  36              	 .cfi_offset 7,-4
+  37 0002 83B0     	 sub sp,sp,#12
+  38              	.LCFI1:
+  39              	 .cfi_def_cfa_offset 16
+  40 0004 00AF     	 add r7,sp,#0
+  41              	.LCFI2:
+  42              	 .cfi_def_cfa_register 7
+  43 0006 0346     	 mov r3,r0
+  44 0008 FB71     	 strb r3,[r7,#7]
+  28:../BSP/can_protocol.c ****     return (uint16_t)((dev_id * 0x1234) ^ 0xABCD);
+  45              	 .loc 1 28 0
+  46 000a FB79     	 ldrb r3,[r7,#7]
+  47 000c 9BB2     	 uxth r3,r3
+  48 000e 1A46     	 mov r2,r3
+  49 0010 D200     	 lsls r2,r2,#3
+  50 0012 D21A     	 subs r2,r2,r3
+  51 0014 9200     	 lsls r2,r2,#2
+  52 0016 1A44     	 add r2,r2,r3
+  53 0018 D200     	 lsls r2,r2,#3
+  54 001a 1344     	 add r3,r3,r2
+  55 001c 1A46     	 mov r2,r3
+  56 001e 9100     	 lsls r1,r2,#2
+  57 0020 1A46     	 mov r2,r3
+  58 0022 0B46     	 mov r3,r1
+  59 0024 1344     	 add r3,r3,r2
+  60 0026 9B00     	 lsls r3,r3,#2
+  61 0028 9BB2     	 uxth r3,r3
+  62 002a 9BB2     	 uxth r3,r3
+  63 002c 83F4A843 	 eor r3,r3,#21504
+  64 0030 83F03203 	 eor r3,r3,#50
+  65 0034 DB43     	 mvns r3,r3
+  66 0036 9BB2     	 uxth r3,r3
+  67 0038 9BB2     	 uxth r3,r3
+  29:../BSP/can_protocol.c **** }
+  68              	 .loc 1 29 0
+  69 003a 1846     	 mov r0,r3
+  70 003c 0C37     	 adds r7,r7,#12
+  71              	.LCFI3:
+  72              	 .cfi_def_cfa_offset 4
+  73 003e BD46     	 mov sp,r7
+  74              	.LCFI4:
+  75              	 .cfi_def_cfa_register 13
+  76              	 
+  77 0040 5DF8047B 	 ldr r7,[sp],#4
+  78              	.LCFI5:
+  79              	 .cfi_restore 7
+  80              	 .cfi_def_cfa_offset 0
+  81 0044 7047     	 bx lr
+  82              	 .cfi_endproc
+  83              	.LFE133:
+  85 0046 00BF     	 .section .data.s_CRC,"aw",%progbits
+  86              	 .align 2
+  89              	s_CRC:
+  90 0000 FFFFFFFF 	 .word -1
+  91              	 .section .rodata.CRC_POLYNOMIAL,"a",%progbits
+  92              	 .align 2
+  95              	CRC_POLYNOMIAL:
+  96 0000 B71DC104 	 .word 79764919
+  97              	 .section .text.CRC_Update,"ax",%progbits
+  98              	 .align 2
+  99              	 .thumb
+ 100              	 .thumb_func
+ 102              	CRC_Update:
+ 103              	.LFB134:
+  30:../BSP/can_protocol.c **** 
+  31:../BSP/can_protocol.c **** /* ==============================================================
+  32:../BSP/can_protocol.c ****  * CRC32 计算 (多项式 0x04C11DB7)
+  33:../BSP/can_protocol.c ****  * ============================================================== */
+  34:../BSP/can_protocol.c **** static uint32_t s_CRC = 0xFFFFFFFF;
+  35:../BSP/can_protocol.c **** static const uint32_t CRC_POLYNOMIAL = 0x04C11DB7;
+  36:../BSP/can_protocol.c **** 
+  37:../BSP/can_protocol.c **** static void CRC_Update(uint32_t data)
+  38:../BSP/can_protocol.c **** {
+ 104              	 .loc 1 38 0
+ 105              	 .cfi_startproc
+ 106              	 
+ 107              	 
+ 108              	 
+ 109 0000 80B4     	 push {r7}
+ 110              	.LCFI6:
+ 111              	 .cfi_def_cfa_offset 4
+ 112              	 .cfi_offset 7,-4
+ 113 0002 85B0     	 sub sp,sp,#20
+ 114              	.LCFI7:
+ 115              	 .cfi_def_cfa_offset 24
+ 116 0004 00AF     	 add r7,sp,#0
+ 117              	.LCFI8:
+ 118              	 .cfi_def_cfa_register 7
+ 119 0006 7860     	 str r0,[r7,#4]
+  39:../BSP/can_protocol.c ****     uint32_t xbit = 1UL << 31;
+ 120              	 .loc 1 39 0
+ 121 0008 4FF00043 	 mov r3,#-2147483648
+ 122 000c FB60     	 str r3,[r7,#12]
+ 123              	.LBB2:
+  40:../BSP/can_protocol.c ****     
+  41:../BSP/can_protocol.c ****     for (int bits = 0; bits < 32; bits++)
+ 124              	 .loc 1 41 0
+ 125 000e 0023     	 movs r3,#0
+ 126 0010 BB60     	 str r3,[r7,#8]
+ 127 0012 25E0     	 b .L4
+ 128              	.L8:
+  42:../BSP/can_protocol.c ****     {
+  43:../BSP/can_protocol.c ****         if (s_CRC & 0x80000000)
+ 129              	 .loc 1 43 0
+ 130 0014 164B     	 ldr r3,.L9
+ 131 0016 1B68     	 ldr r3,[r3]
+ 132 0018 002B     	 cmp r3,#0
+ 133 001a 0BDA     	 bge .L5
+  44:../BSP/can_protocol.c ****         {
+  45:../BSP/can_protocol.c ****             s_CRC <<= 1;
+ 134              	 .loc 1 45 0
+ 135 001c 144B     	 ldr r3,.L9
+ 136 001e 1B68     	 ldr r3,[r3]
+ 137 0020 5B00     	 lsls r3,r3,#1
+ 138 0022 134A     	 ldr r2,.L9
+ 139 0024 1360     	 str r3,[r2]
+  46:../BSP/can_protocol.c ****             s_CRC ^= CRC_POLYNOMIAL;
+ 140              	 .loc 1 46 0
+ 141 0026 124B     	 ldr r3,.L9
+ 142 0028 1B68     	 ldr r3,[r3]
+ 143 002a 124A     	 ldr r2,.L9+4
+ 144 002c 5340     	 eors r3,r3,r2
+ 145 002e 104A     	 ldr r2,.L9
+ 146 0030 1360     	 str r3,[r2]
+ 147 0032 04E0     	 b .L6
+ 148              	.L5:
+  47:../BSP/can_protocol.c ****         }
+  48:../BSP/can_protocol.c ****         else
+  49:../BSP/can_protocol.c ****         {
+  50:../BSP/can_protocol.c ****             s_CRC <<= 1;
+ 149              	 .loc 1 50 0
+ 150 0034 0E4B     	 ldr r3,.L9
+ 151 0036 1B68     	 ldr r3,[r3]
+ 152 0038 5B00     	 lsls r3,r3,#1
+ 153 003a 0D4A     	 ldr r2,.L9
+ 154 003c 1360     	 str r3,[r2]
+ 155              	.L6:
+  51:../BSP/can_protocol.c ****         }
+  52:../BSP/can_protocol.c ****         
+  53:../BSP/can_protocol.c ****         if (data & xbit)
+ 156              	 .loc 1 53 0
+ 157 003e 7A68     	 ldr r2,[r7,#4]
+ 158 0040 FB68     	 ldr r3,[r7,#12]
+ 159 0042 1340     	 ands r3,r3,r2
+ 160 0044 002B     	 cmp r3,#0
+ 161 0046 05D0     	 beq .L7
+  54:../BSP/can_protocol.c ****         {
+  55:../BSP/can_protocol.c ****             s_CRC ^= CRC_POLYNOMIAL;
+ 162              	 .loc 1 55 0
+ 163 0048 094B     	 ldr r3,.L9
+ 164 004a 1B68     	 ldr r3,[r3]
+ 165 004c 094A     	 ldr r2,.L9+4
+ 166 004e 5340     	 eors r3,r3,r2
+ 167 0050 074A     	 ldr r2,.L9
+ 168 0052 1360     	 str r3,[r2]
+ 169              	.L7:
+  56:../BSP/can_protocol.c ****         }
+  57:../BSP/can_protocol.c ****         xbit >>= 1;
+ 170              	 .loc 1 57 0 discriminator 2
+ 171 0054 FB68     	 ldr r3,[r7,#12]
+ 172 0056 5B08     	 lsrs r3,r3,#1
+ 173 0058 FB60     	 str r3,[r7,#12]
+  41:../BSP/can_protocol.c ****     {
+ 174              	 .loc 1 41 0 discriminator 2
+ 175 005a BB68     	 ldr r3,[r7,#8]
+ 176 005c 0133     	 adds r3,r3,#1
+ 177 005e BB60     	 str r3,[r7,#8]
+ 178              	.L4:
+  41:../BSP/can_protocol.c ****     {
+ 179              	 .loc 1 41 0 is_stmt 0 discriminator 1
+ 180 0060 BB68     	 ldr r3,[r7,#8]
+ 181 0062 1F2B     	 cmp r3,#31
+ 182 0064 D6DD     	 ble .L8
+ 183              	.LBE2:
+  58:../BSP/can_protocol.c ****     }
+  59:../BSP/can_protocol.c **** }
+ 184              	 .loc 1 59 0 is_stmt 1
+ 185 0066 1437     	 adds r7,r7,#20
+ 186              	.LCFI9:
+ 187              	 .cfi_def_cfa_offset 4
+ 188 0068 BD46     	 mov sp,r7
+ 189              	.LCFI10:
+ 190              	 .cfi_def_cfa_register 13
+ 191              	 
+ 192 006a 5DF8047B 	 ldr r7,[sp],#4
+ 193              	.LCFI11:
+ 194              	 .cfi_restore 7
+ 195              	 .cfi_def_cfa_offset 0
+ 196 006e 7047     	 bx lr
+ 197              	.L10:
+ 198              	 .align 2
+ 199              	.L9:
+ 200 0070 00000000 	 .word s_CRC
+ 201 0074 B71DC104 	 .word 79764919
+ 202              	 .cfi_endproc
+ 203              	.LFE134:
+ 205              	 .section .text.CAN_Protocol_CalcCRC32,"ax",%progbits
+ 206              	 .align 2
+ 207              	 .global CAN_Protocol_CalcCRC32
+ 208              	 .thumb
+ 209              	 .thumb_func
+ 211              	CAN_Protocol_CalcCRC32:
+ 212              	.LFB135:
+  60:../BSP/can_protocol.c **** 
+  61:../BSP/can_protocol.c **** uint32_t CAN_Protocol_CalcCRC32(const uint8_t *data, uint32_t len)
+  62:../BSP/can_protocol.c **** {
+ 213              	 .loc 1 62 0
+ 214              	 .cfi_startproc
+ 215              	 
+ 216              	 
+ 217 0000 80B5     	 push {r7,lr}
+ 218              	.LCFI12:
+ 219              	 .cfi_def_cfa_offset 8
+ 220              	 .cfi_offset 7,-8
+ 221              	 .cfi_offset 14,-4
+ 222 0002 88B0     	 sub sp,sp,#32
+ 223              	.LCFI13:
+ 224              	 .cfi_def_cfa_offset 40
+ 225 0004 00AF     	 add r7,sp,#0
+ 226              	.LCFI14:
+ 227              	 .cfi_def_cfa_register 7
+ 228 0006 7860     	 str r0,[r7,#4]
+ 229 0008 3960     	 str r1,[r7]
+  63:../BSP/can_protocol.c ****     s_CRC = 0xFFFFFFFF;
+ 230              	 .loc 1 63 0
+ 231 000a 2F4B     	 ldr r3,.L18
+ 232 000c 4FF0FF32 	 mov r2,#-1
+ 233 0010 1A60     	 str r2,[r3]
+  64:../BSP/can_protocol.c ****     
+  65:../BSP/can_protocol.c ****     /* 按 4 字节处理 */
+  66:../BSP/can_protocol.c ****     uint32_t words = len / 4;
+ 234              	 .loc 1 66 0
+ 235 0012 3B68     	 ldr r3,[r7]
+ 236 0014 9B08     	 lsrs r3,r3,#2
+ 237 0016 3B61     	 str r3,[r7,#16]
+ 238              	.LBB3:
+  67:../BSP/can_protocol.c ****     for (uint32_t i = 0; i < words; i++)
+ 239              	 .loc 1 67 0
+ 240 0018 0023     	 movs r3,#0
+ 241 001a FB61     	 str r3,[r7,#28]
+ 242 001c 25E0     	 b .L12
+ 243              	.L13:
+ 244              	.LBB4:
+  68:../BSP/can_protocol.c ****     {
+  69:../BSP/can_protocol.c ****         /* 小端读取 */
+  70:../BSP/can_protocol.c ****         uint32_t word = (uint32_t)data[i*4] |
+ 245              	 .loc 1 70 0 discriminator 3
+ 246 001e FB69     	 ldr r3,[r7,#28]
+ 247 0020 9B00     	 lsls r3,r3,#2
+ 248 0022 7A68     	 ldr r2,[r7,#4]
+ 249 0024 1344     	 add r3,r3,r2
+ 250 0026 1B78     	 ldrb r3,[r3]
+ 251 0028 1946     	 mov r1,r3
+  71:../BSP/can_protocol.c ****                         ((uint32_t)data[i*4+1] << 8) |
+ 252              	 .loc 1 71 0 discriminator 3
+ 253 002a FB69     	 ldr r3,[r7,#28]
+ 254 002c 9B00     	 lsls r3,r3,#2
+ 255 002e 0133     	 adds r3,r3,#1
+ 256 0030 7A68     	 ldr r2,[r7,#4]
+ 257 0032 1344     	 add r3,r3,r2
+ 258 0034 1B78     	 ldrb r3,[r3]
+ 259 0036 1B02     	 lsls r3,r3,#8
+  70:../BSP/can_protocol.c ****                         ((uint32_t)data[i*4+1] << 8) |
+ 260              	 .loc 1 70 0 discriminator 3
+ 261 0038 41EA0302 	 orr r2,r1,r3
+  72:../BSP/can_protocol.c ****                         ((uint32_t)data[i*4+2] << 16) |
+ 262              	 .loc 1 72 0 discriminator 3
+ 263 003c FB69     	 ldr r3,[r7,#28]
+ 264 003e 9B00     	 lsls r3,r3,#2
+ 265 0040 0233     	 adds r3,r3,#2
+ 266 0042 7968     	 ldr r1,[r7,#4]
+ 267 0044 0B44     	 add r3,r3,r1
+ 268 0046 1B78     	 ldrb r3,[r3]
+ 269 0048 1B04     	 lsls r3,r3,#16
+  71:../BSP/can_protocol.c ****                         ((uint32_t)data[i*4+1] << 8) |
+ 270              	 .loc 1 71 0 discriminator 3
+ 271 004a 1A43     	 orrs r2,r2,r3
+  73:../BSP/can_protocol.c ****                         ((uint32_t)data[i*4+3] << 24);
+ 272              	 .loc 1 73 0 discriminator 3
+ 273 004c FB69     	 ldr r3,[r7,#28]
+ 274 004e 9B00     	 lsls r3,r3,#2
+ 275 0050 0333     	 adds r3,r3,#3
+ 276 0052 7968     	 ldr r1,[r7,#4]
+ 277 0054 0B44     	 add r3,r3,r1
+ 278 0056 1B78     	 ldrb r3,[r3]
+ 279 0058 1B06     	 lsls r3,r3,#24
+  70:../BSP/can_protocol.c ****                         ((uint32_t)data[i*4+1] << 8) |
+ 280              	 .loc 1 70 0 discriminator 3
+ 281 005a 1343     	 orrs r3,r3,r2
+ 282 005c FB60     	 str r3,[r7,#12]
+  74:../BSP/can_protocol.c ****         CRC_Update(word);
+ 283              	 .loc 1 74 0 discriminator 3
+ 284 005e F868     	 ldr r0,[r7,#12]
+ 285 0060 FFF7FEFF 	 bl CRC_Update
+ 286              	.LBE4:
+  67:../BSP/can_protocol.c ****     {
+ 287              	 .loc 1 67 0 discriminator 3
+ 288 0064 FB69     	 ldr r3,[r7,#28]
+ 289 0066 0133     	 adds r3,r3,#1
+ 290 0068 FB61     	 str r3,[r7,#28]
+ 291              	.L12:
+  67:../BSP/can_protocol.c ****     {
+ 292              	 .loc 1 67 0 is_stmt 0 discriminator 1
+ 293 006a FA69     	 ldr r2,[r7,#28]
+ 294 006c 3B69     	 ldr r3,[r7,#16]
+ 295 006e 9A42     	 cmp r2,r3
+ 296 0070 D5D3     	 bcc .L13
+ 297              	.LBE3:
+  75:../BSP/can_protocol.c ****     }
+  76:../BSP/can_protocol.c ****     
+  77:../BSP/can_protocol.c ****     /* 处理剩余字节 */
+  78:../BSP/can_protocol.c ****     uint32_t remain = len % 4;
+ 298              	 .loc 1 78 0 is_stmt 1
+ 299 0072 3B68     	 ldr r3,[r7]
+ 300 0074 03F00303 	 and r3,r3,#3
+ 301 0078 BB60     	 str r3,[r7,#8]
+  79:../BSP/can_protocol.c ****     if (remain > 0)
+ 302              	 .loc 1 79 0
+ 303 007a BB68     	 ldr r3,[r7,#8]
+ 304 007c 002B     	 cmp r3,#0
+ 305 007e 1DD0     	 beq .L14
+ 306              	.LBB5:
+  80:../BSP/can_protocol.c ****     {
+  81:../BSP/can_protocol.c ****         uint32_t word = 0;
+ 307              	 .loc 1 81 0
+ 308 0080 0023     	 movs r3,#0
+ 309 0082 BB61     	 str r3,[r7,#24]
+ 310              	.LBB6:
+  82:../BSP/can_protocol.c ****         for (uint32_t i = 0; i < remain; i++)
+ 311              	 .loc 1 82 0
+ 312 0084 0023     	 movs r3,#0
+ 313 0086 7B61     	 str r3,[r7,#20]
+ 314 0088 11E0     	 b .L15
+ 315              	.L16:
+  83:../BSP/can_protocol.c ****         {
+  84:../BSP/can_protocol.c ****             word |= ((uint32_t)data[words*4 + i] << (i * 8));
+ 316              	 .loc 1 84 0 discriminator 3
+ 317 008a 3B69     	 ldr r3,[r7,#16]
+ 318 008c 9A00     	 lsls r2,r3,#2
+ 319 008e 7B69     	 ldr r3,[r7,#20]
+ 320 0090 1344     	 add r3,r3,r2
+ 321 0092 7A68     	 ldr r2,[r7,#4]
+ 322 0094 1344     	 add r3,r3,r2
+ 323 0096 1B78     	 ldrb r3,[r3]
+ 324 0098 1A46     	 mov r2,r3
+ 325 009a 7B69     	 ldr r3,[r7,#20]
+ 326 009c DB00     	 lsls r3,r3,#3
+ 327 009e 02FA03F3 	 lsl r3,r2,r3
+ 328 00a2 BA69     	 ldr r2,[r7,#24]
+ 329 00a4 1343     	 orrs r3,r3,r2
+ 330 00a6 BB61     	 str r3,[r7,#24]
+  82:../BSP/can_protocol.c ****         for (uint32_t i = 0; i < remain; i++)
+ 331              	 .loc 1 82 0 discriminator 3
+ 332 00a8 7B69     	 ldr r3,[r7,#20]
+ 333 00aa 0133     	 adds r3,r3,#1
+ 334 00ac 7B61     	 str r3,[r7,#20]
+ 335              	.L15:
+  82:../BSP/can_protocol.c ****         for (uint32_t i = 0; i < remain; i++)
+ 336              	 .loc 1 82 0 is_stmt 0 discriminator 1
+ 337 00ae 7A69     	 ldr r2,[r7,#20]
+ 338 00b0 BB68     	 ldr r3,[r7,#8]
+ 339 00b2 9A42     	 cmp r2,r3
+ 340 00b4 E9D3     	 bcc .L16
+ 341              	.LBE6:
+  85:../BSP/can_protocol.c ****         }
+  86:../BSP/can_protocol.c ****         CRC_Update(word);
+ 342              	 .loc 1 86 0 is_stmt 1
+ 343 00b6 B869     	 ldr r0,[r7,#24]
+ 344 00b8 FFF7FEFF 	 bl CRC_Update
+ 345              	.L14:
+ 346              	.LBE5:
+  87:../BSP/can_protocol.c ****     }
+  88:../BSP/can_protocol.c ****     
+  89:../BSP/can_protocol.c ****     return s_CRC;
+ 347              	 .loc 1 89 0
+ 348 00bc 024B     	 ldr r3,.L18
+ 349 00be 1B68     	 ldr r3,[r3]
+  90:../BSP/can_protocol.c **** }
+ 350              	 .loc 1 90 0
+ 351 00c0 1846     	 mov r0,r3
+ 352 00c2 2037     	 adds r7,r7,#32
+ 353              	.LCFI15:
+ 354              	 .cfi_def_cfa_offset 8
+ 355 00c4 BD46     	 mov sp,r7
+ 356              	.LCFI16:
+ 357              	 .cfi_def_cfa_register 13
+ 358              	 
+ 359 00c6 80BD     	 pop {r7,pc}
+ 360              	.L19:
+ 361              	 .align 2
+ 362              	.L18:
+ 363 00c8 00000000 	 .word s_CRC
+ 364              	 .cfi_endproc
+ 365              	.LFE135:
+ 367              	 .section .text.CAN_Protocol_HandleCommand,"ax",%progbits
+ 368              	 .align 2
+ 369              	 .global CAN_Protocol_HandleCommand
+ 370              	 .thumb
+ 371              	 .thumb_func
+ 373              	CAN_Protocol_HandleCommand:
+ 374              	.LFB136:
+  91:../BSP/can_protocol.c **** 
+  92:../BSP/can_protocol.c **** /* ==============================================================
+  93:../BSP/can_protocol.c ****  * 协议命令分发
+  94:../BSP/can_protocol.c ****  * ============================================================== */
+  95:../BSP/can_protocol.c **** void CAN_Protocol_HandleCommand(const uint8_t *rx_data, uint8_t rx_len)
+  96:../BSP/can_protocol.c **** {
+ 375              	 .loc 1 96 0
+ 376              	 .cfi_startproc
+ 377              	 
+ 378              	 
+ 379 0000 80B5     	 push {r7,lr}
+ 380              	.LCFI17:
+ 381              	 .cfi_def_cfa_offset 8
+ 382              	 .cfi_offset 7,-8
+ 383              	 .cfi_offset 14,-4
+ 384 0002 86B0     	 sub sp,sp,#24
+ 385              	.LCFI18:
+ 386              	 .cfi_def_cfa_offset 32
+ 387 0004 00AF     	 add r7,sp,#0
+ 388              	.LCFI19:
+ 389              	 .cfi_def_cfa_register 7
+ 390 0006 7860     	 str r0,[r7,#4]
+ 391 0008 0B46     	 mov r3,r1
+ 392 000a FB70     	 strb r3,[r7,#3]
+  97:../BSP/can_protocol.c **** 	uint32_t BR_canfd_ctrl = 0;
+ 393              	 .loc 1 97 0
+ 394 000c 0023     	 movs r3,#0
+ 395 000e 7B61     	 str r3,[r7,#20]
+  98:../BSP/can_protocol.c **** 	uint32_t BR_canfd_data = 0;
+ 396              	 .loc 1 98 0
+ 397 0010 0023     	 movs r3,#0
+ 398 0012 3B61     	 str r3,[r7,#16]
+  99:../BSP/can_protocol.c **** 	uint32_t BR_485 = 0;
+ 399              	 .loc 1 99 0
+ 400 0014 0023     	 movs r3,#0
+ 401 0016 FB60     	 str r3,[r7,#12]
+ 100:../BSP/can_protocol.c ****     if (rx_data == NULL || rx_len == 0)
+ 402              	 .loc 1 100 0
+ 403 0018 7B68     	 ldr r3,[r7,#4]
+ 404 001a 002B     	 cmp r3,#0
+ 405 001c 02D0     	 beq .L21
+ 406              	 .loc 1 100 0 is_stmt 0 discriminator 1
+ 407 001e FB78     	 ldrb r3,[r7,#3]
+ 408 0020 002B     	 cmp r3,#0
+ 409 0022 00D1     	 bne .L22
+ 410              	.L21:
+ 101:../BSP/can_protocol.c ****     {
+ 102:../BSP/can_protocol.c ****         return;
+ 411              	 .loc 1 102 0 is_stmt 1
+ 412 0024 6DE0     	 b .L20
+ 413              	.L22:
+ 103:../BSP/can_protocol.c ****     }
+ 104:../BSP/can_protocol.c ****     
+ 105:../BSP/can_protocol.c ****     uint8_t cmd = rx_data[0];
+ 414              	 .loc 1 105 0
+ 415 0026 7B68     	 ldr r3,[r7,#4]
+ 416 0028 1B78     	 ldrb r3,[r3]
+ 417 002a FB72     	 strb r3,[r7,#11]
+ 106:../BSP/can_protocol.c ****     
+ 107:../BSP/can_protocol.c ****     switch (cmd)
+ 418              	 .loc 1 107 0
+ 419 002c FB7A     	 ldrb r3,[r7,#11]
+ 420 002e EC3B     	 subs r3,r3,#236
+ 421 0030 072B     	 cmp r3,#7
+ 422 0032 65D8     	 bhi .L32
+ 423 0034 01A2     	 adr r2,.L26
+ 424 0036 52F823F0 	 ldr pc,[r2,r3,lsl#2]
+ 425 003a 00BF     	 .p2align 2
+ 426              	.L26:
+ 427 003c 6F000000 	 .word .L25+1
+ 428 0040 CB000000 	 .word .L27+1
+ 429 0044 01010000 	 .word .L32+1
+ 430 0048 01010000 	 .word .L32+1
+ 431 004c 5D000000 	 .word .L28+1
+ 432 0050 63000000 	 .word .L29+1
+ 433 0054 01010000 	 .word .L32+1
+ 434 0058 01010000 	 .word .L32+1
+ 435              	 .p2align 1
+ 436              	.L28:
+ 437              	.LBB7:
+ 108:../BSP/can_protocol.c ****     {
+ 109:../BSP/can_protocol.c ****         case CAN_CMD_GET_SW_VERSION:
+ 110:../BSP/can_protocol.c ****             CAN_Protocol_HandleGetSwVersion();
+ 438              	 .loc 1 110 0
+ 439 005c FFF7FEFF 	 bl CAN_Protocol_HandleGetSwVersion
+ 111:../BSP/can_protocol.c ****             break;
+ 440              	 .loc 1 111 0
+ 441 0060 4FE0     	 b .L20
+ 442              	.L29:
+ 112:../BSP/can_protocol.c ****             
+ 113:../BSP/can_protocol.c ****         case CAN_CMD_START_UPGRADE:
+ 114:../BSP/can_protocol.c ****             CAN_Protocol_HandleStartUpgrade(rx_data, rx_len);
+ 443              	 .loc 1 114 0
+ 444 0062 FB78     	 ldrb r3,[r7,#3]
+ 445 0064 7868     	 ldr r0,[r7,#4]
+ 446 0066 1946     	 mov r1,r3
+ 447 0068 FFF7FEFF 	 bl CAN_Protocol_HandleStartUpgrade
+ 115:../BSP/can_protocol.c ****             break;
+ 448              	 .loc 1 115 0
+ 449 006c 49E0     	 b .L20
+ 450              	.L25:
+ 116:../BSP/can_protocol.c ****             
+ 117:../BSP/can_protocol.c ****         case CAN_CMD_UPGRADE_DATA:
+ 118:../BSP/can_protocol.c ****             /* App 不处理升级数据，由 Boot 处理 */
+ 119:../BSP/can_protocol.c ****             break;
+ 120:../BSP/can_protocol.c ****             
+ 121:../BSP/can_protocol.c ****         case CAN_CMD_UPGRADE_END:
+ 122:../BSP/can_protocol.c ****             /* App 不处理升级结束，由 Boot 处理 */
+ 123:../BSP/can_protocol.c ****             break;
+ 124:../BSP/can_protocol.c ****         case CAN_CMD_SET_CAN_BAUD:
+ 125:../BSP/can_protocol.c ****         	BR_canfd_ctrl = ((uint32_t)rx_data[1]) |
+ 451              	 .loc 1 125 0
+ 452 006e 7B68     	 ldr r3,[r7,#4]
+ 453 0070 0133     	 adds r3,r3,#1
+ 454 0072 1B78     	 ldrb r3,[r3]
+ 455 0074 1A46     	 mov r2,r3
+ 126:../BSP/can_protocol.c **** 						   ((uint32_t)rx_data[2] << 8) |
+ 456              	 .loc 1 126 0
+ 457 0076 7B68     	 ldr r3,[r7,#4]
+ 458 0078 0233     	 adds r3,r3,#2
+ 459 007a 1B78     	 ldrb r3,[r3]
+ 460 007c 1B02     	 lsls r3,r3,#8
+ 125:../BSP/can_protocol.c **** 						   ((uint32_t)rx_data[2] << 8) |
+ 461              	 .loc 1 125 0
+ 462 007e 1A43     	 orrs r2,r2,r3
+ 127:../BSP/can_protocol.c **** 						   ((uint32_t)rx_data[3] << 16);
+ 463              	 .loc 1 127 0
+ 464 0080 7B68     	 ldr r3,[r7,#4]
+ 465 0082 0333     	 adds r3,r3,#3
+ 466 0084 1B78     	 ldrb r3,[r3]
+ 467 0086 1B04     	 lsls r3,r3,#16
+ 125:../BSP/can_protocol.c **** 						   ((uint32_t)rx_data[2] << 8) |
+ 468              	 .loc 1 125 0
+ 469 0088 1343     	 orrs r3,r3,r2
+ 470 008a 7B61     	 str r3,[r7,#20]
+ 128:../BSP/can_protocol.c ****         	BR_canfd_data = ((uint32_t)rx_data[4]) |
+ 471              	 .loc 1 128 0
+ 472 008c 7B68     	 ldr r3,[r7,#4]
+ 473 008e 0433     	 adds r3,r3,#4
+ 474 0090 1B78     	 ldrb r3,[r3]
+ 475 0092 1A46     	 mov r2,r3
+ 129:../BSP/can_protocol.c **** 						   ((uint32_t)rx_data[5] << 8) |
+ 476              	 .loc 1 129 0
+ 477 0094 7B68     	 ldr r3,[r7,#4]
+ 478 0096 0533     	 adds r3,r3,#5
+ 479 0098 1B78     	 ldrb r3,[r3]
+ 480 009a 1B02     	 lsls r3,r3,#8
+ 128:../BSP/can_protocol.c ****         	BR_canfd_data = ((uint32_t)rx_data[4]) |
+ 481              	 .loc 1 128 0
+ 482 009c 1A43     	 orrs r2,r2,r3
+ 130:../BSP/can_protocol.c **** 						   ((uint32_t)rx_data[6] << 16) |
+ 483              	 .loc 1 130 0
+ 484 009e 7B68     	 ldr r3,[r7,#4]
+ 485 00a0 0633     	 adds r3,r3,#6
+ 486 00a2 1B78     	 ldrb r3,[r3]
+ 487 00a4 1B04     	 lsls r3,r3,#16
+ 129:../BSP/can_protocol.c **** 						   ((uint32_t)rx_data[5] << 8) |
+ 488              	 .loc 1 129 0
+ 489 00a6 1A43     	 orrs r2,r2,r3
+ 131:../BSP/can_protocol.c **** 						   ((uint32_t)rx_data[7] << 24);
+ 490              	 .loc 1 131 0
+ 491 00a8 7B68     	 ldr r3,[r7,#4]
+ 492 00aa 0733     	 adds r3,r3,#7
+ 493 00ac 1B78     	 ldrb r3,[r3]
+ 494 00ae 1B06     	 lsls r3,r3,#24
+ 128:../BSP/can_protocol.c **** 						   ((uint32_t)rx_data[5] << 8) |
+ 495              	 .loc 1 128 0
+ 496 00b0 1343     	 orrs r3,r3,r2
+ 497 00b2 3B61     	 str r3,[r7,#16]
+ 132:../BSP/can_protocol.c ****         	DevInfo0x8000.BR_canfd_ctrl = BR_canfd_ctrl;
+ 498              	 .loc 1 132 0
+ 499 00b4 144A     	 ldr r2,.L33
+ 500 00b6 7B69     	 ldr r3,[r7,#20]
+ 501 00b8 C2F88830 	 str r3,[r2,#136]
+ 133:../BSP/can_protocol.c ****         	DevInfo0x8000.BR_canfd_data = BR_canfd_data;
+ 502              	 .loc 1 133 0
+ 503 00bc 124A     	 ldr r2,.L33
+ 504 00be 3B69     	 ldr r3,[r7,#16]
+ 505 00c0 C2F88C30 	 str r3,[r2,#140]
+ 134:../BSP/can_protocol.c ****         	DevConfig_SaveToEEPROM();
+ 506              	 .loc 1 134 0
+ 507 00c4 FFF7FEFF 	 bl DevConfig_SaveToEEPROM
+ 135:../BSP/can_protocol.c **** 			break;
+ 508              	 .loc 1 135 0
+ 509 00c8 1BE0     	 b .L20
+ 510              	.L27:
+ 136:../BSP/can_protocol.c ****         case CAN_CMD_SET_RS485_BAUD:
+ 137:../BSP/can_protocol.c ****         	BR_485 = ((uint32_t)rx_data[1]) |
+ 511              	 .loc 1 137 0
+ 512 00ca 7B68     	 ldr r3,[r7,#4]
+ 513 00cc 0133     	 adds r3,r3,#1
+ 514 00ce 1B78     	 ldrb r3,[r3]
+ 515 00d0 1A46     	 mov r2,r3
+ 138:../BSP/can_protocol.c **** 				   ((uint32_t)rx_data[2] << 8) |
+ 516              	 .loc 1 138 0
+ 517 00d2 7B68     	 ldr r3,[r7,#4]
+ 518 00d4 0233     	 adds r3,r3,#2
+ 519 00d6 1B78     	 ldrb r3,[r3]
+ 520 00d8 1B02     	 lsls r3,r3,#8
+ 137:../BSP/can_protocol.c **** 				   ((uint32_t)rx_data[2] << 8) |
+ 521              	 .loc 1 137 0
+ 522 00da 1A43     	 orrs r2,r2,r3
+ 139:../BSP/can_protocol.c **** 				   ((uint32_t)rx_data[3] << 16) |
+ 523              	 .loc 1 139 0
+ 524 00dc 7B68     	 ldr r3,[r7,#4]
+ 525 00de 0333     	 adds r3,r3,#3
+ 526 00e0 1B78     	 ldrb r3,[r3]
+ 527 00e2 1B04     	 lsls r3,r3,#16
+ 138:../BSP/can_protocol.c **** 				   ((uint32_t)rx_data[2] << 8) |
+ 528              	 .loc 1 138 0
+ 529 00e4 1A43     	 orrs r2,r2,r3
+ 140:../BSP/can_protocol.c **** 				   ((uint32_t)rx_data[4] << 24);
+ 530              	 .loc 1 140 0
+ 531 00e6 7B68     	 ldr r3,[r7,#4]
+ 532 00e8 0433     	 adds r3,r3,#4
+ 533 00ea 1B78     	 ldrb r3,[r3]
+ 534 00ec 1B06     	 lsls r3,r3,#24
+ 137:../BSP/can_protocol.c **** 				   ((uint32_t)rx_data[2] << 8) |
+ 535              	 .loc 1 137 0
+ 536 00ee 1343     	 orrs r3,r3,r2
+ 537 00f0 FB60     	 str r3,[r7,#12]
+ 141:../BSP/can_protocol.c ****             DevInfo0x8000.BR_485  = BR_485;
+ 538              	 .loc 1 141 0
+ 539 00f2 054A     	 ldr r2,.L33
+ 540 00f4 FB68     	 ldr r3,[r7,#12]
+ 541 00f6 C2F89030 	 str r3,[r2,#144]
+ 142:../BSP/can_protocol.c ****             DevConfig_SaveToEEPROM();
+ 542              	 .loc 1 142 0
+ 543 00fa FFF7FEFF 	 bl DevConfig_SaveToEEPROM
+ 143:../BSP/can_protocol.c **** 			break;
+ 544              	 .loc 1 143 0
+ 545 00fe 00E0     	 b .L20
+ 546              	.L32:
+ 144:../BSP/can_protocol.c ****         default:
+ 145:../BSP/can_protocol.c ****             break;
+ 547              	 .loc 1 145 0
+ 548 0100 00BF     	 nop
+ 549              	.L20:
+ 550              	.LBE7:
+ 146:../BSP/can_protocol.c ****     }
+ 147:../BSP/can_protocol.c **** }
+ 551              	 .loc 1 147 0
+ 552 0102 1837     	 adds r7,r7,#24
+ 553              	.LCFI20:
+ 554              	 .cfi_def_cfa_offset 8
+ 555 0104 BD46     	 mov sp,r7
+ 556              	.LCFI21:
+ 557              	 .cfi_def_cfa_register 13
+ 558              	 
+ 559 0106 80BD     	 pop {r7,pc}
+ 560              	.L34:
+ 561              	 .align 2
+ 562              	.L33:
+ 563 0108 00000000 	 .word DevInfo0x8000
+ 564              	 .cfi_endproc
+ 565              	.LFE136:
+ 567              	 .section .text.CAN_Protocol_HandleGetSwVersion,"ax",%progbits
+ 568              	 .align 2
+ 569              	 .global CAN_Protocol_HandleGetSwVersion
+ 570              	 .thumb
+ 571              	 .thumb_func
+ 573              	CAN_Protocol_HandleGetSwVersion:
+ 574              	.LFB137:
+ 148:../BSP/can_protocol.c **** 
+ 149:../BSP/can_protocol.c **** /* ==============================================================
+ 150:../BSP/can_protocol.c ****  * 0xF0 命令 - 读取软件版本
+ 151:../BSP/can_protocol.c ****  * ============================================================== */
+ 152:../BSP/can_protocol.c **** void CAN_Protocol_HandleGetSwVersion(void)
+ 153:../BSP/can_protocol.c **** {
+ 575              	 .loc 1 153 0
+ 576              	 .cfi_startproc
+ 577              	 
+ 578              	 
+ 579 0000 80B5     	 push {r7,lr}
+ 580              	.LCFI22:
+ 581              	 .cfi_def_cfa_offset 8
+ 582              	 .cfi_offset 7,-8
+ 583              	 .cfi_offset 14,-4
+ 584 0002 86B0     	 sub sp,sp,#24
+ 585              	.LCFI23:
+ 586              	 .cfi_def_cfa_offset 32
+ 587 0004 00AF     	 add r7,sp,#0
+ 588              	.LCFI24:
+ 589              	 .cfi_def_cfa_register 7
+ 154:../BSP/can_protocol.c ****     const char *version = DevInfo0x8000.Sv;
+ 590              	 .loc 1 154 0
+ 591 0006 364B     	 ldr r3,.L44
+ 592 0008 3B61     	 str r3,[r7,#16]
+ 155:../BSP/can_protocol.c ****     uint8_t version_len = (uint8_t)strlen(version);
+ 593              	 .loc 1 155 0
+ 594 000a 3869     	 ldr r0,[r7,#16]
+ 595 000c FFF7FEFF 	 bl strlen
+ 596 0010 0346     	 mov r3,r0
+ 597 0012 FB75     	 strb r3,[r7,#23]
+ 156:../BSP/can_protocol.c ****     
+ 157:../BSP/can_protocol.c ****     if (version_len == 0)
+ 598              	 .loc 1 157 0
+ 599 0014 FB7D     	 ldrb r3,[r7,#23]
+ 600 0016 002B     	 cmp r3,#0
+ 601 0018 01D1     	 bne .L36
+ 158:../BSP/can_protocol.c ****     {
+ 159:../BSP/can_protocol.c ****         version_len = 1;
+ 602              	 .loc 1 159 0
+ 603 001a 0123     	 movs r3,#1
+ 604 001c FB75     	 strb r3,[r7,#23]
+ 605              	.L36:
+ 160:../BSP/can_protocol.c ****     }
+ 161:../BSP/can_protocol.c ****     
+ 162:../BSP/can_protocol.c ****     uint8_t total_frames = (version_len + CAN_FRAME_PAYLOAD_SIZE - 1) / CAN_FRAME_PAYLOAD_SIZE;
+ 606              	 .loc 1 162 0
+ 607 001e FB7D     	 ldrb r3,[r7,#23]
+ 608 0020 0533     	 adds r3,r3,#5
+ 609 0022 304A     	 ldr r2,.L44+4
+ 610 0024 82FB0312 	 smull r1,r2,r2,r3
+ 611 0028 DB17     	 asrs r3,r3,#31
+ 612 002a D31A     	 subs r3,r2,r3
+ 613 002c BB75     	 strb r3,[r7,#22]
+ 163:../BSP/can_protocol.c ****     if (total_frames == 0)
+ 614              	 .loc 1 163 0
+ 615 002e BB7D     	 ldrb r3,[r7,#22]
+ 616 0030 002B     	 cmp r3,#0
+ 617 0032 01D1     	 bne .L37
+ 164:../BSP/can_protocol.c ****     {
+ 165:../BSP/can_protocol.c ****         total_frames = 1;
+ 618              	 .loc 1 165 0
+ 619 0034 0123     	 movs r3,#1
+ 620 0036 BB75     	 strb r3,[r7,#22]
+ 621              	.L37:
+ 622              	.LBB8:
+ 166:../BSP/can_protocol.c ****     }
+ 167:../BSP/can_protocol.c ****     
+ 168:../BSP/can_protocol.c ****     for (uint8_t frame_num = 0; frame_num < total_frames; frame_num++)
+ 623              	 .loc 1 168 0
+ 624 0038 0023     	 movs r3,#0
+ 625 003a 7B75     	 strb r3,[r7,#21]
+ 626 003c 49E0     	 b .L38
+ 627              	.L43:
+ 628              	.LBB9:
+ 169:../BSP/can_protocol.c ****     {
+ 170:../BSP/can_protocol.c ****         uint8_t tx_data[8];
+ 171:../BSP/can_protocol.c ****         
+ 172:../BSP/can_protocol.c ****         tx_data[0] = CAN_CMD_GET_SW_VERSION;
+ 629              	 .loc 1 172 0
+ 630 003e F023     	 movs r3,#240
+ 631 0040 3B71     	 strb r3,[r7,#4]
+ 173:../BSP/can_protocol.c ****         
+ 174:../BSP/can_protocol.c ****         uint8_t is_tail = (frame_num == total_frames - 1) ? 1 : 0;
+ 632              	 .loc 1 174 0
+ 633 0042 7A7D     	 ldrb r2,[r7,#21]
+ 634 0044 BB7D     	 ldrb r3,[r7,#22]
+ 635 0046 013B     	 subs r3,r3,#1
+ 636 0048 9A42     	 cmp r2,r3
+ 637 004a 0CBF     	 ite eq
+ 638 004c 0123     	 moveq r3,#1
+ 639 004e 0023     	 movne r3,#0
+ 640 0050 DBB2     	 uxtb r3,r3
+ 641 0052 FB73     	 strb r3,[r7,#15]
+ 175:../BSP/can_protocol.c ****         tx_data[1] = (is_tail << 7) | (frame_num & CAN_FRAME_INFO_NUM_MASK);
+ 642              	 .loc 1 175 0
+ 643 0054 FB7B     	 ldrb r3,[r7,#15]
+ 644 0056 DB01     	 lsls r3,r3,#7
+ 645 0058 DAB2     	 uxtb r2,r3
+ 646 005a 7B7D     	 ldrb r3,[r7,#21]
+ 647 005c 03F07F03 	 and r3,r3,#127
+ 648 0060 DBB2     	 uxtb r3,r3
+ 649 0062 1343     	 orrs r3,r3,r2
+ 650 0064 DBB2     	 uxtb r3,r3
+ 651 0066 DBB2     	 uxtb r3,r3
+ 652 0068 7B71     	 strb r3,[r7,#5]
+ 176:../BSP/can_protocol.c ****         
+ 177:../BSP/can_protocol.c ****         uint8_t offset = frame_num * CAN_FRAME_PAYLOAD_SIZE;
+ 653              	 .loc 1 177 0
+ 654 006a 7B7D     	 ldrb r3,[r7,#21]
+ 655 006c 1A46     	 mov r2,r3
+ 656 006e 5200     	 lsls r2,r2,#1
+ 657 0070 1344     	 add r3,r3,r2
+ 658 0072 5B00     	 lsls r3,r3,#1
+ 659 0074 BB73     	 strb r3,[r7,#14]
+ 660              	.LBB10:
+ 178:../BSP/can_protocol.c ****         for (uint8_t i = 0; i < CAN_FRAME_PAYLOAD_SIZE; i++)
+ 661              	 .loc 1 178 0
+ 662 0076 0023     	 movs r3,#0
+ 663 0078 3B75     	 strb r3,[r7,#20]
+ 664 007a 1FE0     	 b .L39
+ 665              	.L42:
+ 179:../BSP/can_protocol.c ****         {
+ 180:../BSP/can_protocol.c ****             if (offset + i < version_len)
+ 666              	 .loc 1 180 0
+ 667 007c BA7B     	 ldrb r2,[r7,#14]
+ 668 007e 3B7D     	 ldrb r3,[r7,#20]
+ 669 0080 1A44     	 add r2,r2,r3
+ 670 0082 FB7D     	 ldrb r3,[r7,#23]
+ 671 0084 9A42     	 cmp r2,r3
+ 672 0086 0EDA     	 bge .L40
+ 181:../BSP/can_protocol.c ****             {
+ 182:../BSP/can_protocol.c ****                 tx_data[2 + i] = (uint8_t)version[offset + i];
+ 673              	 .loc 1 182 0
+ 674 0088 3B7D     	 ldrb r3,[r7,#20]
+ 675 008a 0233     	 adds r3,r3,#2
+ 676 008c B97B     	 ldrb r1,[r7,#14]
+ 677 008e 3A7D     	 ldrb r2,[r7,#20]
+ 678 0090 0A44     	 add r2,r2,r1
+ 679 0092 1146     	 mov r1,r2
+ 680 0094 3A69     	 ldr r2,[r7,#16]
+ 681 0096 0A44     	 add r2,r2,r1
+ 682 0098 1278     	 ldrb r2,[r2]
+ 683 009a 07F11801 	 add r1,r7,#24
+ 684 009e 0B44     	 add r3,r3,r1
+ 685 00a0 03F8142C 	 strb r2,[r3,#-20]
+ 686 00a4 07E0     	 b .L41
+ 687              	.L40:
+ 183:../BSP/can_protocol.c ****             }
+ 184:../BSP/can_protocol.c ****             else
+ 185:../BSP/can_protocol.c ****             {
+ 186:../BSP/can_protocol.c ****                 tx_data[2 + i] = 0x00;
+ 688              	 .loc 1 186 0
+ 689 00a6 3B7D     	 ldrb r3,[r7,#20]
+ 690 00a8 0233     	 adds r3,r3,#2
+ 691 00aa 07F11802 	 add r2,r7,#24
+ 692 00ae 1344     	 add r3,r3,r2
+ 693 00b0 0022     	 movs r2,#0
+ 694 00b2 03F8142C 	 strb r2,[r3,#-20]
+ 695              	.L41:
+ 178:../BSP/can_protocol.c ****         {
+ 696              	 .loc 1 178 0 discriminator 2
+ 697 00b6 3B7D     	 ldrb r3,[r7,#20]
+ 698 00b8 0133     	 adds r3,r3,#1
+ 699 00ba 3B75     	 strb r3,[r7,#20]
+ 700              	.L39:
+ 178:../BSP/can_protocol.c ****         {
+ 701              	 .loc 1 178 0 is_stmt 0 discriminator 1
+ 702 00bc 3B7D     	 ldrb r3,[r7,#20]
+ 703 00be 052B     	 cmp r3,#5
+ 704 00c0 DCD9     	 bls .L42
+ 705              	.LBE10:
+ 187:../BSP/can_protocol.c ****             }
+ 188:../BSP/can_protocol.c ****         }
+ 189:../BSP/can_protocol.c ****         
+ 190:../BSP/can_protocol.c ****         BSP_CAN_Transmit(tx_data, 8);
+ 706              	 .loc 1 190 0 is_stmt 1 discriminator 2
+ 707 00c2 3B1D     	 adds r3,r7,#4
+ 708 00c4 1846     	 mov r0,r3
+ 709 00c6 0821     	 movs r1,#8
+ 710 00c8 FFF7FEFF 	 bl BSP_CAN_Transmit
+ 711              	.LBE9:
+ 168:../BSP/can_protocol.c ****     {
+ 712              	 .loc 1 168 0 discriminator 2
+ 713 00cc 7B7D     	 ldrb r3,[r7,#21]
+ 714 00ce 0133     	 adds r3,r3,#1
+ 715 00d0 7B75     	 strb r3,[r7,#21]
+ 716              	.L38:
+ 168:../BSP/can_protocol.c ****     {
+ 717              	 .loc 1 168 0 is_stmt 0 discriminator 1
+ 718 00d2 7A7D     	 ldrb r2,[r7,#21]
+ 719 00d4 BB7D     	 ldrb r3,[r7,#22]
+ 720 00d6 9A42     	 cmp r2,r3
+ 721 00d8 B1D3     	 bcc .L43
+ 722              	.LBE8:
+ 191:../BSP/can_protocol.c ****     }
+ 192:../BSP/can_protocol.c **** }
+ 723              	 .loc 1 192 0 is_stmt 1
+ 724 00da 1837     	 adds r7,r7,#24
+ 725              	.LCFI25:
+ 726              	 .cfi_def_cfa_offset 8
+ 727 00dc BD46     	 mov sp,r7
+ 728              	.LCFI26:
+ 729              	 .cfi_def_cfa_register 13
+ 730              	 
+ 731 00de 80BD     	 pop {r7,pc}
+ 732              	.L45:
+ 733              	 .align 2
+ 734              	.L44:
+ 735 00e0 42000000 	 .word DevInfo0x8000+66
+ 736 00e4 ABAAAA2A 	 .word 715827883
+ 737              	 .cfi_endproc
+ 738              	.LFE137:
+ 740              	 .section .text.CAN_Protocol_HandleStartUpgrade,"ax",%progbits
+ 741              	 .align 2
+ 742              	 .global CAN_Protocol_HandleStartUpgrade
+ 743              	 .thumb
+ 744              	 .thumb_func
+ 746              	CAN_Protocol_HandleStartUpgrade:
+ 747              	.LFB138:
+ 193:../BSP/can_protocol.c **** 
+ 194:../BSP/can_protocol.c **** /* ==============================================================
+ 195:../BSP/can_protocol.c ****  * 0xF1 命令 - 开始升级 (App 版本)
+ 196:../BSP/can_protocol.c ****  * 
+ 197:../BSP/can_protocol.c ****  * App 职责:
+ 198:../BSP/can_protocol.c ****  *   1. 解析请求中的密码
+ 199:../BSP/can_protocol.c ****  *   2. 计算正确密码并比较
+ 200:../BSP/can_protocol.c ****  *   3. 密码错误: 返回状态=0 + 正确密码
+ 201:../BSP/can_protocol.c ****  *   4. 密码正确: 返回状态=1 (App进入升级)，然后跳转到 Boot
+ 202:../BSP/can_protocol.c ****  * ============================================================== */
+ 203:../BSP/can_protocol.c **** void CAN_Protocol_HandleStartUpgrade(const uint8_t *rx_data, uint8_t rx_len)
+ 204:../BSP/can_protocol.c **** {
+ 748              	 .loc 1 204 0
+ 749              	 .cfi_startproc
+ 750              	 
+ 751              	 
+ 752 0000 80B5     	 push {r7,lr}
+ 753              	.LCFI27:
+ 754              	 .cfi_def_cfa_offset 8
+ 755              	 .cfi_offset 7,-8
+ 756              	 .cfi_offset 14,-4
+ 757 0002 88B0     	 sub sp,sp,#32
+ 758              	.LCFI28:
+ 759              	 .cfi_def_cfa_offset 40
+ 760 0004 00AF     	 add r7,sp,#0
+ 761              	.LCFI29:
+ 762              	 .cfi_def_cfa_register 7
+ 763 0006 7860     	 str r0,[r7,#4]
+ 764 0008 0B46     	 mov r3,r1
+ 765 000a FB70     	 strb r3,[r7,#3]
+ 205:../BSP/can_protocol.c ****     if (rx_len < 7)
+ 766              	 .loc 1 205 0
+ 767 000c FB78     	 ldrb r3,[r7,#3]
+ 768 000e 062B     	 cmp r3,#6
+ 769 0010 4CD9     	 bls .L46
+ 206:../BSP/can_protocol.c ****     {
+ 207:../BSP/can_protocol.c ****         return;
+ 208:../BSP/can_protocol.c ****     }
+ 209:../BSP/can_protocol.c ****     
+ 210:../BSP/can_protocol.c ****     /* 解析请求 (小端) */
+ 211:../BSP/can_protocol.c ****     /* uint32_t data_len = (uint32_t)rx_data[1] | 
+ 212:../BSP/can_protocol.c ****                         ((uint32_t)rx_data[2] << 8) | 
+ 213:../BSP/can_protocol.c ****                         ((uint32_t)rx_data[3] << 16); */
+ 214:../BSP/can_protocol.c ****     uint16_t recv_password = (uint16_t)rx_data[4] | ((uint16_t)rx_data[5] << 8);
+ 770              	 .loc 1 214 0
+ 771 0012 7B68     	 ldr r3,[r7,#4]
+ 772 0014 0433     	 adds r3,r3,#4
+ 773 0016 1B78     	 ldrb r3,[r3]
+ 774 0018 9AB2     	 uxth r2,r3
+ 775 001a 7B68     	 ldr r3,[r7,#4]
+ 776 001c 0533     	 adds r3,r3,#5
+ 777 001e 1B78     	 ldrb r3,[r3]
+ 778 0020 1B02     	 lsls r3,r3,#8
+ 779 0022 9BB2     	 uxth r3,r3
+ 780 0024 1343     	 orrs r3,r3,r2
+ 781 0026 9BB2     	 uxth r3,r3
+ 782 0028 FB83     	 strh r3,[r7,#30]
+ 215:../BSP/can_protocol.c ****     
+ 216:../BSP/can_protocol.c ****     /* 帧长度: 主机发送1字节，这里强制转换为 uint16_t */
+ 217:../BSP/can_protocol.c ****     uint16_t recv_frame_len = (uint16_t)rx_data[6]; 
+ 783              	 .loc 1 217 0
+ 784 002a 7B68     	 ldr r3,[r7,#4]
+ 785 002c 0633     	 adds r3,r3,#6
+ 786 002e 1B78     	 ldrb r3,[r3]
+ 787 0030 BB83     	 strh r3,[r7,#28]
+ 218:../BSP/can_protocol.c ****     (void)recv_frame_len;  /* 暂不使用 */
+ 219:../BSP/can_protocol.c ****     
+ 220:../BSP/can_protocol.c ****     /* 获取设备ID并计算正确密码 */
+ 221:../BSP/can_protocol.c ****     uint8_t dev_id = BSP_CAN_ParseDevID(DevInfo0x8000.DevID);
+ 788              	 .loc 1 221 0
+ 789 0032 2048     	 ldr r0,.L53
+ 790 0034 FFF7FEFF 	 bl BSP_CAN_ParseDevID
+ 791 0038 0346     	 mov r3,r0
+ 792 003a FB76     	 strb r3,[r7,#27]
+ 222:../BSP/can_protocol.c ****     uint16_t correct_password = CAN_Protocol_CalcPassword(dev_id);
+ 793              	 .loc 1 222 0
+ 794 003c FB7E     	 ldrb r3,[r7,#27]
+ 795 003e 1846     	 mov r0,r3
+ 796 0040 FFF7FEFF 	 bl CAN_Protocol_CalcPassword
+ 797 0044 0346     	 mov r3,r0
+ 798 0046 3B83     	 strh r3,[r7,#24]
+ 223:../BSP/can_protocol.c ****     
+ 224:../BSP/can_protocol.c ****     /* 准备应答 */
+ 225:../BSP/can_protocol.c ****     uint8_t tx_data[8] = {0};
+ 799              	 .loc 1 225 0
+ 800 0048 0023     	 movs r3,#0
+ 801 004a 3B61     	 str r3,[r7,#16]
+ 802 004c 0023     	 movs r3,#0
+ 803 004e 7B61     	 str r3,[r7,#20]
+ 226:../BSP/can_protocol.c ****     tx_data[0] = CAN_CMD_START_UPGRADE;
+ 804              	 .loc 1 226 0
+ 805 0050 F123     	 movs r3,#241
+ 806 0052 3B74     	 strb r3,[r7,#16]
+ 227:../BSP/can_protocol.c ****     
+ 228:../BSP/can_protocol.c ****     /* 密码 (小端) */
+ 229:../BSP/can_protocol.c ****     tx_data[2] = (uint8_t)(correct_password & 0xFF);
+ 807              	 .loc 1 229 0
+ 808 0054 3B8B     	 ldrh r3,[r7,#24]
+ 809 0056 DBB2     	 uxtb r3,r3
+ 810 0058 BB74     	 strb r3,[r7,#18]
+ 230:../BSP/can_protocol.c ****     tx_data[3] = (uint8_t)((correct_password >> 8) & 0xFF);
+ 811              	 .loc 1 230 0
+ 812 005a 3B8B     	 ldrh r3,[r7,#24]
+ 813 005c 1B0A     	 lsrs r3,r3,#8
+ 814 005e 9BB2     	 uxth r3,r3
+ 815 0060 DBB2     	 uxtb r3,r3
+ 816 0062 FB74     	 strb r3,[r7,#19]
+ 231:../BSP/can_protocol.c ****     
+ 232:../BSP/can_protocol.c ****     /* 设备支持的帧长度 (小端) - 改为 1 字节以匹配 5 字节总长 */
+ 233:../BSP/can_protocol.c ****     tx_data[4] = (uint8_t)(CAN_MAX_FRAME_LENGTH & 0xFF);
+ 817              	 .loc 1 233 0
+ 818 0064 0823     	 movs r3,#8
+ 819 0066 3B75     	 strb r3,[r7,#20]
+ 234:../BSP/can_protocol.c ****     /* tx_data[5] = (uint8_t)((CAN_MAX_FRAME_LENGTH >> 8) & 0xFF); 高字节不需要发 */
+ 235:../BSP/can_protocol.c ****     
+ 236:../BSP/can_protocol.c ****     if (recv_password != correct_password)
+ 820              	 .loc 1 236 0
+ 821 0068 FA8B     	 ldrh r2,[r7,#30]
+ 822 006a 3B8B     	 ldrh r3,[r7,#24]
+ 823 006c 9A42     	 cmp r2,r3
+ 824 006e 08D0     	 beq .L49
+ 237:../BSP/can_protocol.c ****     {
+ 238:../BSP/can_protocol.c ****         /* 密码错误 */
+ 239:../BSP/can_protocol.c ****         tx_data[1] = UPGRADE_STATUS_PASSWORD_FAIL;
+ 825              	 .loc 1 239 0
+ 826 0070 0023     	 movs r3,#0
+ 827 0072 7B74     	 strb r3,[r7,#17]
+ 240:../BSP/can_protocol.c ****         BSP_CAN_Transmit(tx_data, 5);  /* 发送 5 字节 */
+ 828              	 .loc 1 240 0
+ 829 0074 07F11003 	 add r3,r7,#16
+ 830 0078 1846     	 mov r0,r3
+ 831 007a 0521     	 movs r1,#5
+ 832 007c FFF7FEFF 	 bl BSP_CAN_Transmit
+ 833 0080 14E0     	 b .L46
+ 834              	.L49:
+ 241:../BSP/can_protocol.c ****     }
+ 242:../BSP/can_protocol.c ****     else
+ 243:../BSP/can_protocol.c ****     {
+ 244:../BSP/can_protocol.c ****         /* 密码正确，从 App 进入升级模式 */
+ 245:../BSP/can_protocol.c ****         tx_data[1] = UPGRADE_STATUS_APP_TO_BOOT;
+ 835              	 .loc 1 245 0
+ 836 0082 0123     	 movs r3,#1
+ 837 0084 7B74     	 strb r3,[r7,#17]
+ 246:../BSP/can_protocol.c ****         BSP_CAN_Transmit(tx_data, 5);  /* 发送 5 字节 */
+ 838              	 .loc 1 246 0
+ 839 0086 07F11003 	 add r3,r7,#16
+ 840 008a 1846     	 mov r0,r3
+ 841 008c 0521     	 movs r1,#5
+ 842 008e FFF7FEFF 	 bl BSP_CAN_Transmit
+ 843              	.LBB11:
+ 247:../BSP/can_protocol.c ****         
+ 248:../BSP/can_protocol.c ****         /* 等待发送完成 */
+ 249:../BSP/can_protocol.c ****         for (volatile int i = 0; i < 50000; i++);
+ 844              	 .loc 1 249 0
+ 845 0092 0023     	 movs r3,#0
+ 846 0094 FB60     	 str r3,[r7,#12]
+ 847 0096 02E0     	 b .L51
+ 848              	.L52:
+ 849              	 .loc 1 249 0 is_stmt 0 discriminator 3
+ 850 0098 FB68     	 ldr r3,[r7,#12]
+ 851 009a 0133     	 adds r3,r3,#1
+ 852 009c FB60     	 str r3,[r7,#12]
+ 853              	.L51:
+ 854              	 .loc 1 249 0 discriminator 1
+ 855 009e FB68     	 ldr r3,[r7,#12]
+ 856 00a0 4CF24F32 	 movw r2,#49999
+ 857 00a4 9342     	 cmp r3,r2
+ 858 00a6 F7DD     	 ble .L52
+ 859              	.LBE11:
+ 250:../BSP/can_protocol.c ****         
+ 251:../BSP/can_protocol.c ****         /* 跳转到 Bootloader */
+ 252:../BSP/can_protocol.c ****         Handle_Bootstrap_Request();
+ 860              	 .loc 1 252 0 is_stmt 1
+ 861 00a8 FFF7FEFF 	 bl Handle_Bootstrap_Request
+ 862              	.L46:
+ 253:../BSP/can_protocol.c ****     }
+ 254:../BSP/can_protocol.c **** }
+ 863              	 .loc 1 254 0
+ 864 00ac 2037     	 adds r7,r7,#32
+ 865              	.LCFI30:
+ 866              	 .cfi_def_cfa_offset 8
+ 867 00ae BD46     	 mov sp,r7
+ 868              	.LCFI31:
+ 869              	 .cfi_def_cfa_register 13
+ 870              	 
+ 871 00b0 80BD     	 pop {r7,pc}
+ 872              	.L54:
+ 873 00b2 00BF     	 .align 2
+ 874              	.L53:
+ 875 00b4 98000000 	 .word DevInfo0x8000+152
+ 876              	 .cfi_endproc
+ 877              	.LFE138:
+ 879              	 .section .text.CAN_Protocol_HandleUpgradeData,"ax",%progbits
+ 880              	 .align 2
+ 881              	 .global CAN_Protocol_HandleUpgradeData
+ 882              	 .thumb
+ 883              	 .thumb_func
+ 885              	CAN_Protocol_HandleUpgradeData:
+ 886              	.LFB139:
+ 255:../BSP/can_protocol.c **** 
+ 256:../BSP/can_protocol.c **** /* ==============================================================
+ 257:../BSP/can_protocol.c ****  * 0xF2/0xF3 命令 - App 不处理
+ 258:../BSP/can_protocol.c ****  * ============================================================== */
+ 259:../BSP/can_protocol.c **** void CAN_Protocol_HandleUpgradeData(const uint8_t *rx_data, uint8_t rx_len)
+ 260:../BSP/can_protocol.c **** {
+ 887              	 .loc 1 260 0
+ 888              	 .cfi_startproc
+ 889              	 
+ 890              	 
+ 891              	 
+ 892 0000 80B4     	 push {r7}
+ 893              	.LCFI32:
+ 894              	 .cfi_def_cfa_offset 4
+ 895              	 .cfi_offset 7,-4
+ 896 0002 83B0     	 sub sp,sp,#12
+ 897              	.LCFI33:
+ 898              	 .cfi_def_cfa_offset 16
+ 899 0004 00AF     	 add r7,sp,#0
+ 900              	.LCFI34:
+ 901              	 .cfi_def_cfa_register 7
+ 902 0006 7860     	 str r0,[r7,#4]
+ 903 0008 0B46     	 mov r3,r1
+ 904 000a FB70     	 strb r3,[r7,#3]
+ 261:../BSP/can_protocol.c ****     (void)rx_data;
+ 262:../BSP/can_protocol.c ****     (void)rx_len;
+ 263:../BSP/can_protocol.c ****     /* App 不处理 */
+ 264:../BSP/can_protocol.c **** }
+ 905              	 .loc 1 264 0
+ 906 000c 0C37     	 adds r7,r7,#12
+ 907              	.LCFI35:
+ 908              	 .cfi_def_cfa_offset 4
+ 909 000e BD46     	 mov sp,r7
+ 910              	.LCFI36:
+ 911              	 .cfi_def_cfa_register 13
+ 912              	 
+ 913 0010 5DF8047B 	 ldr r7,[sp],#4
+ 914              	.LCFI37:
+ 915              	 .cfi_restore 7
+ 916              	 .cfi_def_cfa_offset 0
+ 917 0014 7047     	 bx lr
+ 918              	 .cfi_endproc
+ 919              	.LFE139:
+ 921 0016 00BF     	 .section .text.CAN_Protocol_HandleUpgradeEnd,"ax",%progbits
+ 922              	 .align 2
+ 923              	 .global CAN_Protocol_HandleUpgradeEnd
+ 924              	 .thumb
+ 925              	 .thumb_func
+ 927              	CAN_Protocol_HandleUpgradeEnd:
+ 928              	.LFB140:
+ 265:../BSP/can_protocol.c **** 
+ 266:../BSP/can_protocol.c **** void CAN_Protocol_HandleUpgradeEnd(const uint8_t *rx_data, uint8_t rx_len)
+ 267:../BSP/can_protocol.c **** {
+ 929              	 .loc 1 267 0
+ 930              	 .cfi_startproc
+ 931              	 
+ 932              	 
+ 933              	 
+ 934 0000 80B4     	 push {r7}
+ 935              	.LCFI38:
+ 936              	 .cfi_def_cfa_offset 4
+ 937              	 .cfi_offset 7,-4
+ 938 0002 83B0     	 sub sp,sp,#12
+ 939              	.LCFI39:
+ 940              	 .cfi_def_cfa_offset 16
+ 941 0004 00AF     	 add r7,sp,#0
+ 942              	.LCFI40:
+ 943              	 .cfi_def_cfa_register 7
+ 944 0006 7860     	 str r0,[r7,#4]
+ 945 0008 0B46     	 mov r3,r1
+ 946 000a FB70     	 strb r3,[r7,#3]
+ 268:../BSP/can_protocol.c ****     (void)rx_data;
+ 269:../BSP/can_protocol.c ****     (void)rx_len;
+ 270:../BSP/can_protocol.c ****     /* App 不处理 */
+ 271:../BSP/can_protocol.c **** }
+ 947              	 .loc 1 271 0
+ 948 000c 0C37     	 adds r7,r7,#12
+ 949              	.LCFI41:
+ 950              	 .cfi_def_cfa_offset 4
+ 951 000e BD46     	 mov sp,r7
+ 952              	.LCFI42:
+ 953              	 .cfi_def_cfa_register 13
+ 954              	 
+ 955 0010 5DF8047B 	 ldr r7,[sp],#4
+ 956              	.LCFI43:
+ 957              	 .cfi_restore 7
+ 958              	 .cfi_def_cfa_offset 0
+ 959 0014 7047     	 bx lr
+ 960              	 .cfi_endproc
+ 961              	.LFE140:
+ 963 0016 00BF     	 .text
+ 964              	.Letext0:
+ 965              	 .file 2 "d:\\infineon\\tools\\dave ide\\4.5.0.202105191637\\eclipse\\arm-gcc-49\\arm-none-eabi\\include\\machine\\_default_types.h"
+ 966              	 .file 3 "d:\\infineon\\tools\\dave ide\\4.5.0.202105191637\\eclipse\\arm-gcc-49\\arm-none-eabi\\include\\stdint.h"
+ 967              	 .file 4 "D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-app/SSC/Src/ryhandObjects.h"
+ 968              	 .file 5 "D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-app/Libraries/CMSIS/Include/cmsis_gcc.h"
+ 969              	 .file 6 "D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-app/Libraries/CMSIS/Include/core_cm4.h"
+DEFINED SYMBOLS
+                            *ABS*:00000000 can_protocol.c
+    {standard input}:20     .text.CAN_Protocol_CalcPassword:00000000 $t
+    {standard input}:25     .text.CAN_Protocol_CalcPassword:00000000 CAN_Protocol_CalcPassword
+    {standard input}:86     .data.s_CRC:00000000 $d
+    {standard input}:89     .data.s_CRC:00000000 s_CRC
+    {standard input}:92     .rodata.CRC_POLYNOMIAL:00000000 $d
+    {standard input}:95     .rodata.CRC_POLYNOMIAL:00000000 CRC_POLYNOMIAL
+    {standard input}:98     .text.CRC_Update:00000000 $t
+    {standard input}:102    .text.CRC_Update:00000000 CRC_Update
+    {standard input}:200    .text.CRC_Update:00000070 $d
+    {standard input}:206    .text.CAN_Protocol_CalcCRC32:00000000 $t
+    {standard input}:211    .text.CAN_Protocol_CalcCRC32:00000000 CAN_Protocol_CalcCRC32
+    {standard input}:363    .text.CAN_Protocol_CalcCRC32:000000c8 $d
+    {standard input}:368    .text.CAN_Protocol_HandleCommand:00000000 $t
+    {standard input}:373    .text.CAN_Protocol_HandleCommand:00000000 CAN_Protocol_HandleCommand
+    {standard input}:427    .text.CAN_Protocol_HandleCommand:0000003c $d
+    {standard input}:435    .text.CAN_Protocol_HandleCommand:0000005c $t
+    {standard input}:573    .text.CAN_Protocol_HandleGetSwVersion:00000000 CAN_Protocol_HandleGetSwVersion
+    {standard input}:746    .text.CAN_Protocol_HandleStartUpgrade:00000000 CAN_Protocol_HandleStartUpgrade
+    {standard input}:563    .text.CAN_Protocol_HandleCommand:00000108 $d
+    {standard input}:568    .text.CAN_Protocol_HandleGetSwVersion:00000000 $t
+    {standard input}:735    .text.CAN_Protocol_HandleGetSwVersion:000000e0 $d
+    {standard input}:741    .text.CAN_Protocol_HandleStartUpgrade:00000000 $t
+    {standard input}:875    .text.CAN_Protocol_HandleStartUpgrade:000000b4 $d
+    {standard input}:880    .text.CAN_Protocol_HandleUpgradeData:00000000 $t
+    {standard input}:885    .text.CAN_Protocol_HandleUpgradeData:00000000 CAN_Protocol_HandleUpgradeData
+    {standard input}:922    .text.CAN_Protocol_HandleUpgradeEnd:00000000 $t
+    {standard input}:927    .text.CAN_Protocol_HandleUpgradeEnd:00000000 CAN_Protocol_HandleUpgradeEnd
+                     .debug_frame:00000010 $d
+
+UNDEFINED SYMBOLS
+DevConfig_SaveToEEPROM
+DevInfo0x8000
+strlen
+BSP_CAN_Transmit
+BSP_CAN_ParseDevID
+Handle_Bootstrap_Request

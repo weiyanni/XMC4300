@@ -1,0 +1,145 @@
+   1              	 .syntax unified
+   2              	 .cpu cortex-m4
+   3              	 .eabi_attribute 27,3
+   4              	 .fpu fpv4-sp-d16
+   5              	 .eabi_attribute 20,1
+   6              	 .eabi_attribute 21,1
+   7              	 .eabi_attribute 23,3
+   8              	 .eabi_attribute 24,1
+   9              	 .eabi_attribute 25,1
+  10              	 .eabi_attribute 26,1
+  11              	 .eabi_attribute 30,6
+  12              	 .eabi_attribute 34,1
+  13              	 .eabi_attribute 18,4
+  14              	 .thumb
+  15              	 .file "digital_io_conf.c"
+  16              	 .text
+  17              	.Ltext0:
+  18              	 .cfi_sections .debug_frame
+  19              	 .global DRV_EN5
+  20              	 .section .rodata.DRV_EN5,"a",%progbits
+  21              	 .align 2
+  24              	DRV_EN5:
+  25 0000 00840248 	 .word 1208124416
+  26 0004 80       	 .byte -128
+  27 0005 000000   	 .space 3
+  28 0008 00000100 	 .word 65536
+  29 000c 01       	 .byte 1
+  30 000d 000000   	 .space 3
+  31 0010 00       	 .byte 0
+  32 0011 00       	 .byte 0
+  33 0012 0000     	 .space 2
+  34              	 .global FAULTN5
+  35              	 .section .rodata.FAULTN5,"a",%progbits
+  36              	 .align 2
+  39              	FAULTN5:
+  40 0000 008F0248 	 .word 1208127232
+  41 0004 00       	 .byte 0
+  42 0005 00000000 	 .space 11
+  42      00000000 
+  42      000000
+  43 0010 02       	 .byte 2
+  44 0011 00       	 .byte 0
+  45 0012 0000     	 .space 2
+  46              	 .global LED
+  47              	 .section .rodata.LED,"a",%progbits
+  48              	 .align 2
+  51              	LED:
+  52 0000 00800248 	 .word 1208123392
+  53 0004 80       	 .byte -128
+  54 0005 000000   	 .space 3
+  55 0008 01000000 	 .word 1
+  56 000c 00000000 	 .space 4
+  57 0010 02       	 .byte 2
+  58 0011 00       	 .byte 0
+  59 0012 0000     	 .space 2
+  60              	 .global UART1_RS485_DE
+  61              	 .section .rodata.UART1_RS485_DE,"a",%progbits
+  62              	 .align 2
+  65              	UART1_RS485_DE:
+  66 0000 00800248 	 .word 1208123392
+  67 0004 80       	 .byte -128
+  68 0005 000000   	 .space 3
+  69 0008 00000100 	 .word 65536
+  70 000c 00000000 	 .space 4
+  71 0010 0A       	 .byte 10
+  72 0011 00       	 .byte 0
+  73 0012 0000     	 .space 2
+  74              	 .global CAN_STB
+  75              	 .section .rodata.CAN_STB,"a",%progbits
+  76              	 .align 2
+  79              	CAN_STB:
+  80 0000 00800248 	 .word 1208123392
+  81 0004 80       	 .byte -128
+  82 0005 000000   	 .space 3
+  83 0008 00000100 	 .word 65536
+  84 000c 00000000 	 .space 4
+  85 0010 06       	 .byte 6
+  86 0011 00       	 .byte 0
+  87 0012 0000     	 .space 2
+  88              	 .global CTRLA_L_B
+  89              	 .section .rodata.CTRLA_L_B,"a",%progbits
+  90              	 .align 2
+  93              	CTRLA_L_B:
+  94 0000 00800248 	 .word 1208123392
+  95 0004 80       	 .byte -128
+  96 0005 000000   	 .space 3
+  97 0008 00000100 	 .word 65536
+  98 000c 00000000 	 .space 4
+  99 0010 05       	 .byte 5
+ 100 0011 00       	 .byte 0
+ 101 0012 0000     	 .space 2
+ 102              	 .global CTRLB_H_A
+ 103              	 .section .rodata.CTRLB_H_A,"a",%progbits
+ 104              	 .align 2
+ 107              	CTRLB_H_A:
+ 108 0000 00800248 	 .word 1208123392
+ 109 0004 80       	 .byte -128
+ 110 0005 000000   	 .space 3
+ 111 0008 00000100 	 .word 65536
+ 112 000c 00000000 	 .space 4
+ 113 0010 04       	 .byte 4
+ 114 0011 00       	 .byte 0
+ 115 0012 0000     	 .space 2
+ 116              	 .global CTRL_120R
+ 117              	 .section .rodata.CTRL_120R,"a",%progbits
+ 118              	 .align 2
+ 121              	CTRL_120R:
+ 122 0000 00800248 	 .word 1208123392
+ 123 0004 80       	 .byte -128
+ 124 0005 000000   	 .space 3
+ 125 0008 01000000 	 .word 1
+ 126 000c 00000000 	 .space 4
+ 127 0010 03       	 .byte 3
+ 128 0011 00       	 .byte 0
+ 129 0012 0000     	 .space 2
+ 130              	 .text
+ 131              	.Letext0:
+ 132              	 .file 1 "d:\\infineon\\tools\\dave ide\\4.5.0.202105191637\\eclipse\\arm-gcc-49\\arm-none-eabi\\include\\machine\\_default_types.h"
+ 133              	 .file 2 "d:\\infineon\\tools\\dave ide\\4.5.0.202105191637\\eclipse\\arm-gcc-49\\arm-none-eabi\\include\\stdint.h"
+ 134              	 .file 3 "D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-app/Libraries/XMCLib/inc/xmc_gpio.h"
+ 135              	 .file 4 "D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-app/Libraries/XMCLib/inc/xmc4_gpio.h"
+ 136              	 .file 5 "../Dave/Generated/DIGITAL_IO/digital_io.h"
+ 137              	 .file 6 "D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-app/Libraries/CMSIS/Include/cmsis_gcc.h"
+ 138              	 .file 7 "D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-app/Libraries/CMSIS/Include/core_cm4.h"
+ 139              	 .file 8 "../Dave/Generated/DIGITAL_IO/digital_io_conf.c"
+DEFINED SYMBOLS
+                            *ABS*:00000000 digital_io_conf.c
+    {standard input}:24     .rodata.DRV_EN5:00000000 DRV_EN5
+    {standard input}:21     .rodata.DRV_EN5:00000000 $d
+    {standard input}:39     .rodata.FAULTN5:00000000 FAULTN5
+    {standard input}:36     .rodata.FAULTN5:00000000 $d
+    {standard input}:51     .rodata.LED:00000000 LED
+    {standard input}:48     .rodata.LED:00000000 $d
+    {standard input}:65     .rodata.UART1_RS485_DE:00000000 UART1_RS485_DE
+    {standard input}:62     .rodata.UART1_RS485_DE:00000000 $d
+    {standard input}:79     .rodata.CAN_STB:00000000 CAN_STB
+    {standard input}:76     .rodata.CAN_STB:00000000 $d
+    {standard input}:93     .rodata.CTRLA_L_B:00000000 CTRLA_L_B
+    {standard input}:90     .rodata.CTRLA_L_B:00000000 $d
+    {standard input}:107    .rodata.CTRLB_H_A:00000000 CTRLB_H_A
+    {standard input}:104    .rodata.CTRLB_H_A:00000000 $d
+    {standard input}:121    .rodata.CTRL_120R:00000000 CTRL_120R
+    {standard input}:118    .rodata.CTRL_120R:00000000 $d
+
+NO UNDEFINED SYMBOLS

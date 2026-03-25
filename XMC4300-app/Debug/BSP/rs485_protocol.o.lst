@@ -1,0 +1,1671 @@
+   1              	 .syntax unified
+   2              	 .cpu cortex-m4
+   3              	 .eabi_attribute 27,3
+   4              	 .fpu fpv4-sp-d16
+   5              	 .eabi_attribute 20,1
+   6              	 .eabi_attribute 21,1
+   7              	 .eabi_attribute 23,3
+   8              	 .eabi_attribute 24,1
+   9              	 .eabi_attribute 25,1
+  10              	 .eabi_attribute 26,1
+  11              	 .eabi_attribute 30,6
+  12              	 .eabi_attribute 34,1
+  13              	 .eabi_attribute 18,4
+  14              	 .thumb
+  15              	 .file "rs485_protocol.c"
+  16              	 .text
+  17              	.Ltext0:
+  18              	 .cfi_sections .debug_frame
+  19              	 .section .bss.s_FlashWriteAddr,"aw",%nobits
+  20              	 .align 2
+  23              	s_FlashWriteAddr:
+  24 0000 00000000 	 .space 4
+  25              	 .section .bss.s_PageBuf,"aw",%nobits
+  26              	 .align 2
+  29              	s_PageBuf:
+  30 0000 00000000 	 .space 256
+  30      00000000 
+  30      00000000 
+  30      00000000 
+  30      00000000 
+  31              	 .section .bss.s_PageBufOffset,"aw",%nobits
+  32              	 .align 1
+  35              	s_PageBufOffset:
+  36 0000 0000     	 .space 2
+  37              	 .section .text.RS485_Protocol_CalcPassword,"ax",%progbits
+  38              	 .align 2
+  39              	 .global RS485_Protocol_CalcPassword
+  40              	 .thumb
+  41              	 .thumb_func
+  43              	RS485_Protocol_CalcPassword:
+  44              	.LFB479:
+  45              	 .file 1 "../BSP/rs485_protocol.c"
+   1:../BSP/rs485_protocol.c **** /* ============================================================================
+   2:../BSP/rs485_protocol.c ****  * 文件名: RS485_protocol.c
+   3:../BSP/rs485_protocol.c ****  * 描述: RS485 协议处理实现 (Boot 版本)
+   4:../BSP/rs485_protocol.c ****  *
+   5:../BSP/rs485_protocol.c ****  * 参考 User_FoE_Impl.c 的 Flash 操作逻辑
+   6:../BSP/rs485_protocol.c ****  * ============================================================================ */
+   7:../BSP/rs485_protocol.c **** #include <rs485_protocol.h>
+   8:../BSP/rs485_protocol.c **** #include "bsp_485.h"
+   9:../BSP/rs485_protocol.c **** #include "shared_conf.h"
+  10:../BSP/rs485_protocol.c **** #include "Dave/Generated/E_EEPROM_XMC4/e_eeprom_xmc4.h"
+  11:../BSP/rs485_protocol.c **** #include "SSC/Src/ecat_def.h"        /* 必须在 ryhandObjects.h 之前，提供 UINT16 等类型�
+  12:../BSP/rs485_protocol.c **** #include "SSC/Src/ryhandObjects.h"
+  13:../BSP/rs485_protocol.c **** #include <string.h>
+  14:../BSP/rs485_protocol.c **** #include <xmc_flash.h>
+  15:../BSP/rs485_protocol.c **** #include "DAVE.h"
+  16:../BSP/rs485_protocol.c **** 
+  17:../BSP/rs485_protocol.c **** /* 外部 SSC 对象 */
+  18:../BSP/rs485_protocol.c **** extern TOBJ8000 DevInfo0x8000;
+  19:../BSP/rs485_protocol.c **** 
+  20:../BSP/rs485_protocol.c **** /* 升级上下文 (全局) */
+  21:../BSP/rs485_protocol.c **** extern UpgradeContext_t g_UpgradeCtx;
+  22:../BSP/rs485_protocol.c **** 
+  23:../BSP/rs485_protocol.c **** /* Flash 写入 (参考 FoE 实现) */
+  24:../BSP/rs485_protocol.c **** static uint32_t s_FlashWriteAddr;       /* 当前 Flash 写入地址 */
+  25:../BSP/rs485_protocol.c **** static uint8_t  s_PageBuf[256] __attribute__((aligned(4)));
+  26:../BSP/rs485_protocol.c **** static uint16_t s_PageBufOffset;
+  27:../BSP/rs485_protocol.c **** 
+  28:../BSP/rs485_protocol.c **** /* ==============================================================
+  29:../BSP/rs485_protocol.c ****  * 密码计算 (基于设备ID)
+  30:../BSP/rs485_protocol.c ****  * ============================================================== */
+  31:../BSP/rs485_protocol.c **** uint16_t RS485_Protocol_CalcPassword(uint16_t dev_id)
+  32:../BSP/rs485_protocol.c **** {
+  46              	 .loc 1 32 0
+  47              	 .cfi_startproc
+  48              	 
+  49              	 
+  50              	 
+  51 0000 80B4     	 push {r7}
+  52              	.LCFI0:
+  53              	 .cfi_def_cfa_offset 4
+  54              	 .cfi_offset 7,-4
+  55 0002 83B0     	 sub sp,sp,#12
+  56              	.LCFI1:
+  57              	 .cfi_def_cfa_offset 16
+  58 0004 00AF     	 add r7,sp,#0
+  59              	.LCFI2:
+  60              	 .cfi_def_cfa_register 7
+  61 0006 0346     	 mov r3,r0
+  62 0008 FB80     	 strh r3,[r7,#6]
+  33:../BSP/rs485_protocol.c ****     return (uint16_t)((dev_id * 0x1234) ^ 0xABCD);
+  63              	 .loc 1 33 0
+  64 000a FB88     	 ldrh r3,[r7,#6]
+  65 000c 1A46     	 mov r2,r3
+  66 000e D200     	 lsls r2,r2,#3
+  67 0010 D21A     	 subs r2,r2,r3
+  68 0012 9200     	 lsls r2,r2,#2
+  69 0014 1A44     	 add r2,r2,r3
+  70 0016 D200     	 lsls r2,r2,#3
+  71 0018 1344     	 add r3,r3,r2
+  72 001a 1A46     	 mov r2,r3
+  73 001c 9100     	 lsls r1,r2,#2
+  74 001e 1A46     	 mov r2,r3
+  75 0020 0B46     	 mov r3,r1
+  76 0022 1344     	 add r3,r3,r2
+  77 0024 9B00     	 lsls r3,r3,#2
+  78 0026 9BB2     	 uxth r3,r3
+  79 0028 9BB2     	 uxth r3,r3
+  80 002a 83F4A843 	 eor r3,r3,#21504
+  81 002e 83F03203 	 eor r3,r3,#50
+  82 0032 DB43     	 mvns r3,r3
+  83 0034 9BB2     	 uxth r3,r3
+  84 0036 9BB2     	 uxth r3,r3
+  34:../BSP/rs485_protocol.c **** }
+  85              	 .loc 1 34 0
+  86 0038 1846     	 mov r0,r3
+  87 003a 0C37     	 adds r7,r7,#12
+  88              	.LCFI3:
+  89              	 .cfi_def_cfa_offset 4
+  90 003c BD46     	 mov sp,r7
+  91              	.LCFI4:
+  92              	 .cfi_def_cfa_register 13
+  93              	 
+  94 003e 5DF8047B 	 ldr r7,[sp],#4
+  95              	.LCFI5:
+  96              	 .cfi_restore 7
+  97              	 .cfi_def_cfa_offset 0
+  98 0042 7047     	 bx lr
+  99              	 .cfi_endproc
+ 100              	.LFE479:
+ 102              	 .section .data.s_CRC,"aw",%progbits
+ 103              	 .align 2
+ 106              	s_CRC:
+ 107 0000 FFFFFFFF 	 .word -1
+ 108              	 .section .rodata.CRC_POLYNOMIAL,"a",%progbits
+ 109              	 .align 2
+ 112              	CRC_POLYNOMIAL:
+ 113 0000 B71DC104 	 .word 79764919
+ 114              	 .section .text.CRC_Reset,"ax",%progbits
+ 115              	 .align 2
+ 116              	 .thumb
+ 117              	 .thumb_func
+ 119              	CRC_Reset:
+ 120              	.LFB480:
+  35:../BSP/rs485_protocol.c **** 
+  36:../BSP/rs485_protocol.c **** /* ==============================================================
+  37:../BSP/rs485_protocol.c ****  * CRC32 计算 (多项式 0x04C11DB7，与上位机一致)
+  38:../BSP/rs485_protocol.c ****  *
+  39:../BSP/rs485_protocol.c ****  * 上位机算法特点：
+  40:../BSP/rs485_protocol.c ****  * 1. 按 32 位字处理数据
+  41:../BSP/rs485_protocol.c ****  * 2. MSB first
+  42:../BSP/rs485_protocol.c ****  * ============================================================== */
+  43:../BSP/rs485_protocol.c **** static uint32_t s_CRC = 0xFFFFFFFF;
+  44:../BSP/rs485_protocol.c **** static const uint32_t CRC_POLYNOMIAL = 0x04C11DB7;
+  45:../BSP/rs485_protocol.c **** 
+  46:../BSP/rs485_protocol.c **** static void CRC_Reset(void)
+  47:../BSP/rs485_protocol.c **** {
+ 121              	 .loc 1 47 0
+ 122              	 .cfi_startproc
+ 123              	 
+ 124              	 
+ 125              	 
+ 126 0000 80B4     	 push {r7}
+ 127              	.LCFI6:
+ 128              	 .cfi_def_cfa_offset 4
+ 129              	 .cfi_offset 7,-4
+ 130 0002 00AF     	 add r7,sp,#0
+ 131              	.LCFI7:
+ 132              	 .cfi_def_cfa_register 7
+  48:../BSP/rs485_protocol.c ****     s_CRC = 0xFFFFFFFF;
+ 133              	 .loc 1 48 0
+ 134 0004 034B     	 ldr r3,.L4
+ 135 0006 4FF0FF32 	 mov r2,#-1
+ 136 000a 1A60     	 str r2,[r3]
+  49:../BSP/rs485_protocol.c **** }
+ 137              	 .loc 1 49 0
+ 138 000c BD46     	 mov sp,r7
+ 139              	.LCFI8:
+ 140              	 .cfi_def_cfa_register 13
+ 141              	 
+ 142 000e 5DF8047B 	 ldr r7,[sp],#4
+ 143              	.LCFI9:
+ 144              	 .cfi_restore 7
+ 145              	 .cfi_def_cfa_offset 0
+ 146 0012 7047     	 bx lr
+ 147              	.L5:
+ 148              	 .align 2
+ 149              	.L4:
+ 150 0014 00000000 	 .word s_CRC
+ 151              	 .cfi_endproc
+ 152              	.LFE480:
+ 154              	 .section .text.CRC_UpdateWord,"ax",%progbits
+ 155              	 .align 2
+ 156              	 .thumb
+ 157              	 .thumb_func
+ 159              	CRC_UpdateWord:
+ 160              	.LFB481:
+  50:../BSP/rs485_protocol.c **** 
+  51:../BSP/rs485_protocol.c **** /* 按 32 位字更新 CRC (与上位机 CalCRC 函数一致) */
+  52:../BSP/rs485_protocol.c **** static void CRC_UpdateWord(uint32_t data)
+  53:../BSP/rs485_protocol.c **** {
+ 161              	 .loc 1 53 0
+ 162              	 .cfi_startproc
+ 163              	 
+ 164              	 
+ 165              	 
+ 166 0000 80B4     	 push {r7}
+ 167              	.LCFI10:
+ 168              	 .cfi_def_cfa_offset 4
+ 169              	 .cfi_offset 7,-4
+ 170 0002 85B0     	 sub sp,sp,#20
+ 171              	.LCFI11:
+ 172              	 .cfi_def_cfa_offset 24
+ 173 0004 00AF     	 add r7,sp,#0
+ 174              	.LCFI12:
+ 175              	 .cfi_def_cfa_register 7
+ 176 0006 7860     	 str r0,[r7,#4]
+  54:../BSP/rs485_protocol.c ****     uint32_t xbit = 1U << 31;
+ 177              	 .loc 1 54 0
+ 178 0008 4FF00043 	 mov r3,#-2147483648
+ 179 000c FB60     	 str r3,[r7,#12]
+ 180              	.LBB2:
+  55:../BSP/rs485_protocol.c **** 
+  56:../BSP/rs485_protocol.c ****     for (int bits = 0; bits < 32; bits++)
+ 181              	 .loc 1 56 0
+ 182 000e 0023     	 movs r3,#0
+ 183 0010 BB60     	 str r3,[r7,#8]
+ 184 0012 25E0     	 b .L7
+ 185              	.L11:
+  57:../BSP/rs485_protocol.c ****     {
+  58:../BSP/rs485_protocol.c ****         if (s_CRC & 0x80000000)
+ 186              	 .loc 1 58 0
+ 187 0014 164B     	 ldr r3,.L12
+ 188 0016 1B68     	 ldr r3,[r3]
+ 189 0018 002B     	 cmp r3,#0
+ 190 001a 0BDA     	 bge .L8
+  59:../BSP/rs485_protocol.c ****         {
+  60:../BSP/rs485_protocol.c ****             s_CRC <<= 1;
+ 191              	 .loc 1 60 0
+ 192 001c 144B     	 ldr r3,.L12
+ 193 001e 1B68     	 ldr r3,[r3]
+ 194 0020 5B00     	 lsls r3,r3,#1
+ 195 0022 134A     	 ldr r2,.L12
+ 196 0024 1360     	 str r3,[r2]
+  61:../BSP/rs485_protocol.c ****             s_CRC ^= CRC_POLYNOMIAL;
+ 197              	 .loc 1 61 0
+ 198 0026 124B     	 ldr r3,.L12
+ 199 0028 1B68     	 ldr r3,[r3]
+ 200 002a 124A     	 ldr r2,.L12+4
+ 201 002c 5340     	 eors r3,r3,r2
+ 202 002e 104A     	 ldr r2,.L12
+ 203 0030 1360     	 str r3,[r2]
+ 204 0032 04E0     	 b .L9
+ 205              	.L8:
+  62:../BSP/rs485_protocol.c ****         }
+  63:../BSP/rs485_protocol.c ****         else
+  64:../BSP/rs485_protocol.c ****         {
+  65:../BSP/rs485_protocol.c ****             s_CRC <<= 1;
+ 206              	 .loc 1 65 0
+ 207 0034 0E4B     	 ldr r3,.L12
+ 208 0036 1B68     	 ldr r3,[r3]
+ 209 0038 5B00     	 lsls r3,r3,#1
+ 210 003a 0D4A     	 ldr r2,.L12
+ 211 003c 1360     	 str r3,[r2]
+ 212              	.L9:
+  66:../BSP/rs485_protocol.c ****         }
+  67:../BSP/rs485_protocol.c ****         if (data & xbit)
+ 213              	 .loc 1 67 0
+ 214 003e 7A68     	 ldr r2,[r7,#4]
+ 215 0040 FB68     	 ldr r3,[r7,#12]
+ 216 0042 1340     	 ands r3,r3,r2
+ 217 0044 002B     	 cmp r3,#0
+ 218 0046 05D0     	 beq .L10
+  68:../BSP/rs485_protocol.c ****         {
+  69:../BSP/rs485_protocol.c ****             s_CRC ^= CRC_POLYNOMIAL;
+ 219              	 .loc 1 69 0
+ 220 0048 094B     	 ldr r3,.L12
+ 221 004a 1B68     	 ldr r3,[r3]
+ 222 004c 094A     	 ldr r2,.L12+4
+ 223 004e 5340     	 eors r3,r3,r2
+ 224 0050 074A     	 ldr r2,.L12
+ 225 0052 1360     	 str r3,[r2]
+ 226              	.L10:
+  70:../BSP/rs485_protocol.c ****         }
+  71:../BSP/rs485_protocol.c ****         xbit >>= 1;
+ 227              	 .loc 1 71 0 discriminator 2
+ 228 0054 FB68     	 ldr r3,[r7,#12]
+ 229 0056 5B08     	 lsrs r3,r3,#1
+ 230 0058 FB60     	 str r3,[r7,#12]
+  56:../BSP/rs485_protocol.c ****     {
+ 231              	 .loc 1 56 0 discriminator 2
+ 232 005a BB68     	 ldr r3,[r7,#8]
+ 233 005c 0133     	 adds r3,r3,#1
+ 234 005e BB60     	 str r3,[r7,#8]
+ 235              	.L7:
+  56:../BSP/rs485_protocol.c ****     {
+ 236              	 .loc 1 56 0 is_stmt 0 discriminator 1
+ 237 0060 BB68     	 ldr r3,[r7,#8]
+ 238 0062 1F2B     	 cmp r3,#31
+ 239 0064 D6DD     	 ble .L11
+ 240              	.LBE2:
+  72:../BSP/rs485_protocol.c ****     }
+  73:../BSP/rs485_protocol.c **** }
+ 241              	 .loc 1 73 0 is_stmt 1
+ 242 0066 1437     	 adds r7,r7,#20
+ 243              	.LCFI13:
+ 244              	 .cfi_def_cfa_offset 4
+ 245 0068 BD46     	 mov sp,r7
+ 246              	.LCFI14:
+ 247              	 .cfi_def_cfa_register 13
+ 248              	 
+ 249 006a 5DF8047B 	 ldr r7,[sp],#4
+ 250              	.LCFI15:
+ 251              	 .cfi_restore 7
+ 252              	 .cfi_def_cfa_offset 0
+ 253 006e 7047     	 bx lr
+ 254              	.L13:
+ 255              	 .align 2
+ 256              	.L12:
+ 257 0070 00000000 	 .word s_CRC
+ 258 0074 B71DC104 	 .word 79764919
+ 259              	 .cfi_endproc
+ 260              	.LFE481:
+ 262              	 .section .text.CRC_GetValue,"ax",%progbits
+ 263              	 .align 2
+ 264              	 .thumb
+ 265              	 .thumb_func
+ 267              	CRC_GetValue:
+ 268              	.LFB482:
+  74:../BSP/rs485_protocol.c **** 
+  75:../BSP/rs485_protocol.c **** static uint32_t CRC_GetValue(void)
+  76:../BSP/rs485_protocol.c **** {
+ 269              	 .loc 1 76 0
+ 270              	 .cfi_startproc
+ 271              	 
+ 272              	 
+ 273              	 
+ 274 0000 80B4     	 push {r7}
+ 275              	.LCFI16:
+ 276              	 .cfi_def_cfa_offset 4
+ 277              	 .cfi_offset 7,-4
+ 278 0002 00AF     	 add r7,sp,#0
+ 279              	.LCFI17:
+ 280              	 .cfi_def_cfa_register 7
+  77:../BSP/rs485_protocol.c ****     return s_CRC;
+ 281              	 .loc 1 77 0
+ 282 0004 034B     	 ldr r3,.L16
+ 283 0006 1B68     	 ldr r3,[r3]
+  78:../BSP/rs485_protocol.c **** }
+ 284              	 .loc 1 78 0
+ 285 0008 1846     	 mov r0,r3
+ 286 000a BD46     	 mov sp,r7
+ 287              	.LCFI18:
+ 288              	 .cfi_def_cfa_register 13
+ 289              	 
+ 290 000c 5DF8047B 	 ldr r7,[sp],#4
+ 291              	.LCFI19:
+ 292              	 .cfi_restore 7
+ 293              	 .cfi_def_cfa_offset 0
+ 294 0010 7047     	 bx lr
+ 295              	.L17:
+ 296 0012 00BF     	 .align 2
+ 297              	.L16:
+ 298 0014 00000000 	 .word s_CRC
+ 299              	 .cfi_endproc
+ 300              	.LFE482:
+ 302              	 .section .text.RS485_Protocol_CalcCRC32,"ax",%progbits
+ 303              	 .align 2
+ 304              	 .global RS485_Protocol_CalcCRC32
+ 305              	 .thumb
+ 306              	 .thumb_func
+ 308              	RS485_Protocol_CalcCRC32:
+ 309              	.LFB483:
+  79:../BSP/rs485_protocol.c **** 
+  80:../BSP/rs485_protocol.c **** uint32_t RS485_Protocol_CalcCRC32(const uint8_t *data, uint32_t len)
+  81:../BSP/rs485_protocol.c **** {
+ 310              	 .loc 1 81 0
+ 311              	 .cfi_startproc
+ 312              	 
+ 313              	 
+ 314 0000 80B5     	 push {r7,lr}
+ 315              	.LCFI20:
+ 316              	 .cfi_def_cfa_offset 8
+ 317              	 .cfi_offset 7,-8
+ 318              	 .cfi_offset 14,-4
+ 319 0002 86B0     	 sub sp,sp,#24
+ 320              	.LCFI21:
+ 321              	 .cfi_def_cfa_offset 32
+ 322 0004 00AF     	 add r7,sp,#0
+ 323              	.LCFI22:
+ 324              	 .cfi_def_cfa_register 7
+ 325 0006 7860     	 str r0,[r7,#4]
+ 326 0008 3960     	 str r1,[r7]
+  82:../BSP/rs485_protocol.c ****     CRC_Reset();
+ 327              	 .loc 1 82 0
+ 328 000a FFF7FEFF 	 bl CRC_Reset
+  83:../BSP/rs485_protocol.c ****     /* 按 32 位字处理 */
+  84:../BSP/rs485_protocol.c ****     uint32_t word_count = len / 4;
+ 329              	 .loc 1 84 0
+ 330 000e 3B68     	 ldr r3,[r7]
+ 331 0010 9B08     	 lsrs r3,r3,#2
+ 332 0012 3B61     	 str r3,[r7,#16]
+  85:../BSP/rs485_protocol.c ****     const uint32_t *words = (const uint32_t *)data;
+ 333              	 .loc 1 85 0
+ 334 0014 7B68     	 ldr r3,[r7,#4]
+ 335 0016 FB60     	 str r3,[r7,#12]
+ 336              	.LBB3:
+  86:../BSP/rs485_protocol.c ****     for (uint32_t i = 0; i < word_count; i++)
+ 337              	 .loc 1 86 0
+ 338 0018 0023     	 movs r3,#0
+ 339 001a 7B61     	 str r3,[r7,#20]
+ 340 001c 0AE0     	 b .L19
+ 341              	.L20:
+  87:../BSP/rs485_protocol.c ****     {
+  88:../BSP/rs485_protocol.c ****         CRC_UpdateWord(words[i]);
+ 342              	 .loc 1 88 0 discriminator 3
+ 343 001e 7B69     	 ldr r3,[r7,#20]
+ 344 0020 9B00     	 lsls r3,r3,#2
+ 345 0022 FA68     	 ldr r2,[r7,#12]
+ 346 0024 1344     	 add r3,r3,r2
+ 347 0026 1B68     	 ldr r3,[r3]
+ 348 0028 1846     	 mov r0,r3
+ 349 002a FFF7FEFF 	 bl CRC_UpdateWord
+  86:../BSP/rs485_protocol.c ****     for (uint32_t i = 0; i < word_count; i++)
+ 350              	 .loc 1 86 0 discriminator 3
+ 351 002e 7B69     	 ldr r3,[r7,#20]
+ 352 0030 0133     	 adds r3,r3,#1
+ 353 0032 7B61     	 str r3,[r7,#20]
+ 354              	.L19:
+  86:../BSP/rs485_protocol.c ****     for (uint32_t i = 0; i < word_count; i++)
+ 355              	 .loc 1 86 0 is_stmt 0 discriminator 1
+ 356 0034 7A69     	 ldr r2,[r7,#20]
+ 357 0036 3B69     	 ldr r3,[r7,#16]
+ 358 0038 9A42     	 cmp r2,r3
+ 359 003a F0D3     	 bcc .L20
+ 360              	.LBE3:
+  89:../BSP/rs485_protocol.c ****     }
+  90:../BSP/rs485_protocol.c ****     return CRC_GetValue();
+ 361              	 .loc 1 90 0 is_stmt 1
+ 362 003c FFF7FEFF 	 bl CRC_GetValue
+ 363 0040 0346     	 mov r3,r0
+  91:../BSP/rs485_protocol.c **** }
+ 364              	 .loc 1 91 0
+ 365 0042 1846     	 mov r0,r3
+ 366 0044 1837     	 adds r7,r7,#24
+ 367              	.LCFI23:
+ 368              	 .cfi_def_cfa_offset 8
+ 369 0046 BD46     	 mov sp,r7
+ 370              	.LCFI24:
+ 371              	 .cfi_def_cfa_register 13
+ 372              	 
+ 373 0048 80BD     	 pop {r7,pc}
+ 374              	 .cfi_endproc
+ 375              	.LFE483:
+ 377 004a 00BF     	 .section .text.FlushPageBuffer,"ax",%progbits
+ 378              	 .align 2
+ 379              	 .thumb
+ 380              	 .thumb_func
+ 382              	FlushPageBuffer:
+ 383              	.LFB484:
+  92:../BSP/rs485_protocol.c **** 
+  93:../BSP/rs485_protocol.c **** /* ==============================================================
+  94:../BSP/rs485_protocol.c ****  * Flash 操作 (参考 FoE 实现)
+  95:../BSP/rs485_protocol.c ****  * ============================================================== */
+  96:../BSP/rs485_protocol.c **** 
+  97:../BSP/rs485_protocol.c **** /* 刷新页缓冲区到 Flash */
+  98:../BSP/rs485_protocol.c **** static uint8_t FlushPageBuffer(void)
+  99:../BSP/rs485_protocol.c **** {
+ 384              	 .loc 1 99 0
+ 385              	 .cfi_startproc
+ 386              	 
+ 387              	 
+ 388 0000 80B5     	 push {r7,lr}
+ 389              	.LCFI25:
+ 390              	 .cfi_def_cfa_offset 8
+ 391              	 .cfi_offset 7,-8
+ 392              	 .cfi_offset 14,-4
+ 393 0002 00AF     	 add r7,sp,#0
+ 394              	.LCFI26:
+ 395              	 .cfi_def_cfa_register 7
+ 100:../BSP/rs485_protocol.c ****     if (s_PageBufOffset == 0) return 0;
+ 396              	 .loc 1 100 0
+ 397 0004 144B     	 ldr r3,.L26
+ 398 0006 1B88     	 ldrh r3,[r3]
+ 399 0008 002B     	 cmp r3,#0
+ 400 000a 01D1     	 bne .L23
+ 401              	 .loc 1 100 0 is_stmt 0 discriminator 1
+ 402 000c 0023     	 movs r3,#0
+ 403 000e 21E0     	 b .L24
+ 404              	.L23:
+ 101:../BSP/rs485_protocol.c **** 
+ 102:../BSP/rs485_protocol.c ****     /* 填充剩余部分为 0xFF */
+ 103:../BSP/rs485_protocol.c ****     if (s_PageBufOffset < 256)
+ 405              	 .loc 1 103 0 is_stmt 1
+ 406 0010 114B     	 ldr r3,.L26
+ 407 0012 1B88     	 ldrh r3,[r3]
+ 408 0014 FF2B     	 cmp r3,#255
+ 409 0016 0DD8     	 bhi .L25
+ 104:../BSP/rs485_protocol.c ****     {
+ 105:../BSP/rs485_protocol.c ****         memset(&s_PageBuf[s_PageBufOffset], 0xFF, 256 - s_PageBufOffset);
+ 410              	 .loc 1 105 0
+ 411 0018 0F4B     	 ldr r3,.L26
+ 412 001a 1B88     	 ldrh r3,[r3]
+ 413 001c 1A46     	 mov r2,r3
+ 414 001e 0F4B     	 ldr r3,.L26+4
+ 415 0020 1A44     	 add r2,r2,r3
+ 416 0022 0D4B     	 ldr r3,.L26
+ 417 0024 1B88     	 ldrh r3,[r3]
+ 418 0026 C3F58073 	 rsb r3,r3,#256
+ 419 002a 1046     	 mov r0,r2
+ 420 002c FF21     	 movs r1,#255
+ 421 002e 1A46     	 mov r2,r3
+ 422 0030 FFF7FEFF 	 bl memset
+ 423              	.L25:
+ 106:../BSP/rs485_protocol.c ****     }
+ 107:../BSP/rs485_protocol.c **** 
+ 108:../BSP/rs485_protocol.c ****     /* 写入 Flash */
+ 109:../BSP/rs485_protocol.c ****     XMC_FLASH_ProgramPage((uint32_t*)s_FlashWriteAddr, (uint32_t*)s_PageBuf);
+ 424              	 .loc 1 109 0
+ 425 0034 0A4B     	 ldr r3,.L26+8
+ 426 0036 1B68     	 ldr r3,[r3]
+ 427 0038 1846     	 mov r0,r3
+ 428 003a 0849     	 ldr r1,.L26+4
+ 429 003c FFF7FEFF 	 bl XMC_FLASH_ProgramPage
+ 110:../BSP/rs485_protocol.c **** 
+ 111:../BSP/rs485_protocol.c ****     s_FlashWriteAddr += 256;
+ 430              	 .loc 1 111 0
+ 431 0040 074B     	 ldr r3,.L26+8
+ 432 0042 1B68     	 ldr r3,[r3]
+ 433 0044 03F58073 	 add r3,r3,#256
+ 434 0048 054A     	 ldr r2,.L26+8
+ 435 004a 1360     	 str r3,[r2]
+ 112:../BSP/rs485_protocol.c ****     s_PageBufOffset = 0;
+ 436              	 .loc 1 112 0
+ 437 004c 024B     	 ldr r3,.L26
+ 438 004e 0022     	 movs r2,#0
+ 439 0050 1A80     	 strh r2,[r3]
+ 113:../BSP/rs485_protocol.c **** 
+ 114:../BSP/rs485_protocol.c ****     return 0;
+ 440              	 .loc 1 114 0
+ 441 0052 0023     	 movs r3,#0
+ 442              	.L24:
+ 115:../BSP/rs485_protocol.c **** }
+ 443              	 .loc 1 115 0
+ 444 0054 1846     	 mov r0,r3
+ 445 0056 80BD     	 pop {r7,pc}
+ 446              	.L27:
+ 447              	 .align 2
+ 448              	.L26:
+ 449 0058 00000000 	 .word s_PageBufOffset
+ 450 005c 00000000 	 .word s_PageBuf
+ 451 0060 00000000 	 .word s_FlashWriteAddr
+ 452              	 .cfi_endproc
+ 453              	.LFE484:
+ 455              	 .section .text.BufferData,"ax",%progbits
+ 456              	 .align 2
+ 457              	 .thumb
+ 458              	 .thumb_func
+ 460              	BufferData:
+ 461              	.LFB485:
+ 116:../BSP/rs485_protocol.c **** 
+ 117:../BSP/rs485_protocol.c **** /* 写入数据到页缓冲区 (参考 FoE 的 BufferData) */
+ 118:../BSP/rs485_protocol.c **** static uint8_t BufferData(const uint8_t *data, uint16_t size)
+ 119:../BSP/rs485_protocol.c **** {
+ 462              	 .loc 1 119 0
+ 463              	 .cfi_startproc
+ 464              	 
+ 465              	 
+ 466 0000 80B5     	 push {r7,lr}
+ 467              	.LCFI27:
+ 468              	 .cfi_def_cfa_offset 8
+ 469              	 .cfi_offset 7,-8
+ 470              	 .cfi_offset 14,-4
+ 471 0002 84B0     	 sub sp,sp,#16
+ 472              	.LCFI28:
+ 473              	 .cfi_def_cfa_offset 24
+ 474 0004 00AF     	 add r7,sp,#0
+ 475              	.LCFI29:
+ 476              	 .cfi_def_cfa_register 7
+ 477 0006 7860     	 str r0,[r7,#4]
+ 478 0008 0B46     	 mov r3,r1
+ 479 000a 7B80     	 strh r3,[r7,#2]
+ 480              	.LBB4:
+ 120:../BSP/rs485_protocol.c ****     for (uint16_t i = 0; i < size; i++)
+ 481              	 .loc 1 120 0
+ 482 000c 0023     	 movs r3,#0
+ 483 000e FB81     	 strh r3,[r7,#14]
+ 484 0010 1AE0     	 b .L29
+ 485              	.L32:
+ 121:../BSP/rs485_protocol.c ****     {
+ 122:../BSP/rs485_protocol.c ****         /* 注意: CRC 在升级结束时从 Flash 统一计算 */
+ 123:../BSP/rs485_protocol.c ****         s_PageBuf[s_PageBufOffset++] = data[i];
+ 486              	 .loc 1 123 0
+ 487 0012 124B     	 ldr r3,.L33
+ 488 0014 1B88     	 ldrh r3,[r3]
+ 489 0016 5A1C     	 adds r2,r3,#1
+ 490 0018 91B2     	 uxth r1,r2
+ 491 001a 104A     	 ldr r2,.L33
+ 492 001c 1180     	 strh r1,[r2]
+ 493 001e 1946     	 mov r1,r3
+ 494 0020 FB89     	 ldrh r3,[r7,#14]
+ 495 0022 7A68     	 ldr r2,[r7,#4]
+ 496 0024 1344     	 add r3,r3,r2
+ 497 0026 1A78     	 ldrb r2,[r3]
+ 498 0028 0D4B     	 ldr r3,.L33+4
+ 499 002a 5A54     	 strb r2,[r3,r1]
+ 124:../BSP/rs485_protocol.c **** 
+ 125:../BSP/rs485_protocol.c ****         if (s_PageBufOffset >= 256)
+ 500              	 .loc 1 125 0
+ 501 002c 0B4B     	 ldr r3,.L33
+ 502 002e 1B88     	 ldrh r3,[r3]
+ 503 0030 FF2B     	 cmp r3,#255
+ 504 0032 06D9     	 bls .L30
+ 126:../BSP/rs485_protocol.c ****         {
+ 127:../BSP/rs485_protocol.c ****             if (FlushPageBuffer()) return 1;
+ 505              	 .loc 1 127 0
+ 506 0034 FFF7FEFF 	 bl FlushPageBuffer
+ 507 0038 0346     	 mov r3,r0
+ 508 003a 002B     	 cmp r3,#0
+ 509 003c 01D0     	 beq .L30
+ 510              	 .loc 1 127 0 is_stmt 0 discriminator 1
+ 511 003e 0123     	 movs r3,#1
+ 512 0040 07E0     	 b .L31
+ 513              	.L30:
+ 120:../BSP/rs485_protocol.c ****     {
+ 514              	 .loc 1 120 0 is_stmt 1 discriminator 2
+ 515 0042 FB89     	 ldrh r3,[r7,#14]
+ 516 0044 0133     	 adds r3,r3,#1
+ 517 0046 FB81     	 strh r3,[r7,#14]
+ 518              	.L29:
+ 120:../BSP/rs485_protocol.c ****     {
+ 519              	 .loc 1 120 0 is_stmt 0 discriminator 1
+ 520 0048 FA89     	 ldrh r2,[r7,#14]
+ 521 004a 7B88     	 ldrh r3,[r7,#2]
+ 522 004c 9A42     	 cmp r2,r3
+ 523 004e E0D3     	 bcc .L32
+ 524              	.LBE4:
+ 128:../BSP/rs485_protocol.c ****         }
+ 129:../BSP/rs485_protocol.c ****     }
+ 130:../BSP/rs485_protocol.c ****     return 0;
+ 525              	 .loc 1 130 0 is_stmt 1
+ 526 0050 0023     	 movs r3,#0
+ 527              	.L31:
+ 131:../BSP/rs485_protocol.c **** }
+ 528              	 .loc 1 131 0
+ 529 0052 1846     	 mov r0,r3
+ 530 0054 1037     	 adds r7,r7,#16
+ 531              	.LCFI30:
+ 532              	 .cfi_def_cfa_offset 8
+ 533 0056 BD46     	 mov sp,r7
+ 534              	.LCFI31:
+ 535              	 .cfi_def_cfa_register 13
+ 536              	 
+ 537 0058 80BD     	 pop {r7,pc}
+ 538              	.L34:
+ 539 005a 00BF     	 .align 2
+ 540              	.L33:
+ 541 005c 00000000 	 .word s_PageBufOffset
+ 542 0060 00000000 	 .word s_PageBuf
+ 543              	 .cfi_endproc
+ 544              	.LFE485:
+ 546              	 .section .text.Flash_EraseAppArea,"ax",%progbits
+ 547              	 .align 2
+ 548              	 .thumb
+ 549              	 .thumb_func
+ 551              	Flash_EraseAppArea:
+ 552              	.LFB486:
+ 132:../BSP/rs485_protocol.c **** 
+ 133:../BSP/rs485_protocol.c **** /* 擦除 App 区域 (参考 FoE 的 FOE_Write) */
+ 134:../BSP/rs485_protocol.c **** static uint8_t Flash_EraseAppArea(void)
+ 135:../BSP/rs485_protocol.c **** {
+ 553              	 .loc 1 135 0
+ 554              	 .cfi_startproc
+ 555              	 
+ 556              	 
+ 557 0000 80B5     	 push {r7,lr}
+ 558              	.LCFI32:
+ 559              	 .cfi_def_cfa_offset 8
+ 560              	 .cfi_offset 7,-8
+ 561              	 .cfi_offset 14,-4
+ 562 0002 00AF     	 add r7,sp,#0
+ 563              	.LCFI33:
+ 564              	 .cfi_def_cfa_register 7
+ 136:../BSP/rs485_protocol.c ****     /* 清除状态 (重要!) */
+ 137:../BSP/rs485_protocol.c ****     XMC_FLASH_ClearStatus();
+ 565              	 .loc 1 137 0
+ 566 0004 FFF7FEFF 	 bl XMC_FLASH_ClearStatus
+ 138:../BSP/rs485_protocol.c **** 
+ 139:../BSP/rs485_protocol.c ****     /* 擦除 App 扇区 */
+ 140:../BSP/rs485_protocol.c ****     XMC_FLASH_EraseSector((uint32_t*)APP_START_ADDR);
+ 567              	 .loc 1 140 0
+ 568 0008 0848     	 ldr r0,.L38
+ 569 000a FFF7FEFF 	 bl XMC_FLASH_EraseSector
+ 141:../BSP/rs485_protocol.c **** 
+ 142:../BSP/rs485_protocol.c ****     /* 检查错误 */
+ 143:../BSP/rs485_protocol.c ****     if (FLASH0->FSR & (XMC_FLASH_STATUS_VERIFY_ERROR |
+ 570              	 .loc 1 143 0
+ 571 000e 084B     	 ldr r3,.L38+4
+ 572 0010 03F58053 	 add r3,r3,#4096
+ 573 0014 1033     	 adds r3,r3,#16
+ 574 0016 1A68     	 ldr r2,[r3]
+ 575 0018 064B     	 ldr r3,.L38+8
+ 576 001a 1340     	 ands r3,r3,r2
+ 577 001c 002B     	 cmp r3,#0
+ 578 001e 01D0     	 beq .L36
+ 144:../BSP/rs485_protocol.c ****                        XMC_FLASH_STATUS_PROTECTION_ERROR |
+ 145:../BSP/rs485_protocol.c ****                        XMC_FLASH_STATUS_OPERATION_ERROR))
+ 146:../BSP/rs485_protocol.c ****     {
+ 147:../BSP/rs485_protocol.c ****         return 1;
+ 579              	 .loc 1 147 0
+ 580 0020 0123     	 movs r3,#1
+ 581 0022 00E0     	 b .L37
+ 582              	.L36:
+ 148:../BSP/rs485_protocol.c ****     }
+ 149:../BSP/rs485_protocol.c **** 
+ 150:../BSP/rs485_protocol.c ****     return 0;
+ 583              	 .loc 1 150 0
+ 584 0024 0023     	 movs r3,#0
+ 585              	.L37:
+ 151:../BSP/rs485_protocol.c **** }
+ 586              	 .loc 1 151 0
+ 587 0026 1846     	 mov r0,r3
+ 588 0028 80BD     	 pop {r7,pc}
+ 589              	.L39:
+ 590 002a 00BF     	 .align 2
+ 591              	.L38:
+ 592 002c 0000020C 	 .word 201457664
+ 593 0030 00100058 	 .word 1476399104
+ 594 0034 00090080 	 .word -2147481344
+ 595              	 .cfi_endproc
+ 596              	.LFE486:
+ 598              	 .section .text.RS485_Protocol_HandleCommand,"ax",%progbits
+ 599              	 .align 2
+ 600              	 .global RS485_Protocol_HandleCommand
+ 601              	 .thumb
+ 602              	 .thumb_func
+ 604              	RS485_Protocol_HandleCommand:
+ 605              	.LFB487:
+ 152:../BSP/rs485_protocol.c **** 
+ 153:../BSP/rs485_protocol.c **** /* ==============================================================
+ 154:../BSP/rs485_protocol.c ****  * 协议命令分发
+ 155:../BSP/rs485_protocol.c ****  * ============================================================== */
+ 156:../BSP/rs485_protocol.c **** void RS485_Protocol_HandleCommand(uint16_t  Id,const uint8_t *rx_data, uint8_t rx_len)
+ 157:../BSP/rs485_protocol.c **** {
+ 606              	 .loc 1 157 0
+ 607              	 .cfi_startproc
+ 608              	 
+ 609              	 
+ 610 0000 80B5     	 push {r7,lr}
+ 611              	.LCFI34:
+ 612              	 .cfi_def_cfa_offset 8
+ 613              	 .cfi_offset 7,-8
+ 614              	 .cfi_offset 14,-4
+ 615 0002 86B0     	 sub sp,sp,#24
+ 616              	.LCFI35:
+ 617              	 .cfi_def_cfa_offset 32
+ 618 0004 00AF     	 add r7,sp,#0
+ 619              	.LCFI36:
+ 620              	 .cfi_def_cfa_register 7
+ 621 0006 0346     	 mov r3,r0
+ 622 0008 3960     	 str r1,[r7]
+ 623 000a FB80     	 strh r3,[r7,#6]
+ 624 000c 1346     	 mov r3,r2
+ 625 000e 7B71     	 strb r3,[r7,#5]
+ 158:../BSP/rs485_protocol.c **** 	uint32_t BR_canfd_ctrl = 0;
+ 626              	 .loc 1 158 0
+ 627 0010 0023     	 movs r3,#0
+ 628 0012 7B61     	 str r3,[r7,#20]
+ 159:../BSP/rs485_protocol.c **** 	uint32_t BR_canfd_data = 0;
+ 629              	 .loc 1 159 0
+ 630 0014 0023     	 movs r3,#0
+ 631 0016 3B61     	 str r3,[r7,#16]
+ 160:../BSP/rs485_protocol.c **** 	uint32_t BR_485 = 0;
+ 632              	 .loc 1 160 0
+ 633 0018 0023     	 movs r3,#0
+ 634 001a FB60     	 str r3,[r7,#12]
+ 161:../BSP/rs485_protocol.c ****     if (rx_data == NULL || rx_len == 0)
+ 635              	 .loc 1 161 0
+ 636 001c 3B68     	 ldr r3,[r7]
+ 637 001e 002B     	 cmp r3,#0
+ 638 0020 02D0     	 beq .L41
+ 639              	 .loc 1 161 0 is_stmt 0 discriminator 1
+ 640 0022 7B79     	 ldrb r3,[r7,#5]
+ 641 0024 002B     	 cmp r3,#0
+ 642 0026 00D1     	 bne .L42
+ 643              	.L41:
+ 162:../BSP/rs485_protocol.c ****     {
+ 163:../BSP/rs485_protocol.c ****         return;
+ 644              	 .loc 1 163 0 is_stmt 1
+ 645 0028 89E0     	 b .L40
+ 646              	.L42:
+ 164:../BSP/rs485_protocol.c ****     }
+ 165:../BSP/rs485_protocol.c **** 
+ 166:../BSP/rs485_protocol.c ****     uint8_t cmd = rx_data[0];
+ 647              	 .loc 1 166 0
+ 648 002a 3B68     	 ldr r3,[r7]
+ 649 002c 1B78     	 ldrb r3,[r3]
+ 650 002e FB72     	 strb r3,[r7,#11]
+ 167:../BSP/rs485_protocol.c **** 
+ 168:../BSP/rs485_protocol.c ****     switch (cmd)
+ 651              	 .loc 1 168 0
+ 652 0030 FB7A     	 ldrb r3,[r7,#11]
+ 653 0032 EC3B     	 subs r3,r3,#236
+ 654 0034 072B     	 cmp r3,#7
+ 655 0036 00F28180 	 bhi .L56
+ 656 003a 01A2     	 adr r2,.L46
+ 657 003c 52F823F0 	 ldr pc,[r2,r3,lsl#2]
+ 658              	 .p2align 2
+ 659              	.L46:
+ 660 0040 AB000000 	 .word .L45+1
+ 661 0044 07010000 	 .word .L47+1
+ 662 0048 3D010000 	 .word .L56+1
+ 663 004c 3D010000 	 .word .L56+1
+ 664 0050 61000000 	 .word .L48+1
+ 665 0054 6F000000 	 .word .L49+1
+ 666 0058 83000000 	 .word .L50+1
+ 667 005c 97000000 	 .word .L51+1
+ 668              	 .p2align 1
+ 669              	.L48:
+ 670              	.LBB5:
+ 169:../BSP/rs485_protocol.c ****     {
+ 170:../BSP/rs485_protocol.c ****         case RS485_CMD_GET_SW_VERSION:
+ 171:../BSP/rs485_protocol.c ****         	if(Id == 254)
+ 671              	 .loc 1 171 0
+ 672 0060 FB88     	 ldrh r3,[r7,#6]
+ 673 0062 FE2B     	 cmp r3,#254
+ 674 0064 02D1     	 bne .L52
+ 172:../BSP/rs485_protocol.c ****         	{
+ 173:../BSP/rs485_protocol.c ****         		RS485_Protocol_HandleGetSwVersion();
+ 675              	 .loc 1 173 0
+ 676 0066 FFF7FEFF 	 bl RS485_Protocol_HandleGetSwVersion
+ 174:../BSP/rs485_protocol.c ****         	}
+ 175:../BSP/rs485_protocol.c ****             break;
+ 677              	 .loc 1 175 0
+ 678 006a 68E0     	 b .L40
+ 679              	.L52:
+ 680 006c 67E0     	 b .L40
+ 681              	.L49:
+ 176:../BSP/rs485_protocol.c **** 
+ 177:../BSP/rs485_protocol.c ****         case RS485_CMD_START_UPGRADE:
+ 178:../BSP/rs485_protocol.c ****         	if(Id == 254)
+ 682              	 .loc 1 178 0
+ 683 006e FB88     	 ldrh r3,[r7,#6]
+ 684 0070 FE2B     	 cmp r3,#254
+ 685 0072 05D1     	 bne .L53
+ 179:../BSP/rs485_protocol.c ****         	{
+ 180:../BSP/rs485_protocol.c ****         		RS485_Protocol_HandleStartUpgrade(rx_data, rx_len);
+ 686              	 .loc 1 180 0
+ 687 0074 7B79     	 ldrb r3,[r7,#5]
+ 688 0076 3868     	 ldr r0,[r7]
+ 689 0078 1946     	 mov r1,r3
+ 690 007a FFF7FEFF 	 bl RS485_Protocol_HandleStartUpgrade
+ 181:../BSP/rs485_protocol.c ****         	}
+ 182:../BSP/rs485_protocol.c ****             break;
+ 691              	 .loc 1 182 0
+ 692 007e 5EE0     	 b .L40
+ 693              	.L53:
+ 694 0080 5DE0     	 b .L40
+ 695              	.L50:
+ 183:../BSP/rs485_protocol.c **** 
+ 184:../BSP/rs485_protocol.c ****         case RS485_CMD_UPGRADE_DATA:
+ 185:../BSP/rs485_protocol.c ****         	if(Id == 254)
+ 696              	 .loc 1 185 0
+ 697 0082 FB88     	 ldrh r3,[r7,#6]
+ 698 0084 FE2B     	 cmp r3,#254
+ 699 0086 05D1     	 bne .L54
+ 186:../BSP/rs485_protocol.c ****         	{
+ 187:../BSP/rs485_protocol.c ****         		RS485_Protocol_HandleUpgradeData(rx_data, rx_len);
+ 700              	 .loc 1 187 0
+ 701 0088 7B79     	 ldrb r3,[r7,#5]
+ 702 008a 3868     	 ldr r0,[r7]
+ 703 008c 1946     	 mov r1,r3
+ 704 008e FFF7FEFF 	 bl RS485_Protocol_HandleUpgradeData
+ 188:../BSP/rs485_protocol.c ****         	}
+ 189:../BSP/rs485_protocol.c ****             break;
+ 705              	 .loc 1 189 0
+ 706 0092 54E0     	 b .L40
+ 707              	.L54:
+ 708 0094 53E0     	 b .L40
+ 709              	.L51:
+ 190:../BSP/rs485_protocol.c ****         case RS485_CMD_UPGRADE_END:
+ 191:../BSP/rs485_protocol.c ****         	if(Id == 254)
+ 710              	 .loc 1 191 0
+ 711 0096 FB88     	 ldrh r3,[r7,#6]
+ 712 0098 FE2B     	 cmp r3,#254
+ 713 009a 05D1     	 bne .L55
+ 192:../BSP/rs485_protocol.c ****         	{
+ 193:../BSP/rs485_protocol.c ****         		RS485_Protocol_HandleUpgradeEnd(rx_data, rx_len);
+ 714              	 .loc 1 193 0
+ 715 009c 7B79     	 ldrb r3,[r7,#5]
+ 716 009e 3868     	 ldr r0,[r7]
+ 717 00a0 1946     	 mov r1,r3
+ 718 00a2 FFF7FEFF 	 bl RS485_Protocol_HandleUpgradeEnd
+ 194:../BSP/rs485_protocol.c ****         	}
+ 195:../BSP/rs485_protocol.c ****             break;
+ 719              	 .loc 1 195 0
+ 720 00a6 4AE0     	 b .L40
+ 721              	.L55:
+ 722 00a8 49E0     	 b .L40
+ 723              	.L45:
+ 196:../BSP/rs485_protocol.c ****         case RS485_CMD_SET_CAN_BAUD:
+ 197:../BSP/rs485_protocol.c ****         	BR_canfd_ctrl = ((uint32_t)rx_data[1]) |
+ 724              	 .loc 1 197 0
+ 725 00aa 3B68     	 ldr r3,[r7]
+ 726 00ac 0133     	 adds r3,r3,#1
+ 727 00ae 1B78     	 ldrb r3,[r3]
+ 728 00b0 1A46     	 mov r2,r3
+ 198:../BSP/rs485_protocol.c **** 						   ((uint32_t)rx_data[2] << 8) |
+ 729              	 .loc 1 198 0
+ 730 00b2 3B68     	 ldr r3,[r7]
+ 731 00b4 0233     	 adds r3,r3,#2
+ 732 00b6 1B78     	 ldrb r3,[r3]
+ 733 00b8 1B02     	 lsls r3,r3,#8
+ 197:../BSP/rs485_protocol.c **** 						   ((uint32_t)rx_data[2] << 8) |
+ 734              	 .loc 1 197 0
+ 735 00ba 1A43     	 orrs r2,r2,r3
+ 199:../BSP/rs485_protocol.c **** 						   ((uint32_t)rx_data[3] << 16);
+ 736              	 .loc 1 199 0
+ 737 00bc 3B68     	 ldr r3,[r7]
+ 738 00be 0333     	 adds r3,r3,#3
+ 739 00c0 1B78     	 ldrb r3,[r3]
+ 740 00c2 1B04     	 lsls r3,r3,#16
+ 197:../BSP/rs485_protocol.c **** 						   ((uint32_t)rx_data[2] << 8) |
+ 741              	 .loc 1 197 0
+ 742 00c4 1343     	 orrs r3,r3,r2
+ 743 00c6 7B61     	 str r3,[r7,#20]
+ 200:../BSP/rs485_protocol.c ****         	BR_canfd_data = ((uint32_t)rx_data[4]) |
+ 744              	 .loc 1 200 0
+ 745 00c8 3B68     	 ldr r3,[r7]
+ 746 00ca 0433     	 adds r3,r3,#4
+ 747 00cc 1B78     	 ldrb r3,[r3]
+ 748 00ce 1A46     	 mov r2,r3
+ 201:../BSP/rs485_protocol.c **** 						   ((uint32_t)rx_data[5] << 8) |
+ 749              	 .loc 1 201 0
+ 750 00d0 3B68     	 ldr r3,[r7]
+ 751 00d2 0533     	 adds r3,r3,#5
+ 752 00d4 1B78     	 ldrb r3,[r3]
+ 753 00d6 1B02     	 lsls r3,r3,#8
+ 200:../BSP/rs485_protocol.c ****         	BR_canfd_data = ((uint32_t)rx_data[4]) |
+ 754              	 .loc 1 200 0
+ 755 00d8 1A43     	 orrs r2,r2,r3
+ 202:../BSP/rs485_protocol.c **** 						   ((uint32_t)rx_data[6] << 16) |
+ 756              	 .loc 1 202 0
+ 757 00da 3B68     	 ldr r3,[r7]
+ 758 00dc 0633     	 adds r3,r3,#6
+ 759 00de 1B78     	 ldrb r3,[r3]
+ 760 00e0 1B04     	 lsls r3,r3,#16
+ 201:../BSP/rs485_protocol.c **** 						   ((uint32_t)rx_data[5] << 8) |
+ 761              	 .loc 1 201 0
+ 762 00e2 1A43     	 orrs r2,r2,r3
+ 203:../BSP/rs485_protocol.c **** 						   ((uint32_t)rx_data[7] << 24);
+ 763              	 .loc 1 203 0
+ 764 00e4 3B68     	 ldr r3,[r7]
+ 765 00e6 0733     	 adds r3,r3,#7
+ 766 00e8 1B78     	 ldrb r3,[r3]
+ 767 00ea 1B06     	 lsls r3,r3,#24
+ 200:../BSP/rs485_protocol.c **** 						   ((uint32_t)rx_data[5] << 8) |
+ 768              	 .loc 1 200 0
+ 769 00ec 1343     	 orrs r3,r3,r2
+ 770 00ee 3B61     	 str r3,[r7,#16]
+ 204:../BSP/rs485_protocol.c ****         	DevInfo0x8000.BR_canfd_ctrl = BR_canfd_ctrl;
+ 771              	 .loc 1 204 0
+ 772 00f0 144A     	 ldr r2,.L57
+ 773 00f2 7B69     	 ldr r3,[r7,#20]
+ 774 00f4 C2F88830 	 str r3,[r2,#136]
+ 205:../BSP/rs485_protocol.c ****         	DevInfo0x8000.BR_canfd_data = BR_canfd_data;
+ 775              	 .loc 1 205 0
+ 776 00f8 124A     	 ldr r2,.L57
+ 777 00fa 3B69     	 ldr r3,[r7,#16]
+ 778 00fc C2F88C30 	 str r3,[r2,#140]
+ 206:../BSP/rs485_protocol.c ****         	DevConfig_SaveToEEPROM();
+ 779              	 .loc 1 206 0
+ 780 0100 FFF7FEFF 	 bl DevConfig_SaveToEEPROM
+ 207:../BSP/rs485_protocol.c **** 			break;
+ 781              	 .loc 1 207 0
+ 782 0104 1BE0     	 b .L40
+ 783              	.L47:
+ 208:../BSP/rs485_protocol.c ****         case RS485_CMD_SET_RS485_BAUD:
+ 209:../BSP/rs485_protocol.c ****         	BR_485 = ((uint32_t)rx_data[1]) |
+ 784              	 .loc 1 209 0
+ 785 0106 3B68     	 ldr r3,[r7]
+ 786 0108 0133     	 adds r3,r3,#1
+ 787 010a 1B78     	 ldrb r3,[r3]
+ 788 010c 1A46     	 mov r2,r3
+ 210:../BSP/rs485_protocol.c **** 				   ((uint32_t)rx_data[2] << 8) |
+ 789              	 .loc 1 210 0
+ 790 010e 3B68     	 ldr r3,[r7]
+ 791 0110 0233     	 adds r3,r3,#2
+ 792 0112 1B78     	 ldrb r3,[r3]
+ 793 0114 1B02     	 lsls r3,r3,#8
+ 209:../BSP/rs485_protocol.c **** 				   ((uint32_t)rx_data[2] << 8) |
+ 794              	 .loc 1 209 0
+ 795 0116 1A43     	 orrs r2,r2,r3
+ 211:../BSP/rs485_protocol.c **** 				   ((uint32_t)rx_data[3] << 16) |
+ 796              	 .loc 1 211 0
+ 797 0118 3B68     	 ldr r3,[r7]
+ 798 011a 0333     	 adds r3,r3,#3
+ 799 011c 1B78     	 ldrb r3,[r3]
+ 800 011e 1B04     	 lsls r3,r3,#16
+ 210:../BSP/rs485_protocol.c **** 				   ((uint32_t)rx_data[2] << 8) |
+ 801              	 .loc 1 210 0
+ 802 0120 1A43     	 orrs r2,r2,r3
+ 212:../BSP/rs485_protocol.c **** 				   ((uint32_t)rx_data[4] << 24);
+ 803              	 .loc 1 212 0
+ 804 0122 3B68     	 ldr r3,[r7]
+ 805 0124 0433     	 adds r3,r3,#4
+ 806 0126 1B78     	 ldrb r3,[r3]
+ 807 0128 1B06     	 lsls r3,r3,#24
+ 209:../BSP/rs485_protocol.c **** 				   ((uint32_t)rx_data[2] << 8) |
+ 808              	 .loc 1 209 0
+ 809 012a 1343     	 orrs r3,r3,r2
+ 810 012c FB60     	 str r3,[r7,#12]
+ 213:../BSP/rs485_protocol.c ****             DevInfo0x8000.BR_485  = BR_485;
+ 811              	 .loc 1 213 0
+ 812 012e 054A     	 ldr r2,.L57
+ 813 0130 FB68     	 ldr r3,[r7,#12]
+ 814 0132 C2F89030 	 str r3,[r2,#144]
+ 214:../BSP/rs485_protocol.c ****             DevConfig_SaveToEEPROM();
+ 815              	 .loc 1 214 0
+ 816 0136 FFF7FEFF 	 bl DevConfig_SaveToEEPROM
+ 215:../BSP/rs485_protocol.c **** 			break;
+ 817              	 .loc 1 215 0
+ 818 013a 00E0     	 b .L40
+ 819              	.L56:
+ 216:../BSP/rs485_protocol.c ****         default:
+ 217:../BSP/rs485_protocol.c ****             break;
+ 820              	 .loc 1 217 0
+ 821 013c 00BF     	 nop
+ 822              	.L40:
+ 823              	.LBE5:
+ 218:../BSP/rs485_protocol.c ****     }
+ 219:../BSP/rs485_protocol.c **** }
+ 824              	 .loc 1 219 0
+ 825 013e 1837     	 adds r7,r7,#24
+ 826              	.LCFI37:
+ 827              	 .cfi_def_cfa_offset 8
+ 828 0140 BD46     	 mov sp,r7
+ 829              	.LCFI38:
+ 830              	 .cfi_def_cfa_register 13
+ 831              	 
+ 832 0142 80BD     	 pop {r7,pc}
+ 833              	.L58:
+ 834              	 .align 2
+ 835              	.L57:
+ 836 0144 00000000 	 .word DevInfo0x8000
+ 837              	 .cfi_endproc
+ 838              	.LFE487:
+ 840              	 .section .text.RS485_Protocol_HandleGetSwVersion,"ax",%progbits
+ 841              	 .align 2
+ 842              	 .global RS485_Protocol_HandleGetSwVersion
+ 843              	 .thumb
+ 844              	 .thumb_func
+ 846              	RS485_Protocol_HandleGetSwVersion:
+ 847              	.LFB488:
+ 220:../BSP/rs485_protocol.c **** 
+ 221:../BSP/rs485_protocol.c **** 
+ 222:../BSP/rs485_protocol.c **** /* ==============================================================
+ 223:../BSP/rs485_protocol.c ****  * 0xF0 命令 - 读取软件版本
+ 224:../BSP/rs485_protocol.c ****  * ============================================================== */
+ 225:../BSP/rs485_protocol.c **** void RS485_Protocol_HandleGetSwVersion(void)
+ 226:../BSP/rs485_protocol.c **** {
+ 848              	 .loc 1 226 0
+ 849              	 .cfi_startproc
+ 850              	 
+ 851              	 
+ 852 0000 80B5     	 push {r7,lr}
+ 853              	.LCFI39:
+ 854              	 .cfi_def_cfa_offset 8
+ 855              	 .cfi_offset 7,-8
+ 856              	 .cfi_offset 14,-4
+ 857 0002 86B0     	 sub sp,sp,#24
+ 858              	.LCFI40:
+ 859              	 .cfi_def_cfa_offset 32
+ 860 0004 00AF     	 add r7,sp,#0
+ 861              	.LCFI41:
+ 862              	 .cfi_def_cfa_register 7
+ 227:../BSP/rs485_protocol.c **** 	const char *version = DevInfo0x8000.Sv; // 例如 "1.0.0"
+ 863              	 .loc 1 227 0
+ 864 0006 364B     	 ldr r3,.L69
+ 865 0008 3B61     	 str r3,[r7,#16]
+ 228:../BSP/rs485_protocol.c **** 	uint8_t version_len = (uint8_t)strlen(version);
+ 866              	 .loc 1 228 0
+ 867 000a 3869     	 ldr r0,[r7,#16]
+ 868 000c FFF7FEFF 	 bl strlen
+ 869 0010 0346     	 mov r3,r0
+ 870 0012 FB75     	 strb r3,[r7,#23]
+ 229:../BSP/rs485_protocol.c **** 	if (version_len == 0) version_len = 1;
+ 871              	 .loc 1 229 0
+ 872 0014 FB7D     	 ldrb r3,[r7,#23]
+ 873 0016 002B     	 cmp r3,#0
+ 874 0018 01D1     	 bne .L60
+ 875              	 .loc 1 229 0 is_stmt 0 discriminator 1
+ 876 001a 0123     	 movs r3,#1
+ 877 001c FB75     	 strb r3,[r7,#23]
+ 878              	.L60:
+ 230:../BSP/rs485_protocol.c **** 
+ 231:../BSP/rs485_protocol.c **** 	// 分包发送逻辑 (如果版本号较长)
+ 232:../BSP/rs485_protocol.c **** 	const uint8_t PIECE_SIZE = 6;
+ 879              	 .loc 1 232 0 is_stmt 1
+ 880 001e 0623     	 movs r3,#6
+ 881 0020 FB73     	 strb r3,[r7,#15]
+ 233:../BSP/rs485_protocol.c **** 	uint8_t total_frames = (version_len + PIECE_SIZE - 1) / PIECE_SIZE;
+ 882              	 .loc 1 233 0
+ 883 0022 FA7D     	 ldrb r2,[r7,#23]
+ 884 0024 FB7B     	 ldrb r3,[r7,#15]
+ 885 0026 1344     	 add r3,r3,r2
+ 886 0028 5A1E     	 subs r2,r3,#1
+ 887 002a FB7B     	 ldrb r3,[r7,#15]
+ 888 002c 92FBF3F3 	 sdiv r3,r2,r3
+ 889 0030 BB73     	 strb r3,[r7,#14]
+ 890              	.LBB6:
+ 234:../BSP/rs485_protocol.c **** 
+ 235:../BSP/rs485_protocol.c **** 	for (uint8_t frame_num = 0; frame_num < total_frames; frame_num++)
+ 891              	 .loc 1 235 0
+ 892 0032 0023     	 movs r3,#0
+ 893 0034 BB75     	 strb r3,[r7,#22]
+ 894 0036 4CE0     	 b .L61
+ 895              	.L68:
+ 896              	.LBB7:
+ 236:../BSP/rs485_protocol.c **** 	{
+ 237:../BSP/rs485_protocol.c **** 		uint8_t payload[8]; // 协议中的 DATA 部分
+ 238:../BSP/rs485_protocol.c **** 
+ 239:../BSP/rs485_protocol.c **** 		// 构造 DATA 内容
+ 240:../BSP/rs485_protocol.c **** 		payload[0] = 0xF0; // 命令识别码 (回复 GetVersion)
+ 897              	 .loc 1 240 0
+ 898 0038 F023     	 movs r3,#240
+ 899 003a 3B71     	 strb r3,[r7,#4]
+ 241:../BSP/rs485_protocol.c **** 
+ 242:../BSP/rs485_protocol.c **** 		// 帧信息: Bit7=是否尾帧, Bit0-6=帧序号
+ 243:../BSP/rs485_protocol.c **** 		uint8_t is_tail = (frame_num == total_frames - 1) ? 1 : 0;
+ 900              	 .loc 1 243 0
+ 901 003c BA7D     	 ldrb r2,[r7,#22]
+ 902 003e BB7B     	 ldrb r3,[r7,#14]
+ 903 0040 013B     	 subs r3,r3,#1
+ 904 0042 9A42     	 cmp r2,r3
+ 905 0044 0CBF     	 ite eq
+ 906 0046 0123     	 moveq r3,#1
+ 907 0048 0023     	 movne r3,#0
+ 908 004a DBB2     	 uxtb r3,r3
+ 909 004c 7B73     	 strb r3,[r7,#13]
+ 244:../BSP/rs485_protocol.c **** 		payload[1] = (is_tail << 7) | (frame_num & 0x7F);
+ 910              	 .loc 1 244 0
+ 911 004e 7B7B     	 ldrb r3,[r7,#13]
+ 912 0050 DB01     	 lsls r3,r3,#7
+ 913 0052 DAB2     	 uxtb r2,r3
+ 914 0054 BB7D     	 ldrb r3,[r7,#22]
+ 915 0056 03F07F03 	 and r3,r3,#127
+ 916 005a DBB2     	 uxtb r3,r3
+ 917 005c 1343     	 orrs r3,r3,r2
+ 918 005e DBB2     	 uxtb r3,r3
+ 919 0060 DBB2     	 uxtb r3,r3
+ 920 0062 7B71     	 strb r3,[r7,#5]
+ 245:../BSP/rs485_protocol.c **** 
+ 246:../BSP/rs485_protocol.c **** 		// 填充版本字符串片段
+ 247:../BSP/rs485_protocol.c **** 		uint8_t offset = frame_num * PIECE_SIZE;
+ 921              	 .loc 1 247 0
+ 922 0064 BA7D     	 ldrb r2,[r7,#22]
+ 923 0066 FB7B     	 ldrb r3,[r7,#15]
+ 924 0068 12FB03F3 	 smulbb r3,r2,r3
+ 925 006c 3B73     	 strb r3,[r7,#12]
+ 926              	.LBB8:
+ 248:../BSP/rs485_protocol.c **** 		for (uint8_t j = 0; j < 6; j++) {
+ 927              	 .loc 1 248 0
+ 928 006e 0023     	 movs r3,#0
+ 929 0070 7B75     	 strb r3,[r7,#21]
+ 930 0072 18E0     	 b .L62
+ 931              	.L65:
+ 249:../BSP/rs485_protocol.c **** 			payload[2 + j] = (offset + j < version_len) ? (uint8_t)version[offset + j] : 0x00;
+ 932              	 .loc 1 249 0
+ 933 0074 7B7D     	 ldrb r3,[r7,#21]
+ 934 0076 0233     	 adds r3,r3,#2
+ 935 0078 397B     	 ldrb r1,[r7,#12]
+ 936 007a 7A7D     	 ldrb r2,[r7,#21]
+ 937 007c 1144     	 add r1,r1,r2
+ 938 007e FA7D     	 ldrb r2,[r7,#23]
+ 939 0080 9142     	 cmp r1,r2
+ 940 0082 07DA     	 bge .L63
+ 941              	 .loc 1 249 0 is_stmt 0 discriminator 1
+ 942 0084 397B     	 ldrb r1,[r7,#12]
+ 943 0086 7A7D     	 ldrb r2,[r7,#21]
+ 944 0088 0A44     	 add r2,r2,r1
+ 945 008a 1146     	 mov r1,r2
+ 946 008c 3A69     	 ldr r2,[r7,#16]
+ 947 008e 0A44     	 add r2,r2,r1
+ 948 0090 1278     	 ldrb r2,[r2]
+ 949 0092 00E0     	 b .L64
+ 950              	.L63:
+ 951              	 .loc 1 249 0 discriminator 2
+ 952 0094 0022     	 movs r2,#0
+ 953              	.L64:
+ 954              	 .loc 1 249 0 discriminator 4
+ 955 0096 07F11801 	 add r1,r7,#24
+ 956 009a 0B44     	 add r3,r3,r1
+ 957 009c 03F8142C 	 strb r2,[r3,#-20]
+ 248:../BSP/rs485_protocol.c **** 		for (uint8_t j = 0; j < 6; j++) {
+ 958              	 .loc 1 248 0 is_stmt 1 discriminator 4
+ 959 00a0 7B7D     	 ldrb r3,[r7,#21]
+ 960 00a2 0133     	 adds r3,r3,#1
+ 961 00a4 7B75     	 strb r3,[r7,#21]
+ 962              	.L62:
+ 248:../BSP/rs485_protocol.c **** 		for (uint8_t j = 0; j < 6; j++) {
+ 963              	 .loc 1 248 0 is_stmt 0 discriminator 2
+ 964 00a6 7B7D     	 ldrb r3,[r7,#21]
+ 965 00a8 052B     	 cmp r3,#5
+ 966 00aa E3D9     	 bls .L65
+ 967              	.LBE8:
+ 250:../BSP/rs485_protocol.c **** 		}
+ 251:../BSP/rs485_protocol.c **** 
+ 252:../BSP/rs485_protocol.c **** 		// --- 核心：调用刚才写的组包发送函数 ---
+ 253:../BSP/rs485_protocol.c **** 		RS485_SendProtocolFrame(254,payload, 8);
+ 968              	 .loc 1 253 0 is_stmt 1
+ 969 00ac 3B1D     	 adds r3,r7,#4
+ 970 00ae FE20     	 movs r0,#254
+ 971 00b0 1946     	 mov r1,r3
+ 972 00b2 0822     	 movs r2,#8
+ 973 00b4 FFF7FEFF 	 bl RS485_SendProtocolFrame
+ 974              	.LBB9:
+ 254:../BSP/rs485_protocol.c **** 
+ 255:../BSP/rs485_protocol.c **** 		// 如果是连续多帧发送，建议加一点微小的软件延时，
+ 256:../BSP/rs485_protocol.c **** 		// 确保 DMA 有机会启动（虽然有 Busy 检测，但太快可能会占满带宽）
+ 257:../BSP/rs485_protocol.c **** 		for(volatile int d = 0; d < 500; d++);
+ 975              	 .loc 1 257 0
+ 976 00b8 0023     	 movs r3,#0
+ 977 00ba 3B60     	 str r3,[r7]
+ 978 00bc 02E0     	 b .L66
+ 979              	.L67:
+ 980              	 .loc 1 257 0 is_stmt 0 discriminator 3
+ 981 00be 3B68     	 ldr r3,[r7]
+ 982 00c0 0133     	 adds r3,r3,#1
+ 983 00c2 3B60     	 str r3,[r7]
+ 984              	.L66:
+ 985              	 .loc 1 257 0 discriminator 1
+ 986 00c4 3B68     	 ldr r3,[r7]
+ 987 00c6 B3F5FA7F 	 cmp r3,#500
+ 988 00ca F8DB     	 blt .L67
+ 989              	.LBE9:
+ 990              	.LBE7:
+ 235:../BSP/rs485_protocol.c **** 	{
+ 991              	 .loc 1 235 0 is_stmt 1 discriminator 2
+ 992 00cc BB7D     	 ldrb r3,[r7,#22]
+ 993 00ce 0133     	 adds r3,r3,#1
+ 994 00d0 BB75     	 strb r3,[r7,#22]
+ 995              	.L61:
+ 235:../BSP/rs485_protocol.c **** 	{
+ 996              	 .loc 1 235 0 is_stmt 0 discriminator 1
+ 997 00d2 BA7D     	 ldrb r2,[r7,#22]
+ 998 00d4 BB7B     	 ldrb r3,[r7,#14]
+ 999 00d6 9A42     	 cmp r2,r3
+ 1000 00d8 AED3     	 bcc .L68
+ 1001              	.LBE6:
+ 258:../BSP/rs485_protocol.c **** 	}
+ 259:../BSP/rs485_protocol.c **** }
+ 1002              	 .loc 1 259 0 is_stmt 1
+ 1003 00da 1837     	 adds r7,r7,#24
+ 1004              	.LCFI42:
+ 1005              	 .cfi_def_cfa_offset 8
+ 1006 00dc BD46     	 mov sp,r7
+ 1007              	.LCFI43:
+ 1008              	 .cfi_def_cfa_register 13
+ 1009              	 
+ 1010 00de 80BD     	 pop {r7,pc}
+ 1011              	.L70:
+ 1012              	 .align 2
+ 1013              	.L69:
+ 1014 00e0 42000000 	 .word DevInfo0x8000+66
+ 1015              	 .cfi_endproc
+ 1016              	.LFE488:
+ 1018              	 .section .text.RS485_Protocol_HandleStartUpgrade,"ax",%progbits
+ 1019              	 .align 2
+ 1020              	 .global RS485_Protocol_HandleStartUpgrade
+ 1021              	 .thumb
+ 1022              	 .thumb_func
+ 1024              	RS485_Protocol_HandleStartUpgrade:
+ 1025              	.LFB489:
+ 260:../BSP/rs485_protocol.c **** 
+ 261:../BSP/rs485_protocol.c **** /* ==============================================================
+ 262:../BSP/rs485_protocol.c ****  * 0xF1 命令 - 开始升级 (Boot 版本)
+ 263:../BSP/rs485_protocol.c ****  * ============================================================== */
+ 264:../BSP/rs485_protocol.c **** void RS485_Protocol_HandleStartUpgrade(const uint8_t *rx_data, uint8_t rx_len)
+ 265:../BSP/rs485_protocol.c **** {
+ 1026              	 .loc 1 265 0
+ 1027              	 .cfi_startproc
+ 1028              	 
+ 1029              	 
+ 1030 0000 80B5     	 push {r7,lr}
+ 1031              	.LCFI44:
+ 1032              	 .cfi_def_cfa_offset 8
+ 1033              	 .cfi_offset 7,-8
+ 1034              	 .cfi_offset 14,-4
+ 1035 0002 88B0     	 sub sp,sp,#32
+ 1036              	.LCFI45:
+ 1037              	 .cfi_def_cfa_offset 40
+ 1038 0004 00AF     	 add r7,sp,#0
+ 1039              	.LCFI46:
+ 1040              	 .cfi_def_cfa_register 7
+ 1041 0006 7860     	 str r0,[r7,#4]
+ 1042 0008 0B46     	 mov r3,r1
+ 1043 000a FB70     	 strb r3,[r7,#3]
+ 266:../BSP/rs485_protocol.c **** 	/* 1. 基本长度校验 (根据原逻辑 rx_data 包含 Payload，需确保长度足够) */
+ 267:../BSP/rs485_protocol.c **** 	if (rx_len < 7)
+ 1044              	 .loc 1 267 0
+ 1045 000c FB78     	 ldrb r3,[r7,#3]
+ 1046 000e 062B     	 cmp r3,#6
+ 1047 0010 5AD9     	 bls .L71
+ 268:../BSP/rs485_protocol.c **** 	{
+ 269:../BSP/rs485_protocol.c **** 		return;
+ 270:../BSP/rs485_protocol.c **** 	}
+ 271:../BSP/rs485_protocol.c **** 
+ 272:../BSP/rs485_protocol.c **** 	/* 2. 解析请求 (小端) */
+ 273:../BSP/rs485_protocol.c **** 	/* rx_data[1..3] 为数据总长度 */
+ 274:../BSP/rs485_protocol.c **** 	uint16_t recv_password = (uint16_t)rx_data[4] | ((uint16_t)rx_data[5] << 8);
+ 1048              	 .loc 1 274 0
+ 1049 0012 7B68     	 ldr r3,[r7,#4]
+ 1050 0014 0433     	 adds r3,r3,#4
+ 1051 0016 1B78     	 ldrb r3,[r3]
+ 1052 0018 9AB2     	 uxth r2,r3
+ 1053 001a 7B68     	 ldr r3,[r7,#4]
+ 1054 001c 0533     	 adds r3,r3,#5
+ 1055 001e 1B78     	 ldrb r3,[r3]
+ 1056 0020 1B02     	 lsls r3,r3,#8
+ 1057 0022 9BB2     	 uxth r3,r3
+ 1058 0024 1343     	 orrs r3,r3,r2
+ 1059 0026 9BB2     	 uxth r3,r3
+ 1060 0028 7B83     	 strh r3,[r7,#26]
+ 275:../BSP/rs485_protocol.c **** 
+ 276:../BSP/rs485_protocol.c **** 	/* 帧长度: 主机发送1字节 */
+ 277:../BSP/rs485_protocol.c **** 	uint16_t recv_frame_len = (uint16_t)rx_data[6];
+ 1061              	 .loc 1 277 0
+ 1062 002a 7B68     	 ldr r3,[r7,#4]
+ 1063 002c 0633     	 adds r3,r3,#6
+ 1064 002e 1B78     	 ldrb r3,[r3]
+ 1065 0030 3B83     	 strh r3,[r7,#24]
+ 278:../BSP/rs485_protocol.c **** 	(void)recv_frame_len;
+ 279:../BSP/rs485_protocol.c **** 
+ 280:../BSP/rs485_protocol.c **** 	/* 3. 获取设备ID并计算正确密码 (复用 RS485 协议层的密码算法) */
+ 281:../BSP/rs485_protocol.c **** 	/* 假设 DevInfo0x8000 是全局对象 */
+ 282:../BSP/rs485_protocol.c **** 	uint16_t dev_id = DevInfo0x8000.DevID;
+ 1066              	 .loc 1 282 0
+ 1067 0032 274B     	 ldr r3,.L80
+ 1068 0034 FB82     	 strh r3,[r7,#22]
+ 283:../BSP/rs485_protocol.c **** 	uint16_t correct_password = RS485_Protocol_CalcPassword(dev_id);
+ 1069              	 .loc 1 283 0
+ 1070 0036 FB8A     	 ldrh r3,[r7,#22]
+ 1071 0038 1846     	 mov r0,r3
+ 1072 003a FFF7FEFF 	 bl RS485_Protocol_CalcPassword
+ 1073 003e 0346     	 mov r3,r0
+ 1074 0040 BB82     	 strh r3,[r7,#20]
+ 284:../BSP/rs485_protocol.c **** 
+ 285:../BSP/rs485_protocol.c **** 	/* 4. 准备应答数据 */
+ 286:../BSP/rs485_protocol.c **** 	uint8_t tx_payload[8] = {0};
+ 1075              	 .loc 1 286 0
+ 1076 0042 0023     	 movs r3,#0
+ 1077 0044 FB60     	 str r3,[r7,#12]
+ 1078 0046 0023     	 movs r3,#0
+ 1079 0048 3B61     	 str r3,[r7,#16]
+ 287:../BSP/rs485_protocol.c **** 	tx_payload[0] = RS485_CMD_START_UPGRADE; /* 对应 0xF1 */
+ 1080              	 .loc 1 287 0
+ 1081 004a F123     	 movs r3,#241
+ 1082 004c 3B73     	 strb r3,[r7,#12]
+ 288:../BSP/rs485_protocol.c **** 
+ 289:../BSP/rs485_protocol.c **** 	/* 填充应答内容 (保持小端格式) */
+ 290:../BSP/rs485_protocol.c **** 	tx_payload[2] = (uint8_t)(correct_password & 0xFF);
+ 1083              	 .loc 1 290 0
+ 1084 004e BB8A     	 ldrh r3,[r7,#20]
+ 1085 0050 DBB2     	 uxtb r3,r3
+ 1086 0052 BB73     	 strb r3,[r7,#14]
+ 291:../BSP/rs485_protocol.c **** 	tx_payload[3] = (uint8_t)((correct_password >> 8) & 0xFF);
+ 1087              	 .loc 1 291 0
+ 1088 0054 BB8A     	 ldrh r3,[r7,#20]
+ 1089 0056 1B0A     	 lsrs r3,r3,#8
+ 1090 0058 9BB2     	 uxth r3,r3
+ 1091 005a DBB2     	 uxtb r3,r3
+ 1092 005c FB73     	 strb r3,[r7,#15]
+ 292:../BSP/rs485_protocol.c **** 
+ 293:../BSP/rs485_protocol.c **** 	/* 设备支持的最大数据包长度 (RS485_MAX_DATA_LEN 为 8) */
+ 294:../BSP/rs485_protocol.c **** 	tx_payload[4] = (uint8_t)(RS485_MAX_DATA_LEN & 0xFF);
+ 1093              	 .loc 1 294 0
+ 1094 005e 0823     	 movs r3,#8
+ 1095 0060 3B74     	 strb r3,[r7,#16]
+ 295:../BSP/rs485_protocol.c **** 
+ 296:../BSP/rs485_protocol.c **** 	if (recv_password != correct_password)
+ 1096              	 .loc 1 296 0
+ 1097 0062 7A8B     	 ldrh r2,[r7,#26]
+ 1098 0064 BB8A     	 ldrh r3,[r7,#20]
+ 1099 0066 9A42     	 cmp r2,r3
+ 1100 0068 09D0     	 beq .L74
+ 297:../BSP/rs485_protocol.c **** 	{
+ 298:../BSP/rs485_protocol.c **** 		/* 密码错误状态 */
+ 299:../BSP/rs485_protocol.c **** 		tx_payload[1] = 0x00; /* 假设 UPGRADE_STATUS_PASSWORD_FAIL 为 2 */
+ 1101              	 .loc 1 299 0
+ 1102 006a 0023     	 movs r3,#0
+ 1103 006c 7B73     	 strb r3,[r7,#13]
+ 300:../BSP/rs485_protocol.c **** 
+ 301:../BSP/rs485_protocol.c **** 		/* 调用 485 组包发送接口: 会自动添加 A5, ID, LEN, Checksum */
+ 302:../BSP/rs485_protocol.c **** 		RS485_SendProtocolFrame(254,tx_payload, 5);
+ 1104              	 .loc 1 302 0
+ 1105 006e 07F10C03 	 add r3,r7,#12
+ 1106 0072 FE20     	 movs r0,#254
+ 1107 0074 1946     	 mov r1,r3
+ 1108 0076 0522     	 movs r2,#5
+ 1109 0078 FFF7FEFF 	 bl RS485_SendProtocolFrame
+ 1110 007c 24E0     	 b .L71
+ 1111              	.L74:
+ 1112              	.LBB10:
+ 303:../BSP/rs485_protocol.c **** 	}
+ 304:../BSP/rs485_protocol.c **** 	else
+ 305:../BSP/rs485_protocol.c **** 	{
+ 306:../BSP/rs485_protocol.c **** 		/* 密码正确，准备跳转 */
+ 307:../BSP/rs485_protocol.c **** 		tx_payload[1] = 0x01; /* 假设 UPGRADE_STATUS_APP_TO_BOOT 为 1 */
+ 1113              	 .loc 1 307 0
+ 1114 007e 0123     	 movs r3,#1
+ 1115 0080 7B73     	 strb r3,[r7,#13]
+ 308:../BSP/rs485_protocol.c **** 
+ 309:../BSP/rs485_protocol.c **** 		/* 发送应答帧 */
+ 310:../BSP/rs485_protocol.c **** 		RS485_SendProtocolFrame(254,tx_payload, 5);
+ 1116              	 .loc 1 310 0
+ 1117 0082 07F10C03 	 add r3,r7,#12
+ 1118 0086 FE20     	 movs r0,#254
+ 1119 0088 1946     	 mov r1,r3
+ 1120 008a 0522     	 movs r2,#5
+ 1121 008c FFF7FEFF 	 bl RS485_SendProtocolFrame
+ 311:../BSP/rs485_protocol.c **** 
+ 312:../BSP/rs485_protocol.c **** 		/* 5. 关键：等待 485 硬件彻底发完 (因为 485 是半双工) */
+ 313:../BSP/rs485_protocol.c **** 		/* 由于使用了 DMA + IDLE 轮询，这里等待 tx_busy 清零即可 */
+ 314:../BSP/rs485_protocol.c **** 		uint32_t timeout = 0xFFFFF;
+ 1122              	 .loc 1 314 0
+ 1123 0090 104B     	 ldr r3,.L80+4
+ 1124 0092 FB61     	 str r3,[r7,#28]
+ 315:../BSP/rs485_protocol.c **** 		extern UART_t UART_485;
+ 316:../BSP/rs485_protocol.c **** 		while (UART_485.runtime->tx_busy && --timeout);
+ 1125              	 .loc 1 316 0
+ 1126 0094 00BF     	 nop
+ 1127              	.L77:
+ 1128              	 .loc 1 316 0 is_stmt 0 discriminator 2
+ 1129 0096 104B     	 ldr r3,.L80+8
+ 1130 0098 9B68     	 ldr r3,[r3,#8]
+ 1131 009a 1B7E     	 ldrb r3,[r3,#24]
+ 1132 009c DBB2     	 uxtb r3,r3
+ 1133 009e 002B     	 cmp r3,#0
+ 1134 00a0 05D0     	 beq .L76
+ 1135              	 .loc 1 316 0 discriminator 1
+ 1136 00a2 FB69     	 ldr r3,[r7,#28]
+ 1137 00a4 013B     	 subs r3,r3,#1
+ 1138 00a6 FB61     	 str r3,[r7,#28]
+ 1139 00a8 FB69     	 ldr r3,[r7,#28]
+ 1140 00aa 002B     	 cmp r3,#0
+ 1141 00ac F3D1     	 bne .L77
+ 1142              	.L76:
+ 1143              	.LBB11:
+ 317:../BSP/rs485_protocol.c **** 
+ 318:../BSP/rs485_protocol.c **** 		/* 增加物理链路排空延时 (5Mbps 虽快，但需确保停止位发完) */
+ 319:../BSP/rs485_protocol.c **** 		for (volatile int i = 0; i < 50000; i++);
+ 1144              	 .loc 1 319 0 is_stmt 1
+ 1145 00ae 0023     	 movs r3,#0
+ 1146 00b0 BB60     	 str r3,[r7,#8]
+ 1147 00b2 02E0     	 b .L78
+ 1148              	.L79:
+ 1149              	 .loc 1 319 0 is_stmt 0 discriminator 3
+ 1150 00b4 BB68     	 ldr r3,[r7,#8]
+ 1151 00b6 0133     	 adds r3,r3,#1
+ 1152 00b8 BB60     	 str r3,[r7,#8]
+ 1153              	.L78:
+ 1154              	 .loc 1 319 0 discriminator 1
+ 1155 00ba BB68     	 ldr r3,[r7,#8]
+ 1156 00bc 4CF24F32 	 movw r2,#49999
+ 1157 00c0 9342     	 cmp r3,r2
+ 1158 00c2 F7DD     	 ble .L79
+ 1159              	.LBE11:
+ 320:../BSP/rs485_protocol.c **** 
+ 321:../BSP/rs485_protocol.c **** 		Handle_Bootstrap_Request();
+ 1160              	 .loc 1 321 0 is_stmt 1
+ 1161 00c4 FFF7FEFF 	 bl Handle_Bootstrap_Request
+ 1162              	.L71:
+ 1163              	.LBE10:
+ 322:../BSP/rs485_protocol.c **** 	}
+ 323:../BSP/rs485_protocol.c **** }
+ 1164              	 .loc 1 323 0
+ 1165 00c8 2037     	 adds r7,r7,#32
+ 1166              	.LCFI47:
+ 1167              	 .cfi_def_cfa_offset 8
+ 1168 00ca BD46     	 mov sp,r7
+ 1169              	.LCFI48:
+ 1170              	 .cfi_def_cfa_register 13
+ 1171              	 
+ 1172 00cc 80BD     	 pop {r7,pc}
+ 1173              	.L81:
+ 1174 00ce 00BF     	 .align 2
+ 1175              	.L80:
+ 1176 00d0 98000000 	 .word DevInfo0x8000+152
+ 1177 00d4 FFFF0F00 	 .word 1048575
+ 1178 00d8 00000000 	 .word UART_485
+ 1179              	 .cfi_endproc
+ 1180              	.LFE489:
+ 1182              	 .section .text.RS485_Protocol_HandleUpgradeData,"ax",%progbits
+ 1183              	 .align 2
+ 1184              	 .global RS485_Protocol_HandleUpgradeData
+ 1185              	 .thumb
+ 1186              	 .thumb_func
+ 1188              	RS485_Protocol_HandleUpgradeData:
+ 1189              	.LFB490:
+ 324:../BSP/rs485_protocol.c **** 
+ 325:../BSP/rs485_protocol.c **** /* ==============================================================
+ 326:../BSP/rs485_protocol.c ****  * 0xF2 命令 - 升级数据
+ 327:../BSP/rs485_protocol.c ****  *
+ 328:../BSP/rs485_protocol.c ****  * 注意: 数据按顺序接收，地址用于校验（可选）
+ 329:../BSP/rs485_protocol.c ****  * ============================================================== */
+ 330:../BSP/rs485_protocol.c **** void RS485_Protocol_HandleUpgradeData(const uint8_t *rx_data, uint8_t rx_len)
+ 331:../BSP/rs485_protocol.c **** {
+ 1190              	 .loc 1 331 0
+ 1191              	 .cfi_startproc
+ 1192              	 
+ 1193              	 
+ 1194              	 
+ 1195 0000 80B4     	 push {r7}
+ 1196              	.LCFI49:
+ 1197              	 .cfi_def_cfa_offset 4
+ 1198              	 .cfi_offset 7,-4
+ 1199 0002 83B0     	 sub sp,sp,#12
+ 1200              	.LCFI50:
+ 1201              	 .cfi_def_cfa_offset 16
+ 1202 0004 00AF     	 add r7,sp,#0
+ 1203              	.LCFI51:
+ 1204              	 .cfi_def_cfa_register 7
+ 1205 0006 7860     	 str r0,[r7,#4]
+ 1206 0008 0B46     	 mov r3,r1
+ 1207 000a FB70     	 strb r3,[r7,#3]
+ 332:../BSP/rs485_protocol.c **** 
+ 333:../BSP/rs485_protocol.c **** }
+ 1208              	 .loc 1 333 0
+ 1209 000c 0C37     	 adds r7,r7,#12
+ 1210              	.LCFI52:
+ 1211              	 .cfi_def_cfa_offset 4
+ 1212 000e BD46     	 mov sp,r7
+ 1213              	.LCFI53:
+ 1214              	 .cfi_def_cfa_register 13
+ 1215              	 
+ 1216 0010 5DF8047B 	 ldr r7,[sp],#4
+ 1217              	.LCFI54:
+ 1218              	 .cfi_restore 7
+ 1219              	 .cfi_def_cfa_offset 0
+ 1220 0014 7047     	 bx lr
+ 1221              	 .cfi_endproc
+ 1222              	.LFE490:
+ 1224 0016 00BF     	 .section .text.RS485_Protocol_HandleUpgradeEnd,"ax",%progbits
+ 1225              	 .align 2
+ 1226              	 .global RS485_Protocol_HandleUpgradeEnd
+ 1227              	 .thumb
+ 1228              	 .thumb_func
+ 1230              	RS485_Protocol_HandleUpgradeEnd:
+ 1231              	.LFB491:
+ 334:../BSP/rs485_protocol.c **** 
+ 335:../BSP/rs485_protocol.c **** /* ==============================================================
+ 336:../BSP/rs485_protocol.c ****  * 0xF3 命令 - 升级结束
+ 337:../BSP/rs485_protocol.c ****  * ============================================================== */
+ 338:../BSP/rs485_protocol.c **** void RS485_Protocol_HandleUpgradeEnd(const uint8_t *rx_data, uint8_t rx_len)
+ 339:../BSP/rs485_protocol.c **** {
+ 1232              	 .loc 1 339 0
+ 1233              	 .cfi_startproc
+ 1234              	 
+ 1235              	 
+ 1236              	 
+ 1237 0000 80B4     	 push {r7}
+ 1238              	.LCFI55:
+ 1239              	 .cfi_def_cfa_offset 4
+ 1240              	 .cfi_offset 7,-4
+ 1241 0002 83B0     	 sub sp,sp,#12
+ 1242              	.LCFI56:
+ 1243              	 .cfi_def_cfa_offset 16
+ 1244 0004 00AF     	 add r7,sp,#0
+ 1245              	.LCFI57:
+ 1246              	 .cfi_def_cfa_register 7
+ 1247 0006 7860     	 str r0,[r7,#4]
+ 1248 0008 0B46     	 mov r3,r1
+ 1249 000a FB70     	 strb r3,[r7,#3]
+ 340:../BSP/rs485_protocol.c **** 
+ 341:../BSP/rs485_protocol.c **** }
+ 1250              	 .loc 1 341 0
+ 1251 000c 0C37     	 adds r7,r7,#12
+ 1252              	.LCFI58:
+ 1253              	 .cfi_def_cfa_offset 4
+ 1254 000e BD46     	 mov sp,r7
+ 1255              	.LCFI59:
+ 1256              	 .cfi_def_cfa_register 13
+ 1257              	 
+ 1258 0010 5DF8047B 	 ldr r7,[sp],#4
+ 1259              	.LCFI60:
+ 1260              	 .cfi_restore 7
+ 1261              	 .cfi_def_cfa_offset 0
+ 1262 0014 7047     	 bx lr
+ 1263              	 .cfi_endproc
+ 1264              	.LFE491:
+ 1266 0016 00BF     	 .text
+ 1267              	.Letext0:
+ 1268              	 .file 2 "d:\\infineon\\tools\\dave ide\\4.5.0.202105191637\\eclipse\\arm-gcc-49\\arm-none-eabi\\include\\machine\\_default_types.h"
+ 1269              	 .file 3 "d:\\infineon\\tools\\dave ide\\4.5.0.202105191637\\eclipse\\arm-gcc-49\\arm-none-eabi\\include\\stdint.h"
+ 1270              	 .file 4 "D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-app/Libraries/CMSIS/Infineon/XMC4300_series/Include/XMC4300.h"
+ 1271              	 .file 5 "D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-app/SSC/Src/ryhandObjects.h"
+ 1272              	 .file 6 "D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-app/Libraries/XMCLib/inc/xmc4_flash.h"
+ 1273              	 .file 7 "D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-app/Libraries/XMCLib/inc/xmc_gpio.h"
+ 1274              	 .file 8 "D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-app/Libraries/XMCLib/inc/xmc4_gpio.h"
+ 1275              	 .file 9 "D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-app/Libraries/XMCLib/inc/xmc_dma.h"
+ 1276              	 .file 10 "D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-app/Dave/Generated/GLOBAL_DMA/global_dma.h"
+ 1277              	 .file 11 "D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-app/Libraries/XMCLib/inc/xmc_usic.h"
+ 1278              	 .file 12 "D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-app/Libraries/XMCLib/inc/xmc_uart.h"
+ 1279              	 .file 13 "D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-app/Dave/Generated/UART/uart.h"
+ 1280              	 .file 14 "D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-app/Libraries/CMSIS/Include/cmsis_gcc.h"
+ 1281              	 .file 15 "D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-app/Libraries/CMSIS/Include/core_cm4.h"
+ 1282              	 .file 16 "D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-app/Libraries/CMSIS/Infineon/XMC4300_series/Include/system_XMC4300.h"
+DEFINED SYMBOLS
+                            *ABS*:00000000 rs485_protocol.c
+    {standard input}:20     .bss.s_FlashWriteAddr:00000000 $d
+    {standard input}:23     .bss.s_FlashWriteAddr:00000000 s_FlashWriteAddr
+    {standard input}:26     .bss.s_PageBuf:00000000 $d
+    {standard input}:29     .bss.s_PageBuf:00000000 s_PageBuf
+    {standard input}:32     .bss.s_PageBufOffset:00000000 $d
+    {standard input}:35     .bss.s_PageBufOffset:00000000 s_PageBufOffset
+    {standard input}:38     .text.RS485_Protocol_CalcPassword:00000000 $t
+    {standard input}:43     .text.RS485_Protocol_CalcPassword:00000000 RS485_Protocol_CalcPassword
+    {standard input}:103    .data.s_CRC:00000000 $d
+    {standard input}:106    .data.s_CRC:00000000 s_CRC
+    {standard input}:109    .rodata.CRC_POLYNOMIAL:00000000 $d
+    {standard input}:112    .rodata.CRC_POLYNOMIAL:00000000 CRC_POLYNOMIAL
+    {standard input}:115    .text.CRC_Reset:00000000 $t
+    {standard input}:119    .text.CRC_Reset:00000000 CRC_Reset
+    {standard input}:150    .text.CRC_Reset:00000014 $d
+    {standard input}:155    .text.CRC_UpdateWord:00000000 $t
+    {standard input}:159    .text.CRC_UpdateWord:00000000 CRC_UpdateWord
+    {standard input}:257    .text.CRC_UpdateWord:00000070 $d
+    {standard input}:263    .text.CRC_GetValue:00000000 $t
+    {standard input}:267    .text.CRC_GetValue:00000000 CRC_GetValue
+    {standard input}:298    .text.CRC_GetValue:00000014 $d
+    {standard input}:303    .text.RS485_Protocol_CalcCRC32:00000000 $t
+    {standard input}:308    .text.RS485_Protocol_CalcCRC32:00000000 RS485_Protocol_CalcCRC32
+    {standard input}:378    .text.FlushPageBuffer:00000000 $t
+    {standard input}:382    .text.FlushPageBuffer:00000000 FlushPageBuffer
+    {standard input}:449    .text.FlushPageBuffer:00000058 $d
+    {standard input}:456    .text.BufferData:00000000 $t
+    {standard input}:460    .text.BufferData:00000000 BufferData
+    {standard input}:541    .text.BufferData:0000005c $d
+    {standard input}:547    .text.Flash_EraseAppArea:00000000 $t
+    {standard input}:551    .text.Flash_EraseAppArea:00000000 Flash_EraseAppArea
+    {standard input}:592    .text.Flash_EraseAppArea:0000002c $d
+    {standard input}:599    .text.RS485_Protocol_HandleCommand:00000000 $t
+    {standard input}:604    .text.RS485_Protocol_HandleCommand:00000000 RS485_Protocol_HandleCommand
+    {standard input}:660    .text.RS485_Protocol_HandleCommand:00000040 $d
+    {standard input}:668    .text.RS485_Protocol_HandleCommand:00000060 $t
+    {standard input}:846    .text.RS485_Protocol_HandleGetSwVersion:00000000 RS485_Protocol_HandleGetSwVersion
+    {standard input}:1024   .text.RS485_Protocol_HandleStartUpgrade:00000000 RS485_Protocol_HandleStartUpgrade
+    {standard input}:1188   .text.RS485_Protocol_HandleUpgradeData:00000000 RS485_Protocol_HandleUpgradeData
+    {standard input}:1230   .text.RS485_Protocol_HandleUpgradeEnd:00000000 RS485_Protocol_HandleUpgradeEnd
+    {standard input}:836    .text.RS485_Protocol_HandleCommand:00000144 $d
+    {standard input}:841    .text.RS485_Protocol_HandleGetSwVersion:00000000 $t
+    {standard input}:1014   .text.RS485_Protocol_HandleGetSwVersion:000000e0 $d
+    {standard input}:1019   .text.RS485_Protocol_HandleStartUpgrade:00000000 $t
+    {standard input}:1176   .text.RS485_Protocol_HandleStartUpgrade:000000d0 $d
+    {standard input}:1183   .text.RS485_Protocol_HandleUpgradeData:00000000 $t
+    {standard input}:1225   .text.RS485_Protocol_HandleUpgradeEnd:00000000 $t
+                     .debug_frame:00000010 $d
+
+UNDEFINED SYMBOLS
+memset
+XMC_FLASH_ProgramPage
+XMC_FLASH_ClearStatus
+XMC_FLASH_EraseSector
+DevConfig_SaveToEEPROM
+DevInfo0x8000
+strlen
+RS485_SendProtocolFrame
+Handle_Bootstrap_Request
+UART_485

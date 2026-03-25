@@ -1,0 +1,4187 @@
+   1              	 .syntax unified
+   2              	 .cpu cortex-m4
+   3              	 .eabi_attribute 27,3
+   4              	 .fpu fpv4-sp-d16
+   5              	 .eabi_attribute 20,1
+   6              	 .eabi_attribute 21,1
+   7              	 .eabi_attribute 23,3
+   8              	 .eabi_attribute 24,1
+   9              	 .eabi_attribute 25,1
+  10              	 .eabi_attribute 26,1
+  11              	 .eabi_attribute 30,6
+  12              	 .eabi_attribute 34,1
+  13              	 .eabi_attribute 18,4
+  14              	 .thumb
+  15              	 .file "sdoserv.c"
+  16              	 .text
+  17              	.Ltext0:
+  18              	 .cfi_sections .debug_frame
+  19              	 .comm u8PendingSdo,1,1
+  20              	 .comm bStoreCompleteAccess,1,1
+  21              	 .comm u8StoreSubindex,1,1
+  22              	 .comm u16StoreIndex,2,2
+  23              	 .comm u32StoreDataSize,4,4
+  24              	 .comm pStoreData,4,4
+  25              	 .comm pSdoPendFunc,4,4
+  26              	 .comm aSdoInfoHeader,16,4
+  27              	 .comm pSdoSegData,4,4
+  28              	 .comm nSdoInfoFragmentsLeft,2,2
+  29              	 .global cAbortCode
+  30              	 .section .rodata.cAbortCode,"a",%progbits
+  31              	 .align 2
+  34              	cAbortCode:
+  35 0000 00000000 	 .word 0
+  36 0004 00000305 	 .word 84082688
+  37 0008 00000405 	 .word 84148224
+  38 000c 01000405 	 .word 84148225
+  39 0010 05000405 	 .word 84148229
+  40 0014 00000106 	 .word 100728832
+  41 0018 01000106 	 .word 100728833
+  42 001c 02000106 	 .word 100728834
+  43 0020 00000206 	 .word 100794368
+  44 0024 41000406 	 .word 100925505
+  45 0028 42000406 	 .word 100925506
+  46 002c 43000406 	 .word 100925507
+  47 0030 47000406 	 .word 100925511
+  48 0034 00000606 	 .word 101056512
+  49 0038 10000706 	 .word 101122064
+  50 003c 12000706 	 .word 101122066
+  51 0040 13000706 	 .word 101122067
+  52 0044 11000906 	 .word 101253137
+  53 0048 30000906 	 .word 101253168
+  54 004c 31000906 	 .word 101253169
+  55 0050 32000906 	 .word 101253170
+  56 0054 33000906 	 .word 101253171
+  57 0058 36000906 	 .word 101253174
+  58 005c 00000008 	 .word 134217728
+  59 0060 20000008 	 .word 134217760
+  60 0064 21000008 	 .word 134217761
+  61 0068 22000008 	 .word 134217762
+  62 006c 23000008 	 .word 134217763
+  63 0070 03000106 	 .word 100728835
+  64 0074 04000106 	 .word 100728836
+  65              	 .comm nSdoInfoIndex,2,2
+  66              	 .comm pSdoInfoObjEntry,4,4
+  67              	 .comm pSdoResStored,4,4
+  68              	 .global bSdoInWork
+  69              	 .section .bss.bSdoInWork,"aw",%nobits
+  72              	bSdoInWork:
+  73 0000 00       	 .space 1
+  74              	 .comm nSdoSegService,1,1
+  75              	 .comm bSdoSegFollows,1,1
+  76              	 .comm bSdoSegAccess,1,1
+  77              	 .comm nSdoSegIndex,2,2
+  78              	 .comm nSdoSegSubindex,1,1
+  79              	 .comm nSdoSegBytesToHandle,4,4
+  80              	 .comm bSdoSegLastToggle,1,1
+  81              	 .comm nSdoSegCompleteSize,4,4
+  82              	 .comm pSdoSegObjEntry,4,4
+  83              	 .section .text.SdoDownloadSegmentInd,"ax",%progbits
+  84              	 .align 2
+  85              	 .thumb
+  86              	 .thumb_func
+  88              	SdoDownloadSegmentInd:
+  89              	.LFB175:
+  90              	 .file 1 "../SSC/Src/sdoserv.c"
+   1:../SSC/Src/sdoserv.c **** /*
+   2:../SSC/Src/sdoserv.c **** * This source file is part of the EtherCAT Slave Stack Code licensed by Beckhoff Automation GmbH & 
+   3:../SSC/Src/sdoserv.c **** * The corresponding license agreement applies. This hint shall not be removed.
+   4:../SSC/Src/sdoserv.c **** * https://www.beckhoff.com/media/downloads/slave-stack-code/ethercat_ssc_license.pdf
+   5:../SSC/Src/sdoserv.c **** */
+   6:../SSC/Src/sdoserv.c **** 
+   7:../SSC/Src/sdoserv.c **** /**
+   8:../SSC/Src/sdoserv.c **** \addtogroup CoE CAN Application Profile over EtherCAT
+   9:../SSC/Src/sdoserv.c **** @{
+  10:../SSC/Src/sdoserv.c **** */
+  11:../SSC/Src/sdoserv.c **** 
+  12:../SSC/Src/sdoserv.c **** /**
+  13:../SSC/Src/sdoserv.c **** \file    sdoserv.c
+  14:../SSC/Src/sdoserv.c **** \author EthercatSSC@beckhoff.com
+  15:../SSC/Src/sdoserv.c **** \brief Implementation
+  16:../SSC/Src/sdoserv.c **** The SDO server handles all sdo and sdo information services
+  17:../SSC/Src/sdoserv.c **** 
+  18:../SSC/Src/sdoserv.c **** \version 5.13
+  19:../SSC/Src/sdoserv.c **** 
+  20:../SSC/Src/sdoserv.c **** <br>Changes to version V5.12:<br>
+  21:../SSC/Src/sdoserv.c **** V5.13 COE5: handle complete access if segmented transfer is required, handle unsupported segmented 
+  22:../SSC/Src/sdoserv.c **** <br>Changes to version V5.11:<br>
+  23:../SSC/Src/sdoserv.c **** V5.12 COE2: do not clear the object index low byte in case of creating a SDO Abort<br>
+  24:../SSC/Src/sdoserv.c **** V5.12 COE5: updates in case of MBX_16BIT_ACCESS == 0<br>
+  25:../SSC/Src/sdoserv.c **** V5.12 COE6: handle get object length in case of an out of range subindex<br>
+  26:../SSC/Src/sdoserv.c **** V5.12 ECAT2: big endian changes<br>
+  27:../SSC/Src/sdoserv.c **** V5.12 EOE4: handle 16bit only acceess, move ethernet protocol defines and structures to application
+  28:../SSC/Src/sdoserv.c **** V5.12 MBX3: handle incomplete mailbox communication<br>
+  29:../SSC/Src/sdoserv.c **** V5.12 TEST3: Send  ping request or invalid mbx data in case of access to idx 0x1009<br>
+  30:../SSC/Src/sdoserv.c **** <br>Changes to version V5.10:<br>
+  31:../SSC/Src/sdoserv.c **** V5.11 ECAT10: change PROTO handling to prevent compiler errors<br>
+  32:../SSC/Src/sdoserv.c **** V5.11 ECAT7: add missing big endian swapping<br>
+  33:../SSC/Src/sdoserv.c **** V5.11 SDO10: add new SDO abort code 0x6010004 (complete access not supported)<br>
+  34:../SSC/Src/sdoserv.c **** V5.11 SDO4: "if insufficient memory is available on complete download access return ""unsupported a
+  35:../SSC/Src/sdoserv.c **** <br>Changes to version V5.01:<br>
+  36:../SSC/Src/sdoserv.c **** V5.10 ESC5: Add missing swapping<br>
+  37:../SSC/Src/sdoserv.c **** V5.10 MBX1: Remove multiple swapping of length filed in mailbox header<br>
+  38:../SSC/Src/sdoserv.c **** V5.10 SDO3: Add new SDO Abort Code (0x06090033)<br>
+  39:../SSC/Src/sdoserv.c **** V5.10 SDO4: Block SDO Info services for indices less 0x1000<br>
+  40:../SSC/Src/sdoserv.c **** V5.10 SDO7: Correct mailbox length calculation on segmented or normal SDO upload response<br>
+  41:../SSC/Src/sdoserv.c **** V5.10 SDO8: Fix invalid fragment calculation on SdoInfo list response<br>
+  42:../SSC/Src/sdoserv.c **** V5.10 TEST5: test 0x2020.1 change limit from 10 to 16 Byte <br>
+  43:../SSC/Src/sdoserv.c **** 			 Add test object 0x3009/0x300A (huge array and record objects)<br>
+  44:../SSC/Src/sdoserv.c **** <br>Changes to version V5.0:<br>
+  45:../SSC/Src/sdoserv.c **** V5.01 MBX1: Allocate always complete 16Bit memory areas<br>
+  46:../SSC/Src/sdoserv.c **** V5.01 SDO2: Prevent invalid memory access in case of 8Bit mailbox memory handling<br>
+  47:../SSC/Src/sdoserv.c **** V5.01 SDO3: Update mailbox data length calculation<br>
+  48:../SSC/Src/sdoserv.c **** V5.01 SDO4: Update length calculation in case of an segmented SDO list response<br>
+  49:../SSC/Src/sdoserv.c **** V5.01 SDO6: Update SDO response interface handling. (used if the object access function returns "AB
+  50:../SSC/Src/sdoserv.c **** V5.01 TEST2: Change Test 0x2020.1 (force Segmented transfer) to 16Byte<br>
+  51:../SSC/Src/sdoserv.c **** <br>Changes to version V4.40:<br>
+  52:../SSC/Src/sdoserv.c **** V5.0 TEST1: Add test application. see Application Note ET9300 for more details.<br>
+  53:../SSC/Src/sdoserv.c **** V5.0 MBX3: Calculate MBX datagram length independent of SM size.<br>
+  54:../SSC/Src/sdoserv.c **** V5.0 SDO2: SDO toggle bit don not do be cleared for segmented communication.<br>
+  55:../SSC/Src/sdoserv.c **** V5.0 SDO3: Set SDO OpCode in list response.<br>
+  56:../SSC/Src/sdoserv.c **** V5.0 SDO4: Update abort code for "BIG_ENDIAN_16BIT" configuration.<br>
+  57:../SSC/Src/sdoserv.c **** V5.0 SDO5: Object code was calculated wrong for SDO Info service.<br>
+  58:../SSC/Src/sdoserv.c **** V5.0 SDO6: Handle SDO segmented transfer if only 16Bit MBX memory access is allowed. <br>
+  59:../SSC/Src/sdoserv.c **** <br>Changes to version V4.20:<br>
+  60:../SSC/Src/sdoserv.c **** V4.40 SDO1: change size calculation for SDO services<br>
+  61:../SSC/Src/sdoserv.c **** V4.40 MBX1: Prevent accessing odd address<br>
+  62:../SSC/Src/sdoserv.c **** V4.40 COE1: Abort code is set in OBJ_GetObjectList()<br>
+  63:../SSC/Src/sdoserv.c **** <br>Changes to version V4.11:<br>
+  64:../SSC/Src/sdoserv.c **** V4.20 PIC24: Add EL9800_4 (PIC24) required source code<br>
+  65:../SSC/Src/sdoserv.c **** V4.20 SDO 2: SDO mask value bug<br>
+  66:../SSC/Src/sdoserv.c **** V4.20 SDO 1: check zero size object length<br>
+  67:../SSC/Src/sdoserv.c **** <br>Changes to version V4.10:<br>
+  68:../SSC/Src/sdoserv.c **** V4.11 SDO 1: fixed calculation of frame fragments during a object dictionary array list request<br>
+  69:../SSC/Src/sdoserv.c **** V4.11 SDO 2-3: fixed size of entry description<br>
+  70:../SSC/Src/sdoserv.c **** V4.11 SDO 4-7: add STRUCT_PACKED defines<br>
+  71:../SSC/Src/sdoserv.c **** <br>Changes to version V4.08:\a<br>
+  72:../SSC/Src/sdoserv.c **** V4.10 SDO 1: fixed zero size SDO comparison<br>
+  73:../SSC/Src/sdoserv.c **** V4.10 SDO 2: set SdoService_CommandOffset to 0<br>
+  74:../SSC/Src/sdoserv.c **** V4.10 SDO 3: fixed zero size SDO comparison<br>
+  75:../SSC/Src/sdoserv.c **** V4.10 SDO 4: fixed struct_packed definition<br>
+  76:../SSC/Src/sdoserv.c **** <br>Changes to version V4.07:<br>
+  77:../SSC/Src/sdoserv.c **** V4.08 SDO 1: For an upload segment response the toggle bit was overwritten<br>
+  78:../SSC/Src/sdoserv.c **** V4.08 SDO 2: For a segmented response the command was wrong in the response<br>
+  79:../SSC/Src/sdoserv.c **** <br>Changes to version V4.06:<br>
+  80:../SSC/Src/sdoserv.c **** V4.07 SDO 1: In SdoRes the command specifier was not set correctly in case of an abort<br>
+  81:../SSC/Src/sdoserv.c **** V4.07 ECAT 1: The sources for SPI and MCI were merged (in ecat_def.h<br>
+  82:../SSC/Src/sdoserv.c **** 				   set the switch MCI_HW to 1 when using the MCI,<br>
+  83:../SSC/Src/sdoserv.c **** 				   set the switch SPI_HW to 1 when using the SPI<br>
+  84:../SSC/Src/sdoserv.c **** <br>Changes to version V4.05:<br>
+  85:../SSC/Src/sdoserv.c **** V4.06 SDO 1: The variable dataSize was used wrong in function SdoRes<br>
+  86:../SSC/Src/sdoserv.c **** <br>Changes to version V4.03:<br>
+  87:../SSC/Src/sdoserv.c **** V4.04 SDO 1: The SDO interface was changed in that way that a SDO response<br>
+  88:../SSC/Src/sdoserv.c **** 			 could be sent by the application to a later time. In that case<br>
+  89:../SSC/Src/sdoserv.c **** 				 the functions OBJ_Read and OBJ_Write shall return the value<br>
+  90:../SSC/Src/sdoserv.c **** 				 ABORTIDX_WORKING. To send the SDO response the new function SDOS_SdoRes<br>
+  91:../SSC/Src/sdoserv.c **** 				 has to be called by the application. While waiting for the call<br>
+  92:../SSC/Src/sdoserv.c **** 				 of SDOS_SdoRes the SDO interface will answer to another SDO request<br>
+  93:../SSC/Src/sdoserv.c **** 				 with the error MBXERR_SERVICEINWORK in the mailbox protocol <br>
+  94:../SSC/Src/sdoserv.c **** <br>Changes to version V3.20:<br>
+  95:../SSC/Src/sdoserv.c **** V4.00 SDO 1: The size of the written data in case of a SDO Download will be<br>
+  96:../SSC/Src/sdoserv.c **** 			 in the function OBJ_Write to be more flexible<br>
+  97:../SSC/Src/sdoserv.c **** V4.00 SDO 2: The object lists will be generated in the functions OBJ_GetNoOfObjects<br>
+  98:../SSC/Src/sdoserv.c **** 			 and OBJ_GetObjectList in objdef.c to decouple the SDO services from<br>
+  99:../SSC/Src/sdoserv.c **** 			 the implementation of the object dictionary<br>
+ 100:../SSC/Src/sdoserv.c **** V4.00 SDO 3: The name of an object or entry description will only be transmitted<br>
+ 101:../SSC/Src/sdoserv.c **** 			 if it fits in the mailbox because the fragmentation is not supported in the sample code.<br>
+ 102:../SSC/Src/sdoserv.c **** V4.00 SDO 4: SDOs with size greater than 65535 were not handled correctly, that is fixed now
+ 103:../SSC/Src/sdoserv.c **** */
+ 104:../SSC/Src/sdoserv.c **** 
+ 105:../SSC/Src/sdoserv.c **** /*---------------------------------------------------------------------------------------
+ 106:../SSC/Src/sdoserv.c **** ------
+ 107:../SSC/Src/sdoserv.c **** ------    Includes
+ 108:../SSC/Src/sdoserv.c **** ------
+ 109:../SSC/Src/sdoserv.c **** ---------------------------------------------------------------------------------------*/
+ 110:../SSC/Src/sdoserv.c **** 
+ 111:../SSC/Src/sdoserv.c **** #include "ecat_def.h"
+ 112:../SSC/Src/sdoserv.c **** 
+ 113:../SSC/Src/sdoserv.c **** #include "ecatslv.h"
+ 114:../SSC/Src/sdoserv.c **** 
+ 115:../SSC/Src/sdoserv.c **** 
+ 116:../SSC/Src/sdoserv.c **** #define _SDOSERV_ 1
+ 117:../SSC/Src/sdoserv.c **** #include "objdef.h"
+ 118:../SSC/Src/sdoserv.c **** #undef  _SDOSERV_
+ 119:../SSC/Src/sdoserv.c **** /*remove definition of _SDOSERV_ (#ifdef is used in objdef.h)*/
+ 120:../SSC/Src/sdoserv.c **** 
+ 121:../SSC/Src/sdoserv.c **** 
+ 122:../SSC/Src/sdoserv.c **** 
+ 123:../SSC/Src/sdoserv.c **** 
+ 124:../SSC/Src/sdoserv.c **** 
+ 125:../SSC/Src/sdoserv.c **** extern OBJCONST TOBJECT OBJMEM asObjDef[];
+ 126:../SSC/Src/sdoserv.c **** extern UINT16 OBJ_GetDesc(UINT16 index, UINT8 subindex, OBJCONST TOBJECT OBJMEM * pObjEntry, UINT16
+ 127:../SSC/Src/sdoserv.c **** extern OBJCONST TSDOINFOENTRYDESC OBJMEM * OBJ_GetEntryDesc(OBJCONST TOBJECT OBJMEM * pObjEntry, UI
+ 128:../SSC/Src/sdoserv.c **** extern OBJCONST TSDOINFOOBJDESC OBJMEM * OBJ_GetObjDesc(OBJCONST TOBJECT OBJMEM * pObjEntry);
+ 129:../SSC/Src/sdoserv.c **** 
+ 130:../SSC/Src/sdoserv.c **** /*---------------------------------------------------------------------------------------
+ 131:../SSC/Src/sdoserv.c **** ------
+ 132:../SSC/Src/sdoserv.c **** ------    Modulintern variable definitions
+ 133:../SSC/Src/sdoserv.c **** ------
+ 134:../SSC/Src/sdoserv.c **** ---------------------------------------------------------------------------------------*/
+ 135:../SSC/Src/sdoserv.c **** 
+ 136:../SSC/Src/sdoserv.c **** const UINT32 MBXMEM cAbortCode[] =
+ 137:../SSC/Src/sdoserv.c **** {
+ 138:../SSC/Src/sdoserv.c **** 	ABORT_NOERROR,
+ 139:../SSC/Src/sdoserv.c **** 	ABORT_TOGGLE_BIT_NOT_CHANGED,
+ 140:../SSC/Src/sdoserv.c **** 	ABORT_SDO_PROTOCOL_TIMEOUT,
+ 141:../SSC/Src/sdoserv.c **** 	ABORT_COMMAND_SPECIFIER_UNKNOWN,
+ 142:../SSC/Src/sdoserv.c **** 	ABORT_OUT_OF_MEMORY,
+ 143:../SSC/Src/sdoserv.c **** 	ABORT_UNSUPPORTED_ACCESS,
+ 144:../SSC/Src/sdoserv.c **** 	ABORT_WRITE_ONLY_ENTRY,
+ 145:../SSC/Src/sdoserv.c **** 	ABORT_READ_ONLY_ENTRY,
+ 146:../SSC/Src/sdoserv.c **** 	ABORT_OBJECT_NOT_EXISTING,
+ 147:../SSC/Src/sdoserv.c **** 	ABORT_OBJECT_CANT_BE_PDOMAPPED,
+ 148:../SSC/Src/sdoserv.c **** 	ABORT_MAPPED_OBJECTS_EXCEED_PDO,
+ 149:../SSC/Src/sdoserv.c **** 	ABORT_PARAM_IS_INCOMPATIBLE,
+ 150:../SSC/Src/sdoserv.c **** 	ABORT_INTERNAL_DEVICE_INCOMPATIBILITY,
+ 151:../SSC/Src/sdoserv.c **** 	ABORT_HARDWARE_ERROR,
+ 152:../SSC/Src/sdoserv.c **** 	ABORT_PARAM_LENGTH_ERROR,
+ 153:../SSC/Src/sdoserv.c **** 	ABORT_PARAM_LENGTH_TOO_LONG,
+ 154:../SSC/Src/sdoserv.c **** 	ABORT_PARAM_LENGTH_TOO_SHORT,
+ 155:../SSC/Src/sdoserv.c **** 	ABORT_SUBINDEX_NOT_EXISTING,
+ 156:../SSC/Src/sdoserv.c **** 	ABORT_VALUE_EXCEEDED,
+ 157:../SSC/Src/sdoserv.c **** 	ABORT_VALUE_TOO_GREAT,
+ 158:../SSC/Src/sdoserv.c **** 	ABORT_VALUE_TOO_SMALL,
+ 159:../SSC/Src/sdoserv.c **** 	ABORT_MODULE_ID_LIST_NOT_MATCH,
+ 160:../SSC/Src/sdoserv.c **** 	ABORT_MAX_VALUE_IS_LESS_THAN_MIN_VALUE,
+ 161:../SSC/Src/sdoserv.c **** 	ABORT_GENERAL_ERROR,
+ 162:../SSC/Src/sdoserv.c **** 	ABORT_DATA_CANNOT_BE_READ_OR_STORED,
+ 163:../SSC/Src/sdoserv.c **** 	ABORT_DATA_CANNOT_BE_READ_OR_STORED_BECAUSE_OF_LOCAL_CONTROL,
+ 164:../SSC/Src/sdoserv.c **** 	ABORT_DATA_CANNOT_BE_READ_OR_STORED_IN_THIS_STATE,
+ 165:../SSC/Src/sdoserv.c **** 	ABORT_NO_OBJECT_DICTIONARY_IS_PRESENT,
+ 166:../SSC/Src/sdoserv.c **** 	ABORT_ENTRY_CANT_BE_WRITTEN_SI0_NOT_0,
+ 167:../SSC/Src/sdoserv.c **** 	ABORT_COMPLETE_ACCESS_NOT_SUPPORTED
+ 168:../SSC/Src/sdoserv.c **** };
+ 169:../SSC/Src/sdoserv.c **** 
+ 170:../SSC/Src/sdoserv.c **** UINT16 VARMEM                            nSdoInfoIndex;
+ 171:../SSC/Src/sdoserv.c **** OBJCONST TOBJECT OBJMEM * VARMEM        pSdoInfoObjEntry;
+ 172:../SSC/Src/sdoserv.c **** 
+ 173:../SSC/Src/sdoserv.c **** TINITSDOMBX MBXMEM *    VARMEM            pSdoResStored;
+ 174:../SSC/Src/sdoserv.c **** BOOL    VARMEM                            bSdoInWork = FALSE;
+ 175:../SSC/Src/sdoserv.c **** 
+ 176:../SSC/Src/sdoserv.c **** UINT8    VARMEM                         nSdoSegService;
+ 177:../SSC/Src/sdoserv.c **** UINT8    VARMEM                         bSdoSegFollows;
+ 178:../SSC/Src/sdoserv.c **** UINT8    VARMEM                         bSdoSegAccess;
+ 179:../SSC/Src/sdoserv.c **** UINT16 VARMEM                           nSdoSegIndex;
+ 180:../SSC/Src/sdoserv.c **** UINT8 VARMEM                            nSdoSegSubindex;
+ 181:../SSC/Src/sdoserv.c **** UINT32 VARMEM                           nSdoSegBytesToHandle;
+ 182:../SSC/Src/sdoserv.c **** UINT8 VARMEM                            bSdoSegLastToggle;
+ 183:../SSC/Src/sdoserv.c **** UINT32 VARMEM                           nSdoSegCompleteSize;
+ 184:../SSC/Src/sdoserv.c **** OBJCONST TOBJECT OBJMEM * VARMEM        pSdoSegObjEntry;
+ 185:../SSC/Src/sdoserv.c **** 
+ 186:../SSC/Src/sdoserv.c **** /*---------------------------------------------------------------------------------------
+ 187:../SSC/Src/sdoserv.c **** ------
+ 188:../SSC/Src/sdoserv.c **** ------    module internal function declarations
+ 189:../SSC/Src/sdoserv.c **** ------
+ 190:../SSC/Src/sdoserv.c **** ---------------------------------------------------------------------------------------*/
+ 191:../SSC/Src/sdoserv.c **** static UINT8 SdoDownloadSegmentInd(TDOWNLOADSDOSEGREQMBX MBXMEM * pSdoInd);
+ 192:../SSC/Src/sdoserv.c **** static UINT8 SdoUploadSegmentInd(TUPLOADSDOSEGREQMBX MBXMEM * pSdoInd);
+ 193:../SSC/Src/sdoserv.c **** /*---------------------------------------------------------------------------------------
+ 194:../SSC/Src/sdoserv.c **** ------
+ 195:../SSC/Src/sdoserv.c **** ------    Functions
+ 196:../SSC/Src/sdoserv.c **** ------
+ 197:../SSC/Src/sdoserv.c **** ---------------------------------------------------------------------------------------*/
+ 198:../SSC/Src/sdoserv.c **** 
+ 199:../SSC/Src/sdoserv.c **** /////////////////////////////////////////////////////////////////////////////////////////
+ 200:../SSC/Src/sdoserv.c **** /**
+ 201:../SSC/Src/sdoserv.c ****  \param     pSdoInd    Pointer to the received mailbox data from the master.
+ 202:../SSC/Src/sdoserv.c **** 
+ 203:../SSC/Src/sdoserv.c ****  \return    Indicates if an error occurred while the operation ( good = 0 ).
+ 204:../SSC/Src/sdoserv.c **** 
+ 205:../SSC/Src/sdoserv.c ****  \brief    This function is called when a Download SDO Segment request
+ 206:../SSC/Src/sdoserv.c **** 			service is received from the master. If its the last segment
+ 207:../SSC/Src/sdoserv.c **** 			the data will be written to the object dictionary. The
+ 208:../SSC/Src/sdoserv.c **** 			function sends a response by itself.
+ 209:../SSC/Src/sdoserv.c **** *////////////////////////////////////////////////////////////////////////////////////////
+ 210:../SSC/Src/sdoserv.c **** 
+ 211:../SSC/Src/sdoserv.c **** static UINT8 SdoDownloadSegmentInd(TDOWNLOADSDOSEGREQMBX MBXMEM * pSdoInd)
+ 212:../SSC/Src/sdoserv.c **** {
+  91              	 .loc 1 212 0
+  92              	 .cfi_startproc
+  93              	 
+  94              	 
+  95 0000 B0B5     	 push {r4,r5,r7,lr}
+  96              	.LCFI0:
+  97              	 .cfi_def_cfa_offset 16
+  98              	 .cfi_offset 4,-16
+  99              	 .cfi_offset 5,-12
+ 100              	 .cfi_offset 7,-8
+ 101              	 .cfi_offset 14,-4
+ 102 0002 88B0     	 sub sp,sp,#32
+ 103              	.LCFI1:
+ 104              	 .cfi_def_cfa_offset 48
+ 105 0004 02AF     	 add r7,sp,#8
+ 106              	.LCFI2:
+ 107              	 .cfi_def_cfa 7,40
+ 108 0006 7860     	 str r0,[r7,#4]
+ 213:../SSC/Src/sdoserv.c **** 	UINT8 abort = 0;
+ 109              	 .loc 1 213 0
+ 110 0008 0023     	 movs r3,#0
+ 111 000a FB75     	 strb r3,[r7,#23]
+ 214:../SSC/Src/sdoserv.c **** 	UINT32 bytesToSave = 0;
+ 112              	 .loc 1 214 0
+ 113 000c 0023     	 movs r3,#0
+ 114 000e 3B61     	 str r3,[r7,#16]
+ 215:../SSC/Src/sdoserv.c **** 
+ 216:../SSC/Src/sdoserv.c **** 	if (SWAPWORD(pSdoInd->SdoHeader.SegHeader & SEGHEADER_TOGGLE) == bSdoSegLastToggle)
+ 115              	 .loc 1 216 0
+ 116 0010 7B68     	 ldr r3,[r7,#4]
+ 117 0012 1B7A     	 ldrb r3,[r3,#8]
+ 118 0014 03F01003 	 and r3,r3,#16
+ 119 0018 864A     	 ldr r2,.L24
+ 120 001a 1278     	 ldrb r2,[r2]
+ 121 001c 9342     	 cmp r3,r2
+ 122 001e 02D1     	 bne .L2
+ 217:../SSC/Src/sdoserv.c **** 	{
+ 218:../SSC/Src/sdoserv.c **** 		/* toggle bit has not toggled... */
+ 219:../SSC/Src/sdoserv.c **** 		abort = ABORTIDX_TOGGLE_BIT_NOT_CHANGED;
+ 123              	 .loc 1 219 0
+ 124 0020 0123     	 movs r3,#1
+ 125 0022 FB75     	 strb r3,[r7,#23]
+ 126 0024 BBE0     	 b .L3
+ 127              	.L2:
+ 128              	.LBB2:
+ 220:../SSC/Src/sdoserv.c **** 	}
+ 221:../SSC/Src/sdoserv.c **** 	else
+ 222:../SSC/Src/sdoserv.c **** 	{
+ 223:../SSC/Src/sdoserv.c **** 		/* maxData contains the maximum data to be received with a SDO-DownloadSegment */
+ 224:../SSC/Src/sdoserv.c **** 		UINT16 maxData = u16ReceiveMbxSize - MBX_HEADER_SIZE - SEGMENT_NORM_HEADER_SIZE;
+ 129              	 .loc 1 224 0
+ 130 0026 844B     	 ldr r3,.L24+4
+ 131 0028 1B88     	 ldrh r3,[r3]
+ 132 002a 093B     	 subs r3,r3,#9
+ 133 002c FB81     	 strh r3,[r7,#14]
+ 225:../SSC/Src/sdoserv.c **** 		/* the new toggle bit is stored in bSdoSegLastToggle */
+ 226:../SSC/Src/sdoserv.c **** 		bSdoSegLastToggle = SWAPWORD(pSdoInd->SdoHeader.SegHeader & SEGHEADER_TOGGLE);
+ 134              	 .loc 1 226 0
+ 135 002e 7B68     	 ldr r3,[r7,#4]
+ 136 0030 1B7A     	 ldrb r3,[r3,#8]
+ 137 0032 03F01003 	 and r3,r3,#16
+ 138 0036 DAB2     	 uxtb r2,r3
+ 139 0038 7E4B     	 ldr r3,.L24
+ 140 003a 1A70     	 strb r2,[r3]
+ 227:../SSC/Src/sdoserv.c **** 
+ 228:../SSC/Src/sdoserv.c **** 		/* a SDO-Download Segment is only allowed if a SDO-Download Request was received before,
+ 229:../SSC/Src/sdoserv.c **** 		   in that case a buffer for the received data was allocated in SDOS_SdoInd before */
+ 230:../SSC/Src/sdoserv.c **** 		if (pSdoSegData)
+ 141              	 .loc 1 230 0
+ 142 003c 7F4B     	 ldr r3,.L24+8
+ 143 003e 1B68     	 ldr r3,[r3]
+ 144 0040 002B     	 cmp r3,#0
+ 145 0042 00F0AA80 	 beq .L4
+ 231:../SSC/Src/sdoserv.c **** 		{
+ 232:../SSC/Src/sdoserv.c **** 			/* bytesToSave contains the remaining data with this and maybe the following
+ 233:../SSC/Src/sdoserv.c **** 			   SDO-Download Segment services */
+ 234:../SSC/Src/sdoserv.c **** 			bytesToSave = nSdoSegCompleteSize - nSdoSegBytesToHandle;
+ 146              	 .loc 1 234 0
+ 147 0046 7E4B     	 ldr r3,.L24+12
+ 148 0048 1A68     	 ldr r2,[r3]
+ 149 004a 7E4B     	 ldr r3,.L24+16
+ 150 004c 1B68     	 ldr r3,[r3]
+ 151 004e D31A     	 subs r3,r2,r3
+ 152 0050 3B61     	 str r3,[r7,#16]
+ 235:../SSC/Src/sdoserv.c **** 
+ 236:../SSC/Src/sdoserv.c **** 			if (pSdoInd->SdoHeader.SegHeader & SEGHEADER_NOMOREFOLLOWS)
+ 153              	 .loc 1 236 0
+ 154 0052 7B68     	 ldr r3,[r7,#4]
+ 155 0054 1B7A     	 ldrb r3,[r3,#8]
+ 156 0056 03F00103 	 and r3,r3,#1
+ 157 005a 002B     	 cmp r3,#0
+ 158 005c 2CD0     	 beq .L5
+ 237:../SSC/Src/sdoserv.c **** 			{
+ 238:../SSC/Src/sdoserv.c **** 				/* the last segment is received, check if the length of the remaining data is the
+ 239:../SSC/Src/sdoserv.c **** 				   same as the length of the received data */
+ 240:../SSC/Src/sdoserv.c **** 				if (bytesToSave <= maxData)
+ 159              	 .loc 1 240 0
+ 160 005e FA89     	 ldrh r2,[r7,#14]
+ 161 0060 3B69     	 ldr r3,[r7,#16]
+ 162 0062 9A42     	 cmp r2,r3
+ 163 0064 25D3     	 bcc .L6
+ 164              	.LBB3:
+ 241:../SSC/Src/sdoserv.c **** 				{
+ 242:../SSC/Src/sdoserv.c **** 					UINT16 mbxSize = SWAPWORD(pSdoInd->MbxHeader.Length);
+ 165              	 .loc 1 242 0
+ 166 0066 7B68     	 ldr r3,[r7,#4]
+ 167 0068 1B88     	 ldrh r3,[r3]
+ 168 006a BB81     	 strh r3,[r7,#12]
+ 243:../SSC/Src/sdoserv.c **** 
+ 244:../SSC/Src/sdoserv.c **** 					/* for the check it is distinguished if the remaining bytes are less than 8 (in that
+ 245:../SSC/Src/sdoserv.c **** 					   case 7 data bytes were sent and the SDO-Download Segment header contains the information
+ 246:../SSC/Src/sdoserv.c **** 						how much bytes are valid (CAN-compatibility)), otherwise the length has to match exactly
+ 247:../SSC/Src/sdoserv.c **** 						and the SDO-Download Segment-Headerbyte is ignored */
+ 248:../SSC/Src/sdoserv.c **** 					if (((bytesToSave <= (UINT32)(mbxSize - SEGMENT_NORM_HEADER_SIZE))
+ 169              	 .loc 1 248 0
+ 170 006c BB89     	 ldrh r3,[r7,#12]
+ 171 006e 033B     	 subs r3,r3,#3
+ 172 0070 1A46     	 mov r2,r3
+ 173 0072 3B69     	 ldr r3,[r7,#16]
+ 174 0074 9A42     	 cmp r2,r3
+ 175 0076 0CD3     	 bcc .L7
+ 249:../SSC/Src/sdoserv.c **** 						&& (bytesToSave == ((UINT16)(MIN_SEGMENTED_DATA - ((pSdoInd->SdoHeader.SegHeader & SEGHEADER_
+ 176              	 .loc 1 249 0
+ 177 0078 7B68     	 ldr r3,[r7,#4]
+ 178 007a 1B7A     	 ldrb r3,[r3,#8]
+ 179 007c 03F00E03 	 and r3,r3,#14
+ 180 0080 5B10     	 asrs r3,r3,#1
+ 181 0082 9BB2     	 uxth r3,r3
+ 182 0084 C3F10703 	 rsb r3,r3,#7
+ 183 0088 9BB2     	 uxth r3,r3
+ 184 008a 1A46     	 mov r2,r3
+ 185 008c 3B69     	 ldr r3,[r7,#16]
+ 186 008e 9A42     	 cmp r2,r3
+ 187 0090 08D0     	 beq .L8
+ 188              	.L7:
+ 250:../SSC/Src/sdoserv.c **** 						)
+ 251:../SSC/Src/sdoserv.c **** 						|| ((bytesToSave > MIN_SEGMENTED_DATA)
+ 189              	 .loc 1 251 0
+ 190 0092 3B69     	 ldr r3,[r7,#16]
+ 191 0094 072B     	 cmp r3,#7
+ 192 0096 09D9     	 bls .L9
+ 252:../SSC/Src/sdoserv.c **** 							&& (bytesToSave == (UINT32)(mbxSize - SEGMENT_NORM_HEADER_SIZE))
+ 193              	 .loc 1 252 0
+ 194 0098 BB89     	 ldrh r3,[r7,#12]
+ 195 009a 033B     	 subs r3,r3,#3
+ 196 009c 1A46     	 mov r2,r3
+ 197 009e 3B69     	 ldr r3,[r7,#16]
+ 198 00a0 9A42     	 cmp r2,r3
+ 199 00a2 03D1     	 bne .L9
+ 200              	.L8:
+ 253:../SSC/Src/sdoserv.c **** 							))
+ 254:../SSC/Src/sdoserv.c **** 					{
+ 255:../SSC/Src/sdoserv.c **** 						/* length is correct */
+ 256:../SSC/Src/sdoserv.c **** 						bSdoSegFollows = FALSE;
+ 201              	 .loc 1 256 0
+ 202 00a4 684B     	 ldr r3,.L24+20
+ 203 00a6 0022     	 movs r2,#0
+ 204 00a8 1A70     	 strb r2,[r3]
+ 205 00aa 11E0     	 b .L12
+ 206              	.L9:
+ 257:../SSC/Src/sdoserv.c **** 					}
+ 258:../SSC/Src/sdoserv.c **** 					else
+ 259:../SSC/Src/sdoserv.c **** 					{
+ 260:../SSC/Src/sdoserv.c **** 						abort = ABORTIDX_PARAM_LENGTH_ERROR;
+ 207              	 .loc 1 260 0
+ 208 00ac 0E23     	 movs r3,#14
+ 209 00ae FB75     	 strb r3,[r7,#23]
+ 210              	.LBE3:
+ 211 00b0 0EE0     	 b .L12
+ 212              	.L6:
+ 261:../SSC/Src/sdoserv.c **** 					}
+ 262:../SSC/Src/sdoserv.c **** 				}
+ 263:../SSC/Src/sdoserv.c **** 				else
+ 264:../SSC/Src/sdoserv.c **** 				{
+ 265:../SSC/Src/sdoserv.c **** 					abort = ABORTIDX_PARAM_LENGTH_ERROR;
+ 213              	 .loc 1 265 0
+ 214 00b2 0E23     	 movs r3,#14
+ 215 00b4 FB75     	 strb r3,[r7,#23]
+ 216 00b6 0BE0     	 b .L12
+ 217              	.L5:
+ 266:../SSC/Src/sdoserv.c **** 				}
+ 267:../SSC/Src/sdoserv.c **** 			}
+ 268:../SSC/Src/sdoserv.c **** 			else
+ 269:../SSC/Src/sdoserv.c **** 			{
+ 270:../SSC/Src/sdoserv.c **** 				/* its not the last segment */
+ 271:../SSC/Src/sdoserv.c **** 				bSdoSegFollows = TRUE;
+ 218              	 .loc 1 271 0
+ 219 00b8 634B     	 ldr r3,.L24+20
+ 220 00ba 0122     	 movs r2,#1
+ 221 00bc 1A70     	 strb r2,[r3]
+ 272:../SSC/Src/sdoserv.c **** 				/* we have to check if we expect less bytes than the maximum size which can be send with a sing
+ 273:../SSC/Src/sdoserv.c **** 				   SDO Download Segment */
+ 274:../SSC/Src/sdoserv.c **** 				if (bytesToSave <= maxData)
+ 222              	 .loc 1 274 0
+ 223 00be FA89     	 ldrh r2,[r7,#14]
+ 224 00c0 3B69     	 ldr r3,[r7,#16]
+ 225 00c2 9A42     	 cmp r2,r3
+ 226 00c4 02D3     	 bcc .L13
+ 275:../SSC/Src/sdoserv.c **** 				{
+ 276:../SSC/Src/sdoserv.c **** 					abort = ABORTIDX_PARAM_LENGTH_ERROR;
+ 227              	 .loc 1 276 0
+ 228 00c6 0E23     	 movs r3,#14
+ 229 00c8 FB75     	 strb r3,[r7,#23]
+ 230 00ca 01E0     	 b .L12
+ 231              	.L13:
+ 277:../SSC/Src/sdoserv.c **** 				}
+ 278:../SSC/Src/sdoserv.c **** 				else
+ 279:../SSC/Src/sdoserv.c **** 				{
+ 280:../SSC/Src/sdoserv.c **** 					/* length is okay, bytesToSave contains the data size to be copied */
+ 281:../SSC/Src/sdoserv.c **** 					bytesToSave = maxData;
+ 232              	 .loc 1 281 0
+ 233 00cc FB89     	 ldrh r3,[r7,#14]
+ 234 00ce 3B61     	 str r3,[r7,#16]
+ 235              	.L12:
+ 282:../SSC/Src/sdoserv.c **** 				}
+ 283:../SSC/Src/sdoserv.c **** 			}
+ 284:../SSC/Src/sdoserv.c **** 
+ 285:../SSC/Src/sdoserv.c **** 			if (abort == 0)
+ 236              	 .loc 1 285 0
+ 237 00d0 FB7D     	 ldrb r3,[r7,#23]
+ 238 00d2 002B     	 cmp r3,#0
+ 239 00d4 63D1     	 bne .L3
+ 286:../SSC/Src/sdoserv.c **** 			{
+ 287:../SSC/Src/sdoserv.c **** 				/* the received data is copied in the buffer */
+ 288:../SSC/Src/sdoserv.c **** 				MBXMEMCPY(((UINT8*)pSdoSegData) + (nSdoSegBytesToHandle), pSdoInd->SdoHeader.Data, bytesToSave)
+ 240              	 .loc 1 288 0
+ 241 00d6 594B     	 ldr r3,.L24+8
+ 242 00d8 1A68     	 ldr r2,[r3]
+ 243 00da 5A4B     	 ldr r3,.L24+16
+ 244 00dc 1B68     	 ldr r3,[r3]
+ 245 00de 1A44     	 add r2,r2,r3
+ 246 00e0 7B68     	 ldr r3,[r7,#4]
+ 247 00e2 0933     	 adds r3,r3,#9
+ 248 00e4 1046     	 mov r0,r2
+ 249 00e6 1946     	 mov r1,r3
+ 250 00e8 3A69     	 ldr r2,[r7,#16]
+ 251 00ea FFF7FEFF 	 bl memcpy
+ 289:../SSC/Src/sdoserv.c **** 
+ 290:../SSC/Src/sdoserv.c **** 				if (bSdoSegFollows == FALSE)
+ 252              	 .loc 1 290 0
+ 253 00ee 564B     	 ldr r3,.L24+20
+ 254 00f0 1B78     	 ldrb r3,[r3]
+ 255 00f2 002B     	 cmp r3,#0
+ 256 00f4 53D1     	 bne .L3
+ 291:../SSC/Src/sdoserv.c **** 				{
+ 292:../SSC/Src/sdoserv.c **** 					/* it was the last segment, OBJ_Write will called to make the Write-operation */
+ 293:../SSC/Src/sdoserv.c **** 					abort = OBJ_Write(nSdoSegIndex, nSdoSegSubindex, nSdoSegCompleteSize, pSdoSegObjEntry, (UINT16
+ 257              	 .loc 1 293 0
+ 258 00f6 554B     	 ldr r3,.L24+24
+ 259 00f8 1888     	 ldrh r0,[r3]
+ 260 00fa 554B     	 ldr r3,.L24+28
+ 261 00fc 1978     	 ldrb r1,[r3]
+ 262 00fe 504B     	 ldr r3,.L24+12
+ 263 0100 1D68     	 ldr r5,[r3]
+ 264 0102 544B     	 ldr r3,.L24+32
+ 265 0104 1C68     	 ldr r4,[r3]
+ 266 0106 4D4B     	 ldr r3,.L24+8
+ 267 0108 1A68     	 ldr r2,[r3]
+ 268 010a 534B     	 ldr r3,.L24+36
+ 269 010c 1B78     	 ldrb r3,[r3]
+ 270 010e 0092     	 str r2,[sp]
+ 271 0110 0193     	 str r3,[sp,#4]
+ 272 0112 2A46     	 mov r2,r5
+ 273 0114 2346     	 mov r3,r4
+ 274 0116 FFF7FEFF 	 bl OBJ_Write
+ 275 011a 0346     	 mov r3,r0
+ 276 011c FB75     	 strb r3,[r7,#23]
+ 294:../SSC/Src/sdoserv.c **** 					if (abort == ABORTIDX_WORKING)
+ 277              	 .loc 1 294 0
+ 278 011e FB7D     	 ldrb r3,[r7,#23]
+ 279 0120 FF2B     	 cmp r3,#255
+ 280 0122 31D1     	 bne .L15
+ 295:../SSC/Src/sdoserv.c **** 					{
+ 296:../SSC/Src/sdoserv.c **** 						/* the application generates the SDO-Response later on by calling SDOS_SdoRes (only possible 
+ 297:../SSC/Src/sdoserv.c **** 						u8PendingSdo = SDO_PENDING_SEG_WRITE;
+ 281              	 .loc 1 297 0
+ 282 0124 4D4B     	 ldr r3,.L24+40
+ 283 0126 0222     	 movs r2,#2
+ 284 0128 1A70     	 strb r2,[r3]
+ 298:../SSC/Src/sdoserv.c **** 						bStoreCompleteAccess = bSdoSegAccess;
+ 285              	 .loc 1 298 0
+ 286 012a 4B4B     	 ldr r3,.L24+36
+ 287 012c 1B78     	 ldrb r3,[r3]
+ 288 012e 002B     	 cmp r3,#0
+ 289 0130 14BF     	 ite ne
+ 290 0132 0123     	 movne r3,#1
+ 291 0134 0023     	 moveq r3,#0
+ 292 0136 DAB2     	 uxtb r2,r3
+ 293 0138 494B     	 ldr r3,.L24+44
+ 294 013a 1A70     	 strb r2,[r3]
+ 299:../SSC/Src/sdoserv.c **** 						u8StoreSubindex = nSdoSegSubindex;
+ 295              	 .loc 1 299 0
+ 296 013c 444B     	 ldr r3,.L24+28
+ 297 013e 1A78     	 ldrb r2,[r3]
+ 298 0140 484B     	 ldr r3,.L24+48
+ 299 0142 1A70     	 strb r2,[r3]
+ 300:../SSC/Src/sdoserv.c **** 						u16StoreIndex = nSdoSegIndex;
+ 300              	 .loc 1 300 0
+ 301 0144 414B     	 ldr r3,.L24+24
+ 302 0146 1A88     	 ldrh r2,[r3]
+ 303 0148 474B     	 ldr r3,.L24+52
+ 304 014a 1A80     	 strh r2,[r3]
+ 301:../SSC/Src/sdoserv.c **** 						u32StoreDataSize = nSdoSegCompleteSize;
+ 305              	 .loc 1 301 0
+ 306 014c 3C4B     	 ldr r3,.L24+12
+ 307 014e 1B68     	 ldr r3,[r3]
+ 308 0150 464A     	 ldr r2,.L24+56
+ 309 0152 1360     	 str r3,[r2]
+ 302:../SSC/Src/sdoserv.c **** 						pStoreData = pSdoSegData;
+ 310              	 .loc 1 302 0
+ 311 0154 394B     	 ldr r3,.L24+8
+ 312 0156 1B68     	 ldr r3,[r3]
+ 313 0158 454A     	 ldr r2,.L24+60
+ 314 015a 1360     	 str r3,[r2]
+ 303:../SSC/Src/sdoserv.c **** 
+ 304:../SSC/Src/sdoserv.c **** 						pSdoPendFunc = pSdoSegObjEntry->Write;
+ 315              	 .loc 1 304 0
+ 316 015c 3D4B     	 ldr r3,.L24+32
+ 317 015e 1B68     	 ldr r3,[r3]
+ 318 0160 1B6A     	 ldr r3,[r3,#32]
+ 319 0162 444A     	 ldr r2,.L24+64
+ 320 0164 1360     	 str r3,[r2]
+ 305:../SSC/Src/sdoserv.c **** 
+ 306:../SSC/Src/sdoserv.c **** 						bSdoInWork = TRUE;
+ 321              	 .loc 1 306 0
+ 322 0166 444B     	 ldr r3,.L24+68
+ 323 0168 0122     	 movs r2,#1
+ 324 016a 1A70     	 strb r2,[r3]
+ 307:../SSC/Src/sdoserv.c **** 						pSdoResStored = (TINITSDOMBX MBXMEM *) pSdoInd;
+ 325              	 .loc 1 307 0
+ 326 016c 434A     	 ldr r2,.L24+72
+ 327 016e 7B68     	 ldr r3,[r7,#4]
+ 328 0170 1360     	 str r3,[r2]
+ 308:../SSC/Src/sdoserv.c **** 
+ 309:../SSC/Src/sdoserv.c **** 						bSdoSegFollows = FALSE;
+ 329              	 .loc 1 309 0
+ 330 0172 354B     	 ldr r3,.L24+20
+ 331 0174 0022     	 movs r2,#0
+ 332 0176 1A70     	 strb r2,[r3]
+ 310:../SSC/Src/sdoserv.c **** 						nSdoSegService = 0;
+ 333              	 .loc 1 310 0
+ 334 0178 414B     	 ldr r3,.L24+76
+ 335 017a 0022     	 movs r2,#0
+ 336 017c 1A70     	 strb r2,[r3]
+ 311:../SSC/Src/sdoserv.c **** 						nSdoSegBytesToHandle = 0;
+ 337              	 .loc 1 311 0
+ 338 017e 314B     	 ldr r3,.L24+16
+ 339 0180 0022     	 movs r2,#0
+ 340 0182 1A60     	 str r2,[r3]
+ 312:../SSC/Src/sdoserv.c **** 
+ 313:../SSC/Src/sdoserv.c **** 						return ABORTIDX_WORKING;
+ 341              	 .loc 1 313 0
+ 342 0184 FF23     	 movs r3,#255
+ 343 0186 51E0     	 b .L16
+ 344              	.L15:
+ 314:../SSC/Src/sdoserv.c **** 					}
+ 315:../SSC/Src/sdoserv.c **** 					else
+ 316:../SSC/Src/sdoserv.c **** 					{
+ 317:../SSC/Src/sdoserv.c **** 						/* the allocated buffer can be released */
+ 318:../SSC/Src/sdoserv.c **** 						FREEMEM((UINT16 VARMEM *) pSdoSegData);
+ 345              	 .loc 1 318 0
+ 346 0188 2C4B     	 ldr r3,.L24+8
+ 347 018a 1B68     	 ldr r3,[r3]
+ 348 018c 1846     	 mov r0,r3
+ 349 018e FFF7FEFF 	 bl free
+ 319:../SSC/Src/sdoserv.c **** 						pSdoSegData = NULL;
+ 350              	 .loc 1 319 0
+ 351 0192 2A4B     	 ldr r3,.L24+8
+ 352 0194 0022     	 movs r2,#0
+ 353 0196 1A60     	 str r2,[r3]
+ 354 0198 01E0     	 b .L3
+ 355              	.L4:
+ 320:../SSC/Src/sdoserv.c **** 					}
+ 321:../SSC/Src/sdoserv.c **** 				}
+ 322:../SSC/Src/sdoserv.c **** 			}
+ 323:../SSC/Src/sdoserv.c **** 		}
+ 324:../SSC/Src/sdoserv.c **** 		else
+ 325:../SSC/Src/sdoserv.c **** 		{
+ 326:../SSC/Src/sdoserv.c **** 			abort = ABORTIDX_COMMAND_SPECIFIER_UNKNOWN;
+ 356              	 .loc 1 326 0
+ 357 019a 0323     	 movs r3,#3
+ 358 019c FB75     	 strb r3,[r7,#23]
+ 359              	.L3:
+ 360              	.LBE2:
+ 327:../SSC/Src/sdoserv.c **** 		}
+ 328:../SSC/Src/sdoserv.c **** 	}
+ 329:../SSC/Src/sdoserv.c **** 
+ 330:../SSC/Src/sdoserv.c **** 	if (abort == 0)
+ 361              	 .loc 1 330 0
+ 362 019e FB7D     	 ldrb r3,[r7,#23]
+ 363 01a0 002B     	 cmp r3,#0
+ 364 01a2 2DD1     	 bne .L17
+ 331:../SSC/Src/sdoserv.c **** 	{
+ 332:../SSC/Src/sdoserv.c **** 		/* send the SDO Download Segment response */
+ 333:../SSC/Src/sdoserv.c **** 		pSdoInd->MbxHeader.Length = SEGMENT_NORM_RES_SIZE;
+ 365              	 .loc 1 333 0
+ 366 01a4 7B68     	 ldr r3,[r7,#4]
+ 367 01a6 0A22     	 movs r2,#10
+ 368 01a8 1A80     	 strh r2,[r3]
+ 334:../SSC/Src/sdoserv.c **** 		pSdoInd->CoeHeader &= ~COEHEADER_COESERVICEMASK;
+ 369              	 .loc 1 334 0
+ 370 01aa 7B68     	 ldr r3,[r7,#4]
+ 371 01ac DB88     	 ldrh r3,[r3,#6]
+ 372 01ae C3F30B03 	 ubfx r3,r3,#0,#12
+ 373 01b2 9AB2     	 uxth r2,r3
+ 374 01b4 7B68     	 ldr r3,[r7,#4]
+ 375 01b6 DA80     	 strh r2,[r3,#6]
+ 335:../SSC/Src/sdoserv.c **** 		pSdoInd->CoeHeader |= ((UINT16)COESERVICE_SDORESPONSE) << COEHEADER_COESERVICESHIFT;
+ 376              	 .loc 1 335 0
+ 377 01b8 7B68     	 ldr r3,[r7,#4]
+ 378 01ba DB88     	 ldrh r3,[r3,#6]
+ 379 01bc 43F44053 	 orr r3,r3,#12288
+ 380 01c0 9AB2     	 uxth r2,r3
+ 381 01c2 7B68     	 ldr r3,[r7,#4]
+ 382 01c4 DA80     	 strh r2,[r3,#6]
+ 336:../SSC/Src/sdoserv.c **** 		/* the SDO Download Segment header depends if it was the last segment or not */
+ 337:../SSC/Src/sdoserv.c **** 		if (bSdoSegLastToggle)
+ 383              	 .loc 1 337 0
+ 384 01c6 1B4B     	 ldr r3,.L24
+ 385 01c8 1B78     	 ldrb r3,[r3]
+ 386 01ca 002B     	 cmp r3,#0
+ 387 01cc 03D0     	 beq .L18
+ 338:../SSC/Src/sdoserv.c **** 		{
+ 339:../SSC/Src/sdoserv.c **** 			pSdoInd->SdoHeader.SegHeader = SWAPWORD(SDOSERVICE_DOWNLOADSEGMENTRES | SEGHEADER_TOGGLE);
+ 388              	 .loc 1 339 0
+ 389 01ce 7B68     	 ldr r3,[r7,#4]
+ 390 01d0 3022     	 movs r2,#48
+ 391 01d2 1A72     	 strb r2,[r3,#8]
+ 392 01d4 02E0     	 b .L19
+ 393              	.L18:
+ 340:../SSC/Src/sdoserv.c **** 		}
+ 341:../SSC/Src/sdoserv.c **** 		else
+ 342:../SSC/Src/sdoserv.c **** 		{
+ 343:../SSC/Src/sdoserv.c **** 			pSdoInd->SdoHeader.SegHeader = SWAPWORD(SDOSERVICE_DOWNLOADSEGMENTRES);
+ 394              	 .loc 1 343 0
+ 395 01d6 7B68     	 ldr r3,[r7,#4]
+ 396 01d8 2022     	 movs r2,#32
+ 397 01da 1A72     	 strb r2,[r3,#8]
+ 398              	.L19:
+ 344:../SSC/Src/sdoserv.c **** 		}
+ 345:../SSC/Src/sdoserv.c **** 
+ 346:../SSC/Src/sdoserv.c **** 		if (bSdoSegFollows == TRUE)
+ 399              	 .loc 1 346 0
+ 400 01dc 1A4B     	 ldr r3,.L24+20
+ 401 01de 1B78     	 ldrb r3,[r3]
+ 402 01e0 012B     	 cmp r3,#1
+ 403 01e2 06D1     	 bne .L20
+ 347:../SSC/Src/sdoserv.c **** 		{
+ 348:../SSC/Src/sdoserv.c **** 			/* segments are still expected, nSdoSegBytesToHandle contains the number of received data bytes 
+ 349:../SSC/Src/sdoserv.c **** 			nSdoSegBytesToHandle += bytesToSave;
+ 404              	 .loc 1 349 0
+ 405 01e4 174B     	 ldr r3,.L24+16
+ 406 01e6 1A68     	 ldr r2,[r3]
+ 407 01e8 3B69     	 ldr r3,[r7,#16]
+ 408 01ea 1344     	 add r3,r3,r2
+ 409 01ec 154A     	 ldr r2,.L24+16
+ 410 01ee 1360     	 str r3,[r2]
+ 411 01f0 1BE0     	 b .L22
+ 412              	.L20:
+ 350:../SSC/Src/sdoserv.c **** 		}
+ 351:../SSC/Src/sdoserv.c **** 		else
+ 352:../SSC/Src/sdoserv.c **** 		{
+ 353:../SSC/Src/sdoserv.c **** 			/* the last segment was received, the variables are reset */
+ 354:../SSC/Src/sdoserv.c **** 			nSdoSegBytesToHandle = 0;
+ 413              	 .loc 1 354 0
+ 414 01f2 144B     	 ldr r3,.L24+16
+ 415 01f4 0022     	 movs r2,#0
+ 416 01f6 1A60     	 str r2,[r3]
+ 355:../SSC/Src/sdoserv.c **** 			nSdoSegService = 0;
+ 417              	 .loc 1 355 0
+ 418 01f8 214B     	 ldr r3,.L24+76
+ 419 01fa 0022     	 movs r2,#0
+ 420 01fc 1A70     	 strb r2,[r3]
+ 421 01fe 14E0     	 b .L22
+ 422              	.L17:
+ 356:../SSC/Src/sdoserv.c **** 		}
+ 357:../SSC/Src/sdoserv.c **** 	}
+ 358:../SSC/Src/sdoserv.c **** 	else
+ 359:../SSC/Src/sdoserv.c **** 	{
+ 360:../SSC/Src/sdoserv.c **** 		/* the Abort-Response will be sent in SDOS_SdoInd*/
+ 361:../SSC/Src/sdoserv.c **** 		bSdoSegFollows = FALSE;
+ 423              	 .loc 1 361 0
+ 424 0200 114B     	 ldr r3,.L24+20
+ 425 0202 0022     	 movs r2,#0
+ 426 0204 1A70     	 strb r2,[r3]
+ 362:../SSC/Src/sdoserv.c **** 		nSdoSegService = 0;
+ 427              	 .loc 1 362 0
+ 428 0206 1E4B     	 ldr r3,.L24+76
+ 429 0208 0022     	 movs r2,#0
+ 430 020a 1A70     	 strb r2,[r3]
+ 363:../SSC/Src/sdoserv.c **** 		if (pSdoSegData)
+ 431              	 .loc 1 363 0
+ 432 020c 0B4B     	 ldr r3,.L24+8
+ 433 020e 1B68     	 ldr r3,[r3]
+ 434 0210 002B     	 cmp r3,#0
+ 435 0212 07D0     	 beq .L23
+ 364:../SSC/Src/sdoserv.c **** 		{
+ 365:../SSC/Src/sdoserv.c **** 			/* the memory has to be released if it is not released before.
+ 366:../SSC/Src/sdoserv.c **** 			In case of AbortIdx_Working the buffer will be freed in SDOS_SdoRes*/
+ 367:../SSC/Src/sdoserv.c **** 			FREEMEM((UINT16 VARMEM *) pSdoSegData);
+ 436              	 .loc 1 367 0
+ 437 0214 094B     	 ldr r3,.L24+8
+ 438 0216 1B68     	 ldr r3,[r3]
+ 439 0218 1846     	 mov r0,r3
+ 440 021a FFF7FEFF 	 bl free
+ 368:../SSC/Src/sdoserv.c **** 			pSdoSegData = NULL;
+ 441              	 .loc 1 368 0
+ 442 021e 074B     	 ldr r3,.L24+8
+ 443 0220 0022     	 movs r2,#0
+ 444 0222 1A60     	 str r2,[r3]
+ 445              	.L23:
+ 369:../SSC/Src/sdoserv.c **** 		}
+ 370:../SSC/Src/sdoserv.c **** 
+ 371:../SSC/Src/sdoserv.c **** 		nSdoSegBytesToHandle = 0;
+ 446              	 .loc 1 371 0
+ 447 0224 074B     	 ldr r3,.L24+16
+ 448 0226 0022     	 movs r2,#0
+ 449 0228 1A60     	 str r2,[r3]
+ 450              	.L22:
+ 372:../SSC/Src/sdoserv.c **** 	}
+ 373:../SSC/Src/sdoserv.c **** 
+ 374:../SSC/Src/sdoserv.c **** 	return abort;
+ 451              	 .loc 1 374 0
+ 452 022a FB7D     	 ldrb r3,[r7,#23]
+ 453              	.L16:
+ 375:../SSC/Src/sdoserv.c **** }
+ 454              	 .loc 1 375 0
+ 455 022c 1846     	 mov r0,r3
+ 456 022e 1837     	 adds r7,r7,#24
+ 457              	.LCFI3:
+ 458              	 .cfi_def_cfa_offset 16
+ 459 0230 BD46     	 mov sp,r7
+ 460              	.LCFI4:
+ 461              	 .cfi_def_cfa_register 13
+ 462              	 
+ 463 0232 B0BD     	 pop {r4,r5,r7,pc}
+ 464              	.L25:
+ 465              	 .align 2
+ 466              	.L24:
+ 467 0234 00000000 	 .word bSdoSegLastToggle
+ 468 0238 00000000 	 .word u16ReceiveMbxSize
+ 469 023c 00000000 	 .word pSdoSegData
+ 470 0240 00000000 	 .word nSdoSegCompleteSize
+ 471 0244 00000000 	 .word nSdoSegBytesToHandle
+ 472 0248 00000000 	 .word bSdoSegFollows
+ 473 024c 00000000 	 .word nSdoSegIndex
+ 474 0250 00000000 	 .word nSdoSegSubindex
+ 475 0254 00000000 	 .word pSdoSegObjEntry
+ 476 0258 00000000 	 .word bSdoSegAccess
+ 477 025c 00000000 	 .word u8PendingSdo
+ 478 0260 00000000 	 .word bStoreCompleteAccess
+ 479 0264 00000000 	 .word u8StoreSubindex
+ 480 0268 00000000 	 .word u16StoreIndex
+ 481 026c 00000000 	 .word u32StoreDataSize
+ 482 0270 00000000 	 .word pStoreData
+ 483 0274 00000000 	 .word pSdoPendFunc
+ 484 0278 00000000 	 .word bSdoInWork
+ 485 027c 00000000 	 .word pSdoResStored
+ 486 0280 00000000 	 .word nSdoSegService
+ 487              	 .cfi_endproc
+ 488              	.LFE175:
+ 490              	 .section .text.SdoUploadSegmentInd,"ax",%progbits
+ 491              	 .align 2
+ 492              	 .thumb
+ 493              	 .thumb_func
+ 495              	SdoUploadSegmentInd:
+ 496              	.LFB176:
+ 376:../SSC/Src/sdoserv.c **** 
+ 377:../SSC/Src/sdoserv.c **** /////////////////////////////////////////////////////////////////////////////////////////
+ 378:../SSC/Src/sdoserv.c **** /**
+ 379:../SSC/Src/sdoserv.c ****  \param     pSdoInd            Pointer to the received mailbox data from the master.
+ 380:../SSC/Src/sdoserv.c **** 
+ 381:../SSC/Src/sdoserv.c ****  \return    Indicates if an error occurred while the operation ( good = 0 ).
+ 382:../SSC/Src/sdoserv.c **** 
+ 383:../SSC/Src/sdoserv.c ****  \brief    This function is called when a Upload SDO Segment request service
+ 384:../SSC/Src/sdoserv.c **** 			is received from the master. It prepares and operates the
+ 385:../SSC/Src/sdoserv.c **** 			response and sends it by itself.
+ 386:../SSC/Src/sdoserv.c **** *////////////////////////////////////////////////////////////////////////////////////////
+ 387:../SSC/Src/sdoserv.c **** 
+ 388:../SSC/Src/sdoserv.c **** static UINT8 SdoUploadSegmentInd(TUPLOADSDOSEGREQMBX MBXMEM * pSdoInd)
+ 389:../SSC/Src/sdoserv.c **** {
+ 497              	 .loc 1 389 0
+ 498              	 .cfi_startproc
+ 499              	 
+ 500              	 
+ 501 0000 80B5     	 push {r7,lr}
+ 502              	.LCFI5:
+ 503              	 .cfi_def_cfa_offset 8
+ 504              	 .cfi_offset 7,-8
+ 505              	 .cfi_offset 14,-4
+ 506 0002 86B0     	 sub sp,sp,#24
+ 507              	.LCFI6:
+ 508              	 .cfi_def_cfa_offset 32
+ 509 0004 00AF     	 add r7,sp,#0
+ 510              	.LCFI7:
+ 511              	 .cfi_def_cfa_register 7
+ 512 0006 7860     	 str r0,[r7,#4]
+ 390:../SSC/Src/sdoserv.c **** 	UINT8 abort = 0;
+ 513              	 .loc 1 390 0
+ 514 0008 0023     	 movs r3,#0
+ 515 000a FB75     	 strb r3,[r7,#23]
+ 391:../SSC/Src/sdoserv.c **** 	TUPLOADSDOSEGRESMBX MBXMEM * pSdoSegRes = (TUPLOADSDOSEGRESMBX MBXMEM *)pSdoInd;
+ 516              	 .loc 1 391 0
+ 517 000c 7B68     	 ldr r3,[r7,#4]
+ 518 000e FB60     	 str r3,[r7,#12]
+ 392:../SSC/Src/sdoserv.c **** 
+ 393:../SSC/Src/sdoserv.c **** 	if (SWAPWORD(pSdoInd->SegHeader & SEGHEADER_TOGGLE) == bSdoSegLastToggle)
+ 519              	 .loc 1 393 0
+ 520 0010 7B68     	 ldr r3,[r7,#4]
+ 521 0012 1B7A     	 ldrb r3,[r3,#8]
+ 522 0014 03F01003 	 and r3,r3,#16
+ 523 0018 4C4A     	 ldr r2,.L37
+ 524 001a 1278     	 ldrb r2,[r2]
+ 525 001c 9342     	 cmp r3,r2
+ 526 001e 02D1     	 bne .L27
+ 394:../SSC/Src/sdoserv.c **** 	{
+ 395:../SSC/Src/sdoserv.c **** 		/* toggle bit has not toggled... */
+ 396:../SSC/Src/sdoserv.c **** 		abort = ABORTIDX_TOGGLE_BIT_NOT_CHANGED;
+ 527              	 .loc 1 396 0
+ 528 0020 0123     	 movs r3,#1
+ 529 0022 FB75     	 strb r3,[r7,#23]
+ 530 0024 8CE0     	 b .L28
+ 531              	.L27:
+ 532              	.LBB4:
+ 397:../SSC/Src/sdoserv.c **** 	}
+ 398:../SSC/Src/sdoserv.c **** 	else
+ 399:../SSC/Src/sdoserv.c **** 	{
+ 400:../SSC/Src/sdoserv.c **** 		/* maxData contains the maximum data to be sent with a SDO-Upload Segment response */
+ 401:../SSC/Src/sdoserv.c **** 
+ 402:../SSC/Src/sdoserv.c **** 		UINT32 size = 0;
+ 533              	 .loc 1 402 0
+ 534 0026 0023     	 movs r3,#0
+ 535 0028 3B61     	 str r3,[r7,#16]
+ 403:../SSC/Src/sdoserv.c **** 		UINT16 maxData;
+ 404:../SSC/Src/sdoserv.c **** 
+ 405:../SSC/Src/sdoserv.c **** 		{
+ 406:../SSC/Src/sdoserv.c **** 			maxData = u16SendMbxSize - MBX_HEADER_SIZE - SEGMENT_NORM_HEADER_SIZE;
+ 536              	 .loc 1 406 0
+ 537 002a 494B     	 ldr r3,.L37+4
+ 538 002c 1B88     	 ldrh r3,[r3]
+ 539 002e 093B     	 subs r3,r3,#9
+ 540 0030 7B81     	 strh r3,[r7,#10]
+ 407:../SSC/Src/sdoserv.c **** 		}
+ 408:../SSC/Src/sdoserv.c **** 
+ 409:../SSC/Src/sdoserv.c **** 		/* the new toggle bit is stored in bSdoSegLastToggle */
+ 410:../SSC/Src/sdoserv.c **** 		bSdoSegLastToggle = pSdoInd->SegHeader & SEGHEADER_TOGGLE;
+ 541              	 .loc 1 410 0
+ 542 0032 7B68     	 ldr r3,[r7,#4]
+ 543 0034 1B7A     	 ldrb r3,[r3,#8]
+ 544 0036 03F01003 	 and r3,r3,#16
+ 545 003a DAB2     	 uxtb r2,r3
+ 546 003c 434B     	 ldr r3,.L37
+ 547 003e 1A70     	 strb r2,[r3]
+ 411:../SSC/Src/sdoserv.c **** 
+ 412:../SSC/Src/sdoserv.c **** 		if (nSdoSegCompleteSize < (nSdoSegBytesToHandle + maxData))
+ 548              	 .loc 1 412 0
+ 549 0040 7A89     	 ldrh r2,[r7,#10]
+ 550 0042 444B     	 ldr r3,.L37+8
+ 551 0044 1B68     	 ldr r3,[r3]
+ 552 0046 1A44     	 add r2,r2,r3
+ 553 0048 434B     	 ldr r3,.L37+12
+ 554 004a 1B68     	 ldr r3,[r3]
+ 555 004c 9A42     	 cmp r2,r3
+ 556 004e 09D9     	 bls .L29
+ 413:../SSC/Src/sdoserv.c **** 		{
+ 414:../SSC/Src/sdoserv.c **** 			/* the remaining data can be send with one SDO Upload Segment response,
+ 415:../SSC/Src/sdoserv.c **** 			   size contains the data to be copied */
+ 416:../SSC/Src/sdoserv.c **** 			size = nSdoSegCompleteSize - nSdoSegBytesToHandle;
+ 557              	 .loc 1 416 0
+ 558 0050 414B     	 ldr r3,.L37+12
+ 559 0052 1A68     	 ldr r2,[r3]
+ 560 0054 3F4B     	 ldr r3,.L37+8
+ 561 0056 1B68     	 ldr r3,[r3]
+ 562 0058 D31A     	 subs r3,r2,r3
+ 563 005a 3B61     	 str r3,[r7,#16]
+ 417:../SSC/Src/sdoserv.c **** 			bSdoSegFollows = FALSE;
+ 564              	 .loc 1 417 0
+ 565 005c 3F4B     	 ldr r3,.L37+16
+ 566 005e 0022     	 movs r2,#0
+ 567 0060 1A70     	 strb r2,[r3]
+ 568 0062 04E0     	 b .L30
+ 569              	.L29:
+ 418:../SSC/Src/sdoserv.c **** 		}
+ 419:../SSC/Src/sdoserv.c **** 		else
+ 420:../SSC/Src/sdoserv.c **** 		{
+ 421:../SSC/Src/sdoserv.c **** 			/* more data will follow, size contains the data to be copied */
+ 422:../SSC/Src/sdoserv.c **** 			size = maxData;
+ 570              	 .loc 1 422 0
+ 571 0064 7B89     	 ldrh r3,[r7,#10]
+ 572 0066 3B61     	 str r3,[r7,#16]
+ 423:../SSC/Src/sdoserv.c **** 			bSdoSegFollows = TRUE;
+ 573              	 .loc 1 423 0
+ 574 0068 3C4B     	 ldr r3,.L37+16
+ 575 006a 0122     	 movs r2,#1
+ 576 006c 1A70     	 strb r2,[r3]
+ 577              	.L30:
+ 424:../SSC/Src/sdoserv.c **** 		}
+ 425:../SSC/Src/sdoserv.c **** 
+ 426:../SSC/Src/sdoserv.c **** 		/* copy the object data in the SDO Upload segment response */
+ 427:../SSC/Src/sdoserv.c **** 		MBXMEMCPY(pSdoSegRes->SdoHeader.Data, &(((UINT8*)pSdoSegData)[nSdoSegBytesToHandle]), size);
+ 578              	 .loc 1 427 0
+ 579 006e FB68     	 ldr r3,[r7,#12]
+ 580 0070 03F10901 	 add r1,r3,#9
+ 581 0074 3A4B     	 ldr r3,.L37+20
+ 582 0076 1A68     	 ldr r2,[r3]
+ 583 0078 364B     	 ldr r3,.L37+8
+ 584 007a 1B68     	 ldr r3,[r3]
+ 585 007c 1344     	 add r3,r3,r2
+ 586 007e 0846     	 mov r0,r1
+ 587 0080 1946     	 mov r1,r3
+ 588 0082 3A69     	 ldr r2,[r7,#16]
+ 589 0084 FFF7FEFF 	 bl memcpy
+ 428:../SSC/Src/sdoserv.c **** 
+ 429:../SSC/Src/sdoserv.c **** 		/* the SDO Upload Segment header depends if there is still data to be sent */
+ 430:../SSC/Src/sdoserv.c **** 		pSdoSegRes->CoeHeader &= ~COEHEADER_COESERVICEMASK;
+ 590              	 .loc 1 430 0
+ 591 0088 FB68     	 ldr r3,[r7,#12]
+ 592 008a DB88     	 ldrh r3,[r3,#6]
+ 593 008c C3F30B03 	 ubfx r3,r3,#0,#12
+ 594 0090 9AB2     	 uxth r2,r3
+ 595 0092 FB68     	 ldr r3,[r7,#12]
+ 596 0094 DA80     	 strh r2,[r3,#6]
+ 431:../SSC/Src/sdoserv.c **** 		pSdoSegRes->CoeHeader |= ((UINT16)COESERVICE_SDORESPONSE) << COEHEADER_COESERVICESHIFT;
+ 597              	 .loc 1 431 0
+ 598 0096 FB68     	 ldr r3,[r7,#12]
+ 599 0098 DB88     	 ldrh r3,[r3,#6]
+ 600 009a 43F44053 	 orr r3,r3,#12288
+ 601 009e 9AB2     	 uxth r2,r3
+ 602 00a0 FB68     	 ldr r3,[r7,#12]
+ 603 00a2 DA80     	 strh r2,[r3,#6]
+ 432:../SSC/Src/sdoserv.c **** 
+ 433:../SSC/Src/sdoserv.c **** 		/*Clear SDO header*/
+ 434:../SSC/Src/sdoserv.c **** 		pSdoSegRes->SdoHeader.SegHeader &= ~SEGHEADER_MASK;
+ 604              	 .loc 1 434 0
+ 605 00a4 FB68     	 ldr r3,[r7,#12]
+ 606 00a6 0022     	 movs r2,#0
+ 607 00a8 1A72     	 strb r2,[r3,#8]
+ 435:../SSC/Src/sdoserv.c **** 		if (bSdoSegFollows)
+ 608              	 .loc 1 435 0
+ 609 00aa 2C4B     	 ldr r3,.L37+16
+ 610 00ac 1B78     	 ldrb r3,[r3]
+ 611 00ae 002B     	 cmp r3,#0
+ 612 00b0 08D0     	 beq .L31
+ 436:../SSC/Src/sdoserv.c **** 		{
+ 437:../SSC/Src/sdoserv.c **** 			pSdoSegRes->SdoHeader.SegHeader |= SWAPWORD(SDOSERVICE_UPLOADSEGMENTRES | bSdoSegLastToggle);
+ 613              	 .loc 1 437 0
+ 614 00b2 FB68     	 ldr r3,[r7,#12]
+ 615 00b4 1A7A     	 ldrb r2,[r3,#8]
+ 616 00b6 254B     	 ldr r3,.L37
+ 617 00b8 1B78     	 ldrb r3,[r3]
+ 618 00ba 1343     	 orrs r3,r3,r2
+ 619 00bc DAB2     	 uxtb r2,r3
+ 620 00be FB68     	 ldr r3,[r7,#12]
+ 621 00c0 1A72     	 strb r2,[r3,#8]
+ 622 00c2 0AE0     	 b .L32
+ 623              	.L31:
+ 438:../SSC/Src/sdoserv.c **** 		}
+ 439:../SSC/Src/sdoserv.c **** 		else
+ 440:../SSC/Src/sdoserv.c **** 		{
+ 441:../SSC/Src/sdoserv.c **** 			pSdoSegRes->SdoHeader.SegHeader |= SWAPWORD(SDOSERVICE_UPLOADSEGMENTRES | bSdoSegLastToggle | SE
+ 624              	 .loc 1 441 0
+ 625 00c4 FB68     	 ldr r3,[r7,#12]
+ 626 00c6 1A7A     	 ldrb r2,[r3,#8]
+ 627 00c8 204B     	 ldr r3,.L37
+ 628 00ca 1B78     	 ldrb r3,[r3]
+ 629 00cc 1343     	 orrs r3,r3,r2
+ 630 00ce DBB2     	 uxtb r3,r3
+ 631 00d0 43F00103 	 orr r3,r3,#1
+ 632 00d4 DAB2     	 uxtb r2,r3
+ 633 00d6 FB68     	 ldr r3,[r7,#12]
+ 634 00d8 1A72     	 strb r2,[r3,#8]
+ 635              	.L32:
+ 442:../SSC/Src/sdoserv.c **** 		}
+ 443:../SSC/Src/sdoserv.c **** 
+ 444:../SSC/Src/sdoserv.c **** 				// operate CAN specific flag segDataSize:
+ 445:../SSC/Src/sdoserv.c **** 				/* HBu 06.02.06: the sizes were wrong */
+ 446:../SSC/Src/sdoserv.c **** 		if (size < MIN_SEGMENTED_DATA)
+ 636              	 .loc 1 446 0
+ 637 00da 3B69     	 ldr r3,[r7,#16]
+ 638 00dc 062B     	 cmp r3,#6
+ 639 00de 10D8     	 bhi .L33
+ 447:../SSC/Src/sdoserv.c **** 		{
+ 448:../SSC/Src/sdoserv.c **** 			// at least    MIN_SEGMENTED_DATA bytes have to be send:
+ 449:../SSC/Src/sdoserv.c **** 			pSdoSegRes->MbxHeader.Length = SEGMENT_NORM_RES_SIZE;
+ 640              	 .loc 1 449 0
+ 641 00e0 FB68     	 ldr r3,[r7,#12]
+ 642 00e2 0A22     	 movs r2,#10
+ 643 00e4 1A80     	 strh r2,[r3]
+ 450:../SSC/Src/sdoserv.c **** 			pSdoSegRes->SdoHeader.SegHeader |= (MIN_SEGMENTED_DATA - size) << SEGHEADERSHIFT_SEGDATASIZE;
+ 644              	 .loc 1 450 0
+ 645 00e6 FB68     	 ldr r3,[r7,#12]
+ 646 00e8 1A7A     	 ldrb r2,[r3,#8]
+ 647 00ea 3B69     	 ldr r3,[r7,#16]
+ 648 00ec DBB2     	 uxtb r3,r3
+ 649 00ee C3F10703 	 rsb r3,r3,#7
+ 650 00f2 DBB2     	 uxtb r3,r3
+ 651 00f4 5B00     	 lsls r3,r3,#1
+ 652 00f6 DBB2     	 uxtb r3,r3
+ 653 00f8 1343     	 orrs r3,r3,r2
+ 654 00fa DAB2     	 uxtb r2,r3
+ 655 00fc FB68     	 ldr r3,[r7,#12]
+ 656 00fe 1A72     	 strb r2,[r3,#8]
+ 657 0100 05E0     	 b .L34
+ 658              	.L33:
+ 451:../SSC/Src/sdoserv.c **** 		}
+ 452:../SSC/Src/sdoserv.c **** 		else
+ 453:../SSC/Src/sdoserv.c **** 		{
+ 454:../SSC/Src/sdoserv.c **** 			pSdoSegRes->MbxHeader.Length = ((UINT16)size) + SEGMENT_NORM_HEADER_SIZE;
+ 659              	 .loc 1 454 0
+ 660 0102 3B69     	 ldr r3,[r7,#16]
+ 661 0104 9BB2     	 uxth r3,r3
+ 662 0106 0333     	 adds r3,r3,#3
+ 663 0108 9AB2     	 uxth r2,r3
+ 664 010a FB68     	 ldr r3,[r7,#12]
+ 665 010c 1A80     	 strh r2,[r3]
+ 666              	.L34:
+ 455:../SSC/Src/sdoserv.c **** 		}
+ 456:../SSC/Src/sdoserv.c **** 
+ 457:../SSC/Src/sdoserv.c **** 		if (bSdoSegFollows == TRUE)
+ 667              	 .loc 1 457 0
+ 668 010e 134B     	 ldr r3,.L37+16
+ 669 0110 1B78     	 ldrb r3,[r3]
+ 670 0112 012B     	 cmp r3,#1
+ 671 0114 06D1     	 bne .L35
+ 458:../SSC/Src/sdoserv.c **** 		{
+ 459:../SSC/Src/sdoserv.c **** 			// updating the value of send bytes:
+ 460:../SSC/Src/sdoserv.c **** 			nSdoSegBytesToHandle += size;
+ 672              	 .loc 1 460 0
+ 673 0116 0F4B     	 ldr r3,.L37+8
+ 674 0118 1A68     	 ldr r2,[r3]
+ 675 011a 3B69     	 ldr r3,[r7,#16]
+ 676 011c 1344     	 add r3,r3,r2
+ 677 011e 0D4A     	 ldr r2,.L37+8
+ 678 0120 1360     	 str r3,[r2]
+ 679 0122 0DE0     	 b .L28
+ 680              	.L35:
+ 461:../SSC/Src/sdoserv.c **** 		}
+ 462:../SSC/Src/sdoserv.c **** 		else
+ 463:../SSC/Src/sdoserv.c **** 		{
+ 464:../SSC/Src/sdoserv.c **** 			FREEMEM((UINT16 VARMEM *) pSdoSegData);
+ 681              	 .loc 1 464 0
+ 682 0124 0E4B     	 ldr r3,.L37+20
+ 683 0126 1B68     	 ldr r3,[r3]
+ 684 0128 1846     	 mov r0,r3
+ 685 012a FFF7FEFF 	 bl free
+ 465:../SSC/Src/sdoserv.c **** 			pSdoSegData = NULL;
+ 686              	 .loc 1 465 0
+ 687 012e 0C4B     	 ldr r3,.L37+20
+ 688 0130 0022     	 movs r2,#0
+ 689 0132 1A60     	 str r2,[r3]
+ 466:../SSC/Src/sdoserv.c **** 			nSdoSegBytesToHandle = 0;
+ 690              	 .loc 1 466 0
+ 691 0134 074B     	 ldr r3,.L37+8
+ 692 0136 0022     	 movs r2,#0
+ 693 0138 1A60     	 str r2,[r3]
+ 467:../SSC/Src/sdoserv.c **** 			nSdoSegService = 0;
+ 694              	 .loc 1 467 0
+ 695 013a 0A4B     	 ldr r3,.L37+24
+ 696 013c 0022     	 movs r2,#0
+ 697 013e 1A70     	 strb r2,[r3]
+ 698              	.L28:
+ 699              	.LBE4:
+ 468:../SSC/Src/sdoserv.c **** 		}
+ 469:../SSC/Src/sdoserv.c **** 	}
+ 470:../SSC/Src/sdoserv.c **** 
+ 471:../SSC/Src/sdoserv.c **** 	return abort;
+ 700              	 .loc 1 471 0
+ 701 0140 FB7D     	 ldrb r3,[r7,#23]
+ 472:../SSC/Src/sdoserv.c **** }
+ 702              	 .loc 1 472 0
+ 703 0142 1846     	 mov r0,r3
+ 704 0144 1837     	 adds r7,r7,#24
+ 705              	.LCFI8:
+ 706              	 .cfi_def_cfa_offset 8
+ 707 0146 BD46     	 mov sp,r7
+ 708              	.LCFI9:
+ 709              	 .cfi_def_cfa_register 13
+ 710              	 
+ 711 0148 80BD     	 pop {r7,pc}
+ 712              	.L38:
+ 713 014a 00BF     	 .align 2
+ 714              	.L37:
+ 715 014c 00000000 	 .word bSdoSegLastToggle
+ 716 0150 00000000 	 .word u16SendMbxSize
+ 717 0154 00000000 	 .word nSdoSegBytesToHandle
+ 718 0158 00000000 	 .word nSdoSegCompleteSize
+ 719 015c 00000000 	 .word bSdoSegFollows
+ 720 0160 00000000 	 .word pSdoSegData
+ 721 0164 00000000 	 .word nSdoSegService
+ 722              	 .cfi_endproc
+ 723              	.LFE176:
+ 725              	 .section .text.SdoRes,"ax",%progbits
+ 726              	 .align 2
+ 727              	 .global SdoRes
+ 728              	 .thumb
+ 729              	 .thumb_func
+ 731              	SdoRes:
+ 732              	.LFB177:
+ 473:../SSC/Src/sdoserv.c **** 
+ 474:../SSC/Src/sdoserv.c **** 
+ 475:../SSC/Src/sdoserv.c **** /////////////////////////////////////////////////////////////////////////////////////////
+ 476:../SSC/Src/sdoserv.c **** /**
+ 477:../SSC/Src/sdoserv.c ****  \param    abort                 Result of the SDO access
+ 478:../SSC/Src/sdoserv.c ****  \param    command		         SDO command index
+ 479:../SSC/Src/sdoserv.c ****  \param    completeAccess        Indicates if complete access was requested
+ 480:../SSC/Src/sdoserv.c ****  \param    dataSize              Available data buffer in the response
+ 481:../SSC/Src/sdoserv.c ****  \param    objLength             Complete size of the object
+ 482:../SSC/Src/sdoserv.c ****  \param     pSdoRes                Pointer to the mailbox buffer
+ 483:../SSC/Src/sdoserv.c **** 
+ 484:../SSC/Src/sdoserv.c ****  \brief    This function is called when a SDO response shall be sent
+ 485:../SSC/Src/sdoserv.c **** *////////////////////////////////////////////////////////////////////////////////////////
+ 486:../SSC/Src/sdoserv.c **** 
+ 487:../SSC/Src/sdoserv.c **** void SdoRes(UINT8 abort, UINT8 command, UINT8 completeAccess, UINT16 dataSize, UINT32 objLength, TI
+ 488:../SSC/Src/sdoserv.c **** {
+ 733              	 .loc 1 488 0
+ 734              	 .cfi_startproc
+ 735              	 
+ 736              	 
+ 737 0000 90B5     	 push {r4,r7,lr}
+ 738              	.LCFI10:
+ 739              	 .cfi_def_cfa_offset 12
+ 740              	 .cfi_offset 4,-12
+ 741              	 .cfi_offset 7,-8
+ 742              	 .cfi_offset 14,-4
+ 743 0002 83B0     	 sub sp,sp,#12
+ 744              	.LCFI11:
+ 745              	 .cfi_def_cfa_offset 24
+ 746 0004 00AF     	 add r7,sp,#0
+ 747              	.LCFI12:
+ 748              	 .cfi_def_cfa_register 7
+ 749 0006 0446     	 mov r4,r0
+ 750 0008 0846     	 mov r0,r1
+ 751 000a 1146     	 mov r1,r2
+ 752 000c 1A46     	 mov r2,r3
+ 753 000e 2346     	 mov r3,r4
+ 754 0010 FB71     	 strb r3,[r7,#7]
+ 755 0012 0346     	 mov r3,r0
+ 756 0014 BB71     	 strb r3,[r7,#6]
+ 757 0016 0B46     	 mov r3,r1
+ 758 0018 7B71     	 strb r3,[r7,#5]
+ 759 001a 1346     	 mov r3,r2
+ 760 001c 7B80     	 strh r3,[r7,#2]
+ 489:../SSC/Src/sdoserv.c **** 	/* for an upload segment response the toggle bit was overwritten */
+ 490:../SSC/Src/sdoserv.c **** 	if ((command != SDOSERVICE_UPLOADSEGMENTREQ) && (command != SDOSERVICE_DOWNLOADSEGMENTREQ))
+ 761              	 .loc 1 490 0
+ 762 001e BB79     	 ldrb r3,[r7,#6]
+ 763 0020 602B     	 cmp r3,#96
+ 764 0022 05D0     	 beq .L40
+ 765              	 .loc 1 490 0 is_stmt 0 discriminator 1
+ 766 0024 BB79     	 ldrb r3,[r7,#6]
+ 767 0026 002B     	 cmp r3,#0
+ 768 0028 02D0     	 beq .L40
+ 491:../SSC/Src/sdoserv.c **** 	{
+ 492:../SSC/Src/sdoserv.c **** 		pSdoRes->SdoHeader.Sdo[SDOHEADER_COMMANDOFFSET] = 0;
+ 769              	 .loc 1 492 0 is_stmt 1
+ 770 002a FB69     	 ldr r3,[r7,#28]
+ 771 002c 0022     	 movs r2,#0
+ 772 002e 1A72     	 strb r2,[r3,#8]
+ 773              	.L40:
+ 493:../SSC/Src/sdoserv.c **** 	}
+ 494:../SSC/Src/sdoserv.c **** 	if (abort == 0)
+ 774              	 .loc 1 494 0
+ 775 0030 FB79     	 ldrb r3,[r7,#7]
+ 776 0032 002B     	 cmp r3,#0
+ 777 0034 6CD1     	 bne .L41
+ 495:../SSC/Src/sdoserv.c **** 	{
+ 496:../SSC/Src/sdoserv.c **** 		/* SDO-Download or SDO-Upload was successful, generate the SDO- and CoE-Header */
+ 497:../SSC/Src/sdoserv.c **** 		pSdoRes->CoeHeader &= ~COEHEADER_COESERVICEMASK;
+ 778              	 .loc 1 497 0
+ 779 0036 FB69     	 ldr r3,[r7,#28]
+ 780 0038 DB88     	 ldrh r3,[r3,#6]
+ 781 003a C3F30B03 	 ubfx r3,r3,#0,#12
+ 782 003e 9AB2     	 uxth r2,r3
+ 783 0040 FB69     	 ldr r3,[r7,#28]
+ 784 0042 DA80     	 strh r2,[r3,#6]
+ 498:../SSC/Src/sdoserv.c **** 		pSdoRes->CoeHeader |= ((UINT16)COESERVICE_SDORESPONSE) << COEHEADER_COESERVICESHIFT;
+ 785              	 .loc 1 498 0
+ 786 0044 FB69     	 ldr r3,[r7,#28]
+ 787 0046 DB88     	 ldrh r3,[r3,#6]
+ 788 0048 43F44053 	 orr r3,r3,#12288
+ 789 004c 9AB2     	 uxth r2,r3
+ 790 004e FB69     	 ldr r3,[r7,#28]
+ 791 0050 DA80     	 strh r2,[r3,#6]
+ 499:../SSC/Src/sdoserv.c **** 		if (command == SDOSERVICE_INITIATEUPLOADREQ)
+ 792              	 .loc 1 499 0
+ 793 0052 BB79     	 ldrb r3,[r7,#6]
+ 794 0054 402B     	 cmp r3,#64
+ 795 0056 3FD1     	 bne .L42
+ 500:../SSC/Src/sdoserv.c **** 		{
+ 501:../SSC/Src/sdoserv.c **** 			// HBu 06.02.06: Complete Access Bit in the SDO-Upload-Response too */
+ 502:../SSC/Src/sdoserv.c **** 			if ((objLength <= 4) && (objLength > 0))
+ 796              	 .loc 1 502 0
+ 797 0058 BB69     	 ldr r3,[r7,#24]
+ 798 005a 042B     	 cmp r3,#4
+ 799 005c 18D8     	 bhi .L43
+ 800              	 .loc 1 502 0 is_stmt 0 discriminator 1
+ 801 005e BB69     	 ldr r3,[r7,#24]
+ 802 0060 002B     	 cmp r3,#0
+ 803 0062 15D0     	 beq .L43
+ 503:../SSC/Src/sdoserv.c **** 			{
+ 504:../SSC/Src/sdoserv.c **** 				/* Expedited Upload Response */
+ 505:../SSC/Src/sdoserv.c **** 				pSdoRes->MbxHeader.Length = EXPEDITED_FRAME_SIZE;
+ 804              	 .loc 1 505 0 is_stmt 1
+ 805 0064 FB69     	 ldr r3,[r7,#28]
+ 806 0066 0A22     	 movs r2,#10
+ 807 0068 1A80     	 strh r2,[r3]
+ 506:../SSC/Src/sdoserv.c **** 				pSdoRes->SdoHeader.Sdo[SDOHEADER_COMMANDOFFSET] |= SDOHEADER_SIZEINDICATOR |
+ 808              	 .loc 1 506 0
+ 809 006a FB69     	 ldr r3,[r7,#28]
+ 810 006c 1A7A     	 ldrb r2,[r3,#8]
+ 507:../SSC/Src/sdoserv.c **** 					SDOHEADER_TRANSFERTYPE |
+ 508:../SSC/Src/sdoserv.c **** 					completeAccess |
+ 509:../SSC/Src/sdoserv.c **** 					((MAX_EXPEDITED_DATA - ((UINT8)objLength)) << SDOHEADERSHIFT_DATASETSIZE) |
+ 811              	 .loc 1 509 0
+ 812 006e BB69     	 ldr r3,[r7,#24]
+ 813 0070 DBB2     	 uxtb r3,r3
+ 814 0072 C3F10403 	 rsb r3,r3,#4
+ 815 0076 9B00     	 lsls r3,r3,#2
+ 506:../SSC/Src/sdoserv.c **** 				pSdoRes->SdoHeader.Sdo[SDOHEADER_COMMANDOFFSET] |= SDOHEADER_SIZEINDICATOR |
+ 816              	 .loc 1 506 0
+ 817 0078 D9B2     	 uxtb r1,r3
+ 818 007a 7B79     	 ldrb r3,[r7,#5]
+ 819 007c 0B43     	 orrs r3,r3,r1
+ 820 007e DBB2     	 uxtb r3,r3
+ 821 0080 1343     	 orrs r3,r3,r2
+ 822 0082 DBB2     	 uxtb r3,r3
+ 823 0084 43F04303 	 orr r3,r3,#67
+ 824 0088 DAB2     	 uxtb r2,r3
+ 825 008a FB69     	 ldr r3,[r7,#28]
+ 826 008c 1A72     	 strb r2,[r3,#8]
+ 827 008e 5DE0     	 b .L49
+ 828              	.L43:
+ 510:../SSC/Src/sdoserv.c **** 					SDOSERVICE_INITIATEUPLOADRES;
+ 511:../SSC/Src/sdoserv.c **** 			}
+ 512:../SSC/Src/sdoserv.c **** 			else
+ 513:../SSC/Src/sdoserv.c **** 			{
+ 514:../SSC/Src/sdoserv.c **** 				/* Normal or Segmented Upload Response */
+ 515:../SSC/Src/sdoserv.c **** 				if (dataSize < objLength)
+ 829              	 .loc 1 515 0
+ 830 0090 7A88     	 ldrh r2,[r7,#2]
+ 831 0092 BB69     	 ldr r3,[r7,#24]
+ 832 0094 9A42     	 cmp r2,r3
+ 833 0096 05D2     	 bcs .L45
+ 516:../SSC/Src/sdoserv.c **** 				{
+ 517:../SSC/Src/sdoserv.c **** 					pSdoRes->MbxHeader.Length = UPLOAD_NORM_RES_SIZE + dataSize;
+ 834              	 .loc 1 517 0
+ 835 0098 7B88     	 ldrh r3,[r7,#2]
+ 836 009a 0A33     	 adds r3,r3,#10
+ 837 009c 9AB2     	 uxth r2,r3
+ 838 009e FB69     	 ldr r3,[r7,#28]
+ 839 00a0 1A80     	 strh r2,[r3]
+ 840 00a2 05E0     	 b .L46
+ 841              	.L45:
+ 518:../SSC/Src/sdoserv.c **** 				}
+ 519:../SSC/Src/sdoserv.c **** 				else
+ 520:../SSC/Src/sdoserv.c **** 				{
+ 521:../SSC/Src/sdoserv.c **** 					pSdoRes->MbxHeader.Length = UPLOAD_NORM_RES_SIZE + ((UINT16)objLength);
+ 842              	 .loc 1 521 0
+ 843 00a4 BB69     	 ldr r3,[r7,#24]
+ 844 00a6 9BB2     	 uxth r3,r3
+ 845 00a8 0A33     	 adds r3,r3,#10
+ 846 00aa 9AB2     	 uxth r2,r3
+ 847 00ac FB69     	 ldr r3,[r7,#28]
+ 848 00ae 1A80     	 strh r2,[r3]
+ 849              	.L46:
+ 522:../SSC/Src/sdoserv.c **** 				}
+ 523:../SSC/Src/sdoserv.c **** 				((TINITSDOUPLOADNORMRESMBX MBXMEM *) pSdoRes)->CompleteSize[0] = SWAPWORD((UINT16)objLength);
+ 850              	 .loc 1 523 0
+ 851 00b0 BB69     	 ldr r3,[r7,#24]
+ 852 00b2 9AB2     	 uxth r2,r3
+ 853 00b4 FB69     	 ldr r3,[r7,#28]
+ 854 00b6 9A81     	 strh r2,[r3,#12]
+ 524:../SSC/Src/sdoserv.c **** 				((TINITSDOUPLOADNORMRESMBX MBXMEM *) pSdoRes)->CompleteSize[1] = SWAPWORD((UINT16)(objLength >>
+ 855              	 .loc 1 524 0
+ 856 00b8 BB69     	 ldr r3,[r7,#24]
+ 857 00ba 1B0C     	 lsrs r3,r3,#16
+ 858 00bc 9AB2     	 uxth r2,r3
+ 859 00be FB69     	 ldr r3,[r7,#28]
+ 860 00c0 DA81     	 strh r2,[r3,#14]
+ 525:../SSC/Src/sdoserv.c **** 				pSdoRes->SdoHeader.Sdo[SDOHEADER_COMMANDOFFSET] |= SDOHEADER_SIZEINDICATOR |
+ 861              	 .loc 1 525 0
+ 862 00c2 FB69     	 ldr r3,[r7,#28]
+ 863 00c4 1A7A     	 ldrb r2,[r3,#8]
+ 864 00c6 7B79     	 ldrb r3,[r7,#5]
+ 865 00c8 1343     	 orrs r3,r3,r2
+ 866 00ca DBB2     	 uxtb r3,r3
+ 867 00cc 43F04103 	 orr r3,r3,#65
+ 868 00d0 DAB2     	 uxtb r2,r3
+ 869 00d2 FB69     	 ldr r3,[r7,#28]
+ 870 00d4 1A72     	 strb r2,[r3,#8]
+ 871 00d6 39E0     	 b .L49
+ 872              	.L42:
+ 526:../SSC/Src/sdoserv.c **** 					completeAccess |
+ 527:../SSC/Src/sdoserv.c **** 					SDOSERVICE_INITIATEUPLOADRES;
+ 528:../SSC/Src/sdoserv.c **** 
+ 529:../SSC/Src/sdoserv.c **** 			}
+ 530:../SSC/Src/sdoserv.c **** 		}
+ 531:../SSC/Src/sdoserv.c **** 		/* for a segmented response the command was wrong in the response */
+ 532:../SSC/Src/sdoserv.c **** 		else if (command == SDOSERVICE_DOWNLOADSEGMENTREQ)
+ 873              	 .loc 1 532 0
+ 874 00d8 BB79     	 ldrb r3,[r7,#6]
+ 875 00da 002B     	 cmp r3,#0
+ 876 00dc 0AD1     	 bne .L48
+ 533:../SSC/Src/sdoserv.c **** 		{
+ 534:../SSC/Src/sdoserv.c **** 			/* Download segmented response */
+ 535:../SSC/Src/sdoserv.c **** 			pSdoRes->MbxHeader.Length = DOWNLOAD_NORM_RES_SIZE;
+ 877              	 .loc 1 535 0
+ 878 00de FB69     	 ldr r3,[r7,#28]
+ 879 00e0 0A22     	 movs r2,#10
+ 880 00e2 1A80     	 strh r2,[r3]
+ 536:../SSC/Src/sdoserv.c **** 			pSdoRes->SdoHeader.Sdo[SDOHEADER_COMMANDOFFSET] |= SDOSERVICE_DOWNLOADSEGMENTRES;
+ 881              	 .loc 1 536 0
+ 882 00e4 FB69     	 ldr r3,[r7,#28]
+ 883 00e6 1B7A     	 ldrb r3,[r3,#8]
+ 884 00e8 43F02003 	 orr r3,r3,#32
+ 885 00ec DAB2     	 uxtb r2,r3
+ 886 00ee FB69     	 ldr r3,[r7,#28]
+ 887 00f0 1A72     	 strb r2,[r3,#8]
+ 888 00f2 2BE0     	 b .L49
+ 889              	.L48:
+ 537:../SSC/Src/sdoserv.c **** 		}
+ 538:../SSC/Src/sdoserv.c **** 		else if (command != SDOSERVICE_UPLOADSEGMENTREQ)
+ 890              	 .loc 1 538 0
+ 891 00f4 BB79     	 ldrb r3,[r7,#6]
+ 892 00f6 602B     	 cmp r3,#96
+ 893 00f8 28D0     	 beq .L49
+ 539:../SSC/Src/sdoserv.c **** 		{
+ 540:../SSC/Src/sdoserv.c **** 			/* Download response */
+ 541:../SSC/Src/sdoserv.c **** 			pSdoRes->MbxHeader.Length = DOWNLOAD_NORM_RES_SIZE;
+ 894              	 .loc 1 541 0
+ 895 00fa FB69     	 ldr r3,[r7,#28]
+ 896 00fc 0A22     	 movs r2,#10
+ 897 00fe 1A80     	 strh r2,[r3]
+ 542:../SSC/Src/sdoserv.c **** 			pSdoRes->SdoHeader.Sdo[SDOHEADER_COMMANDOFFSET] |= SDOSERVICE_INITIATEDOWNLOADRES;
+ 898              	 .loc 1 542 0
+ 899 0100 FB69     	 ldr r3,[r7,#28]
+ 900 0102 1B7A     	 ldrb r3,[r3,#8]
+ 901 0104 43F06003 	 orr r3,r3,#96
+ 902 0108 DAB2     	 uxtb r2,r3
+ 903 010a FB69     	 ldr r3,[r7,#28]
+ 904 010c 1A72     	 strb r2,[r3,#8]
+ 905 010e 1DE0     	 b .L49
+ 906              	.L41:
+ 543:../SSC/Src/sdoserv.c **** 		}
+ 544:../SSC/Src/sdoserv.c **** 	}
+ 545:../SSC/Src/sdoserv.c **** 	else
+ 546:../SSC/Src/sdoserv.c **** 	{
+ 547:../SSC/Src/sdoserv.c **** 		/* generate a SDO-Abort-Request */
+ 548:../SSC/Src/sdoserv.c **** 		pSdoRes->MbxHeader.Length = ABORT_NORM_RES_SIZE;
+ 907              	 .loc 1 548 0
+ 908 0110 FB69     	 ldr r3,[r7,#28]
+ 909 0112 0A22     	 movs r2,#10
+ 910 0114 1A80     	 strh r2,[r3]
+ 549:../SSC/Src/sdoserv.c **** 		pSdoRes->CoeHeader &= ~COEHEADER_COESERVICEMASK;
+ 911              	 .loc 1 549 0
+ 912 0116 FB69     	 ldr r3,[r7,#28]
+ 913 0118 DB88     	 ldrh r3,[r3,#6]
+ 914 011a C3F30B03 	 ubfx r3,r3,#0,#12
+ 915 011e 9AB2     	 uxth r2,r3
+ 916 0120 FB69     	 ldr r3,[r7,#28]
+ 917 0122 DA80     	 strh r2,[r3,#6]
+ 550:../SSC/Src/sdoserv.c **** 		pSdoRes->CoeHeader |= ((UINT16)COESERVICE_SDOREQUEST) << COEHEADER_COESERVICESHIFT;
+ 918              	 .loc 1 550 0
+ 919 0124 FB69     	 ldr r3,[r7,#28]
+ 920 0126 DB88     	 ldrh r3,[r3,#6]
+ 921 0128 43F40053 	 orr r3,r3,#8192
+ 922 012c 9AB2     	 uxth r2,r3
+ 923 012e FB69     	 ldr r3,[r7,#28]
+ 924 0130 DA80     	 strh r2,[r3,#6]
+ 551:../SSC/Src/sdoserv.c **** 		pSdoRes->SdoHeader.Sdo[SDOHEADER_COMMANDOFFSET] |= SDOSERVICE_ABORTTRANSFER;
+ 925              	 .loc 1 551 0
+ 926 0132 FB69     	 ldr r3,[r7,#28]
+ 927 0134 1B7A     	 ldrb r3,[r3,#8]
+ 928 0136 63F07F03 	 orn r3,r3,#127
+ 929 013a DAB2     	 uxtb r2,r3
+ 930 013c FB69     	 ldr r3,[r7,#28]
+ 931 013e 1A72     	 strb r2,[r3,#8]
+ 552:../SSC/Src/sdoserv.c **** 
+ 553:../SSC/Src/sdoserv.c **** 		((TABORTSDOTRANSFERREQMBX MBXMEM *) pSdoRes)->AbortCode = SWAPDWORD(cAbortCode[abort]);
+ 932              	 .loc 1 553 0
+ 933 0140 FB79     	 ldrb r3,[r7,#7]
+ 934 0142 094A     	 ldr r2,.L51
+ 935 0144 52F82320 	 ldr r2,[r2,r3,lsl#2]
+ 936 0148 FB69     	 ldr r3,[r7,#28]
+ 937 014a DA60     	 str r2,[r3,#12]
+ 938              	.L49:
+ 554:../SSC/Src/sdoserv.c **** 	}
+ 555:../SSC/Src/sdoserv.c **** 
+ 556:../SSC/Src/sdoserv.c **** 	// HBu 02.05.06: if the CoE-response could not be sent because the
+ 557:../SSC/Src/sdoserv.c **** 	//               send mailbox is full it should be stored
+ 558:../SSC/Src/sdoserv.c **** 	if (MBX_MailboxSendReq((TMBX MBXMEM *) pSdoRes, COE_SERVICE) != 0)
+ 939              	 .loc 1 558 0
+ 940 014c F869     	 ldr r0,[r7,#28]
+ 941 014e 0221     	 movs r1,#2
+ 942 0150 FFF7FEFF 	 bl MBX_MailboxSendReq
+ 943 0154 0346     	 mov r3,r0
+ 944 0156 002B     	 cmp r3,#0
+ 945 0158 02D0     	 beq .L39
+ 559:../SSC/Src/sdoserv.c **** 	{
+ 560:../SSC/Src/sdoserv.c **** 		/* we store the CoE mailbox service to send it later (in COE_ContinueInd) when the mailbox is rea
+ 561:../SSC/Src/sdoserv.c **** 		pCoeSendStored = (TMBX MBXMEM *) pSdoRes;
+ 946              	 .loc 1 561 0
+ 947 015a 044A     	 ldr r2,.L51+4
+ 948 015c FB69     	 ldr r3,[r7,#28]
+ 949 015e 1360     	 str r3,[r2]
+ 950              	.L39:
+ 562:../SSC/Src/sdoserv.c **** 	}
+ 563:../SSC/Src/sdoserv.c **** }
+ 951              	 .loc 1 563 0
+ 952 0160 0C37     	 adds r7,r7,#12
+ 953              	.LCFI13:
+ 954              	 .cfi_def_cfa_offset 12
+ 955 0162 BD46     	 mov sp,r7
+ 956              	.LCFI14:
+ 957              	 .cfi_def_cfa_register 13
+ 958              	 
+ 959 0164 90BD     	 pop {r4,r7,pc}
+ 960              	.L52:
+ 961 0166 00BF     	 .align 2
+ 962              	.L51:
+ 963 0168 00000000 	 .word cAbortCode
+ 964 016c 00000000 	 .word pCoeSendStored
+ 965              	 .cfi_endproc
+ 966              	.LFE177:
+ 968              	 .section .text.SDOS_SdoInd,"ax",%progbits
+ 969              	 .align 2
+ 970              	 .global SDOS_SdoInd
+ 971              	 .thumb
+ 972              	 .thumb_func
+ 974              	SDOS_SdoInd:
+ 975              	.LFB178:
+ 564:../SSC/Src/sdoserv.c **** 
+ 565:../SSC/Src/sdoserv.c **** /////////////////////////////////////////////////////////////////////////////////////////
+ 566:../SSC/Src/sdoserv.c **** /**
+ 567:../SSC/Src/sdoserv.c ****  \param     pSdoInd    Pointer to the received mailbox data from the master.
+ 568:../SSC/Src/sdoserv.c **** 
+ 569:../SSC/Src/sdoserv.c ****  \return    Indicates if an error occurred while the operation ( good = 0 ).
+ 570:../SSC/Src/sdoserv.c **** 
+ 571:../SSC/Src/sdoserv.c ****  \brief    This function is called when a SDO request service
+ 572:../SSC/Src/sdoserv.c **** 			is received from the master and calls depending from
+ 573:../SSC/Src/sdoserv.c **** 			the command the concerning function.
+ 574:../SSC/Src/sdoserv.c **** *////////////////////////////////////////////////////////////////////////////////////////
+ 575:../SSC/Src/sdoserv.c **** 
+ 576:../SSC/Src/sdoserv.c **** UINT8 SDOS_SdoInd(TINITSDOMBX MBXMEM *pSdoInd)
+ 577:../SSC/Src/sdoserv.c **** {
+ 976              	 .loc 1 577 0
+ 977              	 .cfi_startproc
+ 978              	 
+ 979              	 
+ 980 0000 90B5     	 push {r4,r7,lr}
+ 981              	.LCFI15:
+ 982              	 .cfi_def_cfa_offset 12
+ 983              	 .cfi_offset 4,-12
+ 984              	 .cfi_offset 7,-8
+ 985              	 .cfi_offset 14,-4
+ 986 0002 91B0     	 sub sp,sp,#68
+ 987              	.LCFI16:
+ 988              	 .cfi_def_cfa_offset 80
+ 989 0004 02AF     	 add r7,sp,#8
+ 990              	.LCFI17:
+ 991              	 .cfi_def_cfa 7,72
+ 992 0006 7860     	 str r0,[r7,#4]
+ 578:../SSC/Src/sdoserv.c **** 	UINT8 abort = 0;
+ 993              	 .loc 1 578 0
+ 994 0008 0023     	 movs r3,#0
+ 995 000a 87F83730 	 strb r3,[r7,#55]
+ 579:../SSC/Src/sdoserv.c **** 	UINT8 sdoHeader = (pSdoInd->SdoHeader.Sdo[SDOHEADER_COMMANDOFFSET] & SDOHEADER_COMMANDMASK);
+ 996              	 .loc 1 579 0
+ 997 000e 7B68     	 ldr r3,[r7,#4]
+ 998 0010 1B7A     	 ldrb r3,[r3,#8]
+ 999 0012 87F82230 	 strb r3,[r7,#34]
+ 580:../SSC/Src/sdoserv.c **** 	/* the SDO-command is in bit 5-7 of the first SDO-Byte */
+ 581:../SSC/Src/sdoserv.c **** 	UINT8 command = (sdoHeader & SDOHEADER_COMMAND);
+ 1000              	 .loc 1 581 0
+ 1001 0016 97F82230 	 ldrb r3,[r7,#34]
+ 1002 001a 23F01F03 	 bic r3,r3,#31
+ 1003 001e 87F82130 	 strb r3,[r7,#33]
+ 582:../SSC/Src/sdoserv.c **** 	/* mbxSize contains the size of the mailbox (CoE-Header (2 Bytes) + SDO-Header (8 Bytes) + SDO-Dat
+ 583:../SSC/Src/sdoserv.c **** 	UINT16 mbxSize = SWAPWORD(pSdoInd->MbxHeader.Length);
+ 1004              	 .loc 1 583 0
+ 1005 0022 7B68     	 ldr r3,[r7,#4]
+ 1006 0024 1B88     	 ldrh r3,[r3]
+ 1007 0026 FB83     	 strh r3,[r7,#30]
+ 584:../SSC/Src/sdoserv.c **** 	UINT16 index;
+ 585:../SSC/Src/sdoserv.c **** 	UINT8 subindex;
+ 586:../SSC/Src/sdoserv.c **** 	OBJCONST TOBJECT OBJMEM * pObjEntry;
+ 587:../SSC/Src/sdoserv.c **** 	/* this variable contains the information, if all entries of an object will be read (bCompleteAcce
+ 588:../SSC/Src/sdoserv.c **** 	UINT8 bCompleteAccess = 0;
+ 1008              	 .loc 1 588 0
+ 1009 0028 0023     	 movs r3,#0
+ 1010 002a 87F83630 	 strb r3,[r7,#54]
+ 589:../SSC/Src/sdoserv.c **** 	UINT32 objLength = 0;
+ 1011              	 .loc 1 589 0
+ 1012 002e 0023     	 movs r3,#0
+ 1013 0030 3B63     	 str r3,[r7,#48]
+ 590:../SSC/Src/sdoserv.c **** 	UINT32 dataSize = 0;
+ 1014              	 .loc 1 590 0
+ 1015 0032 0023     	 movs r3,#0
+ 1016 0034 FB62     	 str r3,[r7,#44]
+ 591:../SSC/Src/sdoserv.c **** 
+ 592:../SSC/Src/sdoserv.c **** 	if (bSdoInWork)
+ 1017              	 .loc 1 592 0
+ 1018 0036 AE4B     	 ldr r3,.L97
+ 1019 0038 1B78     	 ldrb r3,[r3]
+ 1020 003a 002B     	 cmp r3,#0
+ 1021 003c 01D0     	 beq .L54
+ 593:../SSC/Src/sdoserv.c **** 	{
+ 594:../SSC/Src/sdoserv.c **** 		/* the last SDO is still in work */
+ 595:../SSC/Src/sdoserv.c **** 		return MBXERR_SERVICEINWORK;
+ 1022              	 .loc 1 595 0
+ 1023 003e 0923     	 movs r3,#9
+ 1024 0040 A7E2     	 b .L55
+ 1025              	.L54:
+ 596:../SSC/Src/sdoserv.c **** 	}
+ 597:../SSC/Src/sdoserv.c **** 
+ 598:../SSC/Src/sdoserv.c **** /* ECATCHANGE_START(V5.13) COE5*/
+ 599:../SSC/Src/sdoserv.c **** 	if (sdoHeader & SDOHEADER_COMPLETEACCESS)
+ 1026              	 .loc 1 599 0
+ 1027 0042 97F82230 	 ldrb r3,[r7,#34]
+ 1028 0046 03F01003 	 and r3,r3,#16
+ 1029 004a 002B     	 cmp r3,#0
+ 1030 004c 02D0     	 beq .L56
+ 600:../SSC/Src/sdoserv.c **** 	{
+ 601:../SSC/Src/sdoserv.c **** 		bCompleteAccess = 1;
+ 1031              	 .loc 1 601 0
+ 1032 004e 0123     	 movs r3,#1
+ 1033 0050 87F83630 	 strb r3,[r7,#54]
+ 1034              	.L56:
+ 602:../SSC/Src/sdoserv.c **** 	}
+ 603:../SSC/Src/sdoserv.c **** /* ECATCHANGE_END(V5.13) COE5*/
+ 604:../SSC/Src/sdoserv.c **** 
+ 605:../SSC/Src/sdoserv.c **** 	switch (command)
+ 1035              	 .loc 1 605 0
+ 1036 0054 97F82130 	 ldrb r3,[r7,#33]
+ 1037 0058 202B     	 cmp r3,#32
+ 1038 005a 0BD0     	 beq .L58
+ 1039 005c 202B     	 cmp r3,#32
+ 1040 005e 03DC     	 bgt .L59
+ 1041 0060 002B     	 cmp r3,#0
+ 1042 0062 00F05F82 	 beq .L60
+ 1043 0066 79E2     	 b .L57
+ 1044              	.L59:
+ 1045 0068 402B     	 cmp r3,#64
+ 1046 006a 03D0     	 beq .L58
+ 1047 006c 602B     	 cmp r3,#96
+ 1048 006e 00F05982 	 beq .L60
+ 1049 0072 73E2     	 b .L57
+ 1050              	.L58:
+ 606:../SSC/Src/sdoserv.c **** 	{
+ 607:../SSC/Src/sdoserv.c **** 	case SDOSERVICE_INITIATEDOWNLOADREQ:
+ 608:../SSC/Src/sdoserv.c **** 	case SDOSERVICE_INITIATEUPLOADREQ:
+ 609:../SSC/Src/sdoserv.c **** 		/* the variable index contains the requested index of the SDO service */
+ 610:../SSC/Src/sdoserv.c **** 		index = ((UINT16)(pSdoInd->SdoHeader.Sdo[SDOHEADER_INDEXHIOFFSET] & SDOHEADER_INDEXHIMASK));
+ 1051              	 .loc 1 610 0
+ 1052 0074 7B68     	 ldr r3,[r7,#4]
+ 1053 0076 9B7A     	 ldrb r3,[r3,#10]
+ 1054 0078 BB83     	 strh r3,[r7,#28]
+ 611:../SSC/Src/sdoserv.c **** 		index <<= 8;
+ 1055              	 .loc 1 611 0
+ 1056 007a BB8B     	 ldrh r3,[r7,#28]
+ 1057 007c 1B02     	 lsls r3,r3,#8
+ 1058 007e BB83     	 strh r3,[r7,#28]
+ 612:../SSC/Src/sdoserv.c **** 		index += (pSdoInd->SdoHeader.Sdo[SDOHEADER_INDEXLOOFFSET]);
+ 1059              	 .loc 1 612 0
+ 1060 0080 7B68     	 ldr r3,[r7,#4]
+ 1061 0082 5B7A     	 ldrb r3,[r3,#9]
+ 1062 0084 9AB2     	 uxth r2,r3
+ 1063 0086 BB8B     	 ldrh r3,[r7,#28]
+ 1064 0088 1344     	 add r3,r3,r2
+ 1065 008a BB83     	 strh r3,[r7,#28]
+ 613:../SSC/Src/sdoserv.c **** 		/* the variable subindex contains the requested subindex of the SDO service */
+ 614:../SSC/Src/sdoserv.c **** 		subindex = pSdoInd->SdoHeader.Sdo[SDOHEADER_SUBINDEXOFFSET];
+ 1066              	 .loc 1 614 0
+ 1067 008c 7B68     	 ldr r3,[r7,#4]
+ 1068 008e DB7A     	 ldrb r3,[r3,#11]
+ 1069 0090 FB76     	 strb r3,[r7,#27]
+ 615:../SSC/Src/sdoserv.c **** 
+ 616:../SSC/Src/sdoserv.c **** 
+ 617:../SSC/Src/sdoserv.c **** 
+ 618:../SSC/Src/sdoserv.c **** 
+ 619:../SSC/Src/sdoserv.c **** 
+ 620:../SSC/Src/sdoserv.c **** 		/* OBJ_GetObjectHandle checks if the requested index is defined in the object dictionary */
+ 621:../SSC/Src/sdoserv.c **** 		pObjEntry = OBJ_GetObjectHandle(index);
+ 1070              	 .loc 1 621 0
+ 1071 0092 BB8B     	 ldrh r3,[r7,#28]
+ 1072 0094 1846     	 mov r0,r3
+ 1073 0096 FFF7FEFF 	 bl OBJ_GetObjectHandle
+ 1074 009a 7861     	 str r0,[r7,#20]
+ 622:../SSC/Src/sdoserv.c **** 
+ 623:../SSC/Src/sdoserv.c **** 		if (pObjEntry)
+ 1075              	 .loc 1 623 0
+ 1076 009c 7B69     	 ldr r3,[r7,#20]
+ 1077 009e 002B     	 cmp r3,#0
+ 1078 00a0 00F03B82 	 beq .L61
+ 1079              	.LBB5:
+ 624:../SSC/Src/sdoserv.c **** 		{
+ 625:../SSC/Src/sdoserv.c **** 			/* transferType contains the information if the SDO Download Request or the SDO Upload Response
+ 626:../SSC/Src/sdoserv.c **** 			   can be an expedited service (SDO data length <= 4, that means the data is stored in the
+ 627:../SSC/Src/sdoserv.c **** 				SDO-Header completely */
+ 628:../SSC/Src/sdoserv.c **** 			UINT8 bTransferType = 0;
+ 1080              	 .loc 1 628 0
+ 1081 00a4 0023     	 movs r3,#0
+ 1082 00a6 87F82B30 	 strb r3,[r7,#43]
+ 629:../SSC/Src/sdoserv.c **** 			/* pData is the pointer to the received (SDO-Download) or sent (SDO-Upload) SDO data in the mail
+ 630:../SSC/Src/sdoserv.c **** 			UINT16 MBXMEM * pData = NULL;
+ 1083              	 .loc 1 630 0
+ 1084 00aa 0023     	 movs r3,#0
+ 1085 00ac 7B62     	 str r3,[r7,#36]
+ 631:../SSC/Src/sdoserv.c **** 			UINT8 segTransfer = 0;
+ 1086              	 .loc 1 631 0
+ 1087 00ae 0023     	 movs r3,#0
+ 1088 00b0 87F82330 	 strb r3,[r7,#35]
+ 1089              	.LBB6:
+ 632:../SSC/Src/sdoserv.c **** 
+ 633:../SSC/Src/sdoserv.c **** 			{
+ 634:../SSC/Src/sdoserv.c **** 				UINT8 maxSubindex = (pObjEntry->ObjDesc.ObjFlags & OBJFLAGS_MAXSUBINDEXMASK) >> OBJFLAGS_MAXSUB
+ 1090              	 .loc 1 634 0
+ 1091 00b4 7B69     	 ldr r3,[r7,#20]
+ 1092 00b6 9B89     	 ldrh r3,[r3,#12]
+ 1093 00b8 FB74     	 strb r3,[r7,#19]
+ 635:../SSC/Src/sdoserv.c **** 
+ 636:../SSC/Src/sdoserv.c **** 				if (subindex > maxSubindex)
+ 1094              	 .loc 1 636 0
+ 1095 00ba FA7E     	 ldrb r2,[r7,#27]
+ 1096 00bc FB7C     	 ldrb r3,[r7,#19]
+ 1097 00be 9A42     	 cmp r2,r3
+ 1098 00c0 03D9     	 bls .L62
+ 637:../SSC/Src/sdoserv.c **** 				{
+ 638:../SSC/Src/sdoserv.c **** 					abort = ABORTIDX_SUBINDEX_NOT_EXISTING;
+ 1099              	 .loc 1 638 0
+ 1100 00c2 1123     	 movs r3,#17
+ 1101 00c4 87F83730 	 strb r3,[r7,#55]
+ 1102 00c8 0EE0     	 b .L63
+ 1103              	.L62:
+ 639:../SSC/Src/sdoserv.c **** 				}
+ 640:../SSC/Src/sdoserv.c **** 				else
+ 641:../SSC/Src/sdoserv.c **** 				{
+ 642:../SSC/Src/sdoserv.c **** 					dataSize = objLength = OBJ_GetObjectLength(index, subindex, pObjEntry, (UINT8)(sdoHeader & SDO
+ 1104              	 .loc 1 642 0
+ 1105 00ca 97F82230 	 ldrb r3,[r7,#34]
+ 1106 00ce 03F01003 	 and r3,r3,#16
+ 1107 00d2 DBB2     	 uxtb r3,r3
+ 1108 00d4 B98B     	 ldrh r1,[r7,#28]
+ 1109 00d6 FA7E     	 ldrb r2,[r7,#27]
+ 1110 00d8 0846     	 mov r0,r1
+ 1111 00da 1146     	 mov r1,r2
+ 1112 00dc 7A69     	 ldr r2,[r7,#20]
+ 1113 00de FFF7FEFF 	 bl OBJ_GetObjectLength
+ 1114 00e2 3863     	 str r0,[r7,#48]
+ 1115 00e4 3B6B     	 ldr r3,[r7,#48]
+ 1116 00e6 FB62     	 str r3,[r7,#44]
+ 1117              	.L63:
+ 643:../SSC/Src/sdoserv.c **** 				}
+ 644:../SSC/Src/sdoserv.c **** 
+ 645:../SSC/Src/sdoserv.c **** 				if (abort == 0)
+ 1118              	 .loc 1 645 0
+ 1119 00e8 97F83730 	 ldrb r3,[r7,#55]
+ 1120 00ec 002B     	 cmp r3,#0
+ 1121 00ee 32D1     	 bne .L64
+ 646:../SSC/Src/sdoserv.c **** 				{
+ 647:../SSC/Src/sdoserv.c **** 					if (command == SDOSERVICE_INITIATEUPLOADREQ)
+ 1122              	 .loc 1 647 0
+ 1123 00f0 97F82130 	 ldrb r3,[r7,#33]
+ 1124 00f4 402B     	 cmp r3,#64
+ 1125 00f6 28D1     	 bne .L65
+ 648:../SSC/Src/sdoserv.c **** 					{
+ 649:../SSC/Src/sdoserv.c **** 						/* SDO Upload */
+ 650:../SSC/Src/sdoserv.c **** 						if (mbxSize != EXPEDITED_FRAME_SIZE)
+ 1126              	 .loc 1 650 0
+ 1127 00f8 FB8B     	 ldrh r3,[r7,#30]
+ 1128 00fa 0A2B     	 cmp r3,#10
+ 1129 00fc 01D0     	 beq .L66
+ 651:../SSC/Src/sdoserv.c **** 						{
+ 652:../SSC/Src/sdoserv.c **** 							/* a SDO Upload request has always a fixed size (2 Byte CoE-Header plus 8 Byte SDO-Header) *
+ 653:../SSC/Src/sdoserv.c **** 							return MBXERR_INVALIDSIZE;
+ 1130              	 .loc 1 653 0
+ 1131 00fe 0823     	 movs r3,#8
+ 1132 0100 47E2     	 b .L55
+ 1133              	.L66:
+ 654:../SSC/Src/sdoserv.c **** 						}
+ 655:../SSC/Src/sdoserv.c **** 						/* distinguish between expedited and normal upload response within the length of the response
+ 656:../SSC/Src/sdoserv.c **** 						if ((objLength <= MAX_EXPEDITED_DATA) && objLength != 0)
+ 1134              	 .loc 1 656 0
+ 1135 0102 3B6B     	 ldr r3,[r7,#48]
+ 1136 0104 042B     	 cmp r3,#4
+ 1137 0106 10D8     	 bhi .L67
+ 1138              	 .loc 1 656 0 is_stmt 0 discriminator 1
+ 1139 0108 3B6B     	 ldr r3,[r7,#48]
+ 1140 010a 002B     	 cmp r3,#0
+ 1141 010c 0DD0     	 beq .L67
+ 657:../SSC/Src/sdoserv.c **** 						{
+ 658:../SSC/Src/sdoserv.c **** 							/* Expedited Upload */
+ 659:../SSC/Src/sdoserv.c **** 							bTransferType = 1;
+ 1142              	 .loc 1 659 0 is_stmt 1
+ 1143 010e 0123     	 movs r3,#1
+ 1144 0110 87F82B30 	 strb r3,[r7,#43]
+ 660:../SSC/Src/sdoserv.c **** 							/* pData is the pointer where the object data has to be copied for the response */
+ 661:../SSC/Src/sdoserv.c **** 							pData = (UINT16 MBXMEM *) ((TINITSDOUPLOADEXPRESMBX MBXMEM *) pSdoInd)->Data;
+ 1145              	 .loc 1 661 0
+ 1146 0114 7B68     	 ldr r3,[r7,#4]
+ 1147 0116 0C33     	 adds r3,r3,#12
+ 1148 0118 7B62     	 str r3,[r7,#36]
+ 662:../SSC/Src/sdoserv.c **** 													/* initialize the 4 data bytes of the SDO upload response because the requested object
+ 663:../SSC/Src/sdoserv.c **** 														could be less than 4 */
+ 664:../SSC/Src/sdoserv.c **** 							pData[0] = 0;
+ 1149              	 .loc 1 664 0
+ 1150 011a 7B6A     	 ldr r3,[r7,#36]
+ 1151 011c 0022     	 movs r2,#0
+ 1152 011e 1A80     	 strh r2,[r3]
+ 665:../SSC/Src/sdoserv.c **** 							pData[1] = 0;
+ 1153              	 .loc 1 665 0
+ 1154 0120 7B6A     	 ldr r3,[r7,#36]
+ 1155 0122 0233     	 adds r3,r3,#2
+ 1156 0124 0022     	 movs r2,#0
+ 1157 0126 1A80     	 strh r2,[r3]
+ 1158 0128 15E0     	 b .L64
+ 1159              	.L67:
+ 666:../SSC/Src/sdoserv.c **** 						}
+ 667:../SSC/Src/sdoserv.c **** 						else
+ 668:../SSC/Src/sdoserv.c **** 						{
+ 669:../SSC/Src/sdoserv.c **** 							/* HBu 06.02.06: the variable dataSize has to be set to the available size in one mailbox */
+ 670:../SSC/Src/sdoserv.c **** 							dataSize = u16SendMbxSize - MBX_HEADER_SIZE - UPLOAD_NORM_RES_SIZE;
+ 1160              	 .loc 1 670 0
+ 1161 012a 724B     	 ldr r3,.L97+4
+ 1162 012c 1B88     	 ldrh r3,[r3]
+ 1163 012e 103B     	 subs r3,r3,#16
+ 1164 0130 FB62     	 str r3,[r7,#44]
+ 671:../SSC/Src/sdoserv.c **** 							if (dataSize < objLength)
+ 1165              	 .loc 1 671 0
+ 1166 0132 FA6A     	 ldr r2,[r7,#44]
+ 1167 0134 3B6B     	 ldr r3,[r7,#48]
+ 1168 0136 9A42     	 cmp r2,r3
+ 1169 0138 03D2     	 bcs .L69
+ 672:../SSC/Src/sdoserv.c **** 							{
+ 673:../SSC/Src/sdoserv.c **** 								/* Segmented Upload */
+ 674:../SSC/Src/sdoserv.c **** 								segTransfer = 1;
+ 1170              	 .loc 1 674 0
+ 1171 013a 0123     	 movs r3,#1
+ 1172 013c 87F82330 	 strb r3,[r7,#35]
+ 1173 0140 09E0     	 b .L64
+ 1174              	.L69:
+ 675:../SSC/Src/sdoserv.c **** 							}
+ 676:../SSC/Src/sdoserv.c **** 
+ 677:../SSC/Src/sdoserv.c **** 
+ 678:../SSC/Src/sdoserv.c **** 							else
+ 679:../SSC/Src/sdoserv.c **** 							{
+ 680:../SSC/Src/sdoserv.c **** 								/* Normal Upload */
+ 681:../SSC/Src/sdoserv.c **** 
+ 682:../SSC/Src/sdoserv.c **** 								/* pData is the pointer where the object data has to be copied for the response */
+ 683:../SSC/Src/sdoserv.c **** 								pData = (UINT16 MBXMEM *) ((TINITSDOUPLOADNORMRESMBX MBXMEM *) pSdoInd)->Data;
+ 1175              	 .loc 1 683 0
+ 1176 0142 7B68     	 ldr r3,[r7,#4]
+ 1177 0144 1033     	 adds r3,r3,#16
+ 1178 0146 7B62     	 str r3,[r7,#36]
+ 1179 0148 05E0     	 b .L64
+ 1180              	.L65:
+ 684:../SSC/Src/sdoserv.c **** 							}
+ 685:../SSC/Src/sdoserv.c **** 						}
+ 686:../SSC/Src/sdoserv.c **** 					}
+ 687:../SSC/Src/sdoserv.c **** 					else
+ 688:../SSC/Src/sdoserv.c **** 					{
+ 689:../SSC/Src/sdoserv.c **** 						/* SDO-Download: store if the request is a expedited or normal request  */
+ 690:../SSC/Src/sdoserv.c **** 						bTransferType = sdoHeader & SDOHEADER_TRANSFERTYPE;
+ 1181              	 .loc 1 690 0
+ 1182 014a 97F82230 	 ldrb r3,[r7,#34]
+ 1183 014e 03F00203 	 and r3,r3,#2
+ 1184 0152 87F82B30 	 strb r3,[r7,#43]
+ 1185              	.L64:
+ 1186              	.LBE6:
+ 691:../SSC/Src/sdoserv.c **** 					}
+ 692:../SSC/Src/sdoserv.c **** 				}
+ 693:../SSC/Src/sdoserv.c **** 			}
+ 694:../SSC/Src/sdoserv.c **** 
+ 695:../SSC/Src/sdoserv.c **** 			if ((abort == 0) && (command == SDOSERVICE_INITIATEDOWNLOADREQ))
+ 1187              	 .loc 1 695 0
+ 1188 0156 97F83730 	 ldrb r3,[r7,#55]
+ 1189 015a 002B     	 cmp r3,#0
+ 1190 015c 42D1     	 bne .L70
+ 1191              	 .loc 1 695 0 is_stmt 0 discriminator 1
+ 1192 015e 97F82130 	 ldrb r3,[r7,#33]
+ 1193 0162 202B     	 cmp r3,#32
+ 1194 0164 3ED1     	 bne .L70
+ 696:../SSC/Src/sdoserv.c **** 			{
+ 697:../SSC/Src/sdoserv.c **** 				/* SDO Download */
+ 698:../SSC/Src/sdoserv.c **** 				if (bTransferType)
+ 1195              	 .loc 1 698 0 is_stmt 1
+ 1196 0166 97F82B30 	 ldrb r3,[r7,#43]
+ 1197 016a 002B     	 cmp r3,#0
+ 1198 016c 10D0     	 beq .L71
+ 699:../SSC/Src/sdoserv.c **** 				{
+ 700:../SSC/Src/sdoserv.c **** 					/* Expedited Download */
+ 701:../SSC/Src/sdoserv.c **** 					if (mbxSize != EXPEDITED_FRAME_SIZE)
+ 1199              	 .loc 1 701 0
+ 1200 016e FB8B     	 ldrh r3,[r7,#30]
+ 1201 0170 0A2B     	 cmp r3,#10
+ 1202 0172 01D0     	 beq .L72
+ 702:../SSC/Src/sdoserv.c **** 					{
+ 703:../SSC/Src/sdoserv.c **** 						/* an Expedited SDO Download request has always a fixed size (2 Byte CoE-Header plus 8 Byte S
+ 704:../SSC/Src/sdoserv.c **** 						return MBXERR_INVALIDSIZE;
+ 1203              	 .loc 1 704 0
+ 1204 0174 0823     	 movs r3,#8
+ 1205 0176 0CE2     	 b .L55
+ 1206              	.L72:
+ 705:../SSC/Src/sdoserv.c **** 					}
+ 706:../SSC/Src/sdoserv.c **** 					/* dataSize gets the real size of the downloaded object data (1,2,3 or 4) */
+ 707:../SSC/Src/sdoserv.c **** 					dataSize = MAX_EXPEDITED_DATA - ((sdoHeader & SDOHEADER_DATASETSIZE) >> SDOHEADERSHIFT_DATASET
+ 1207              	 .loc 1 707 0
+ 1208 0178 97F82230 	 ldrb r3,[r7,#34]
+ 1209 017c 03F00C03 	 and r3,r3,#12
+ 1210 0180 9B10     	 asrs r3,r3,#2
+ 1211 0182 C3F10403 	 rsb r3,r3,#4
+ 1212 0186 FB62     	 str r3,[r7,#44]
+ 708:../SSC/Src/sdoserv.c **** 					/* pData is the pointer to the downloaded object data */
+ 709:../SSC/Src/sdoserv.c **** 					pData = (UINT16 MBXMEM *) &pSdoInd[1];
+ 1213              	 .loc 1 709 0
+ 1214 0188 7B68     	 ldr r3,[r7,#4]
+ 1215 018a 0C33     	 adds r3,r3,#12
+ 1216 018c 7B62     	 str r3,[r7,#36]
+ 1217 018e 29E0     	 b .L70
+ 1218              	.L71:
+ 1219              	.LBB7:
+ 710:../SSC/Src/sdoserv.c **** 				}
+ 711:../SSC/Src/sdoserv.c **** 				else
+ 712:../SSC/Src/sdoserv.c **** 				{
+ 713:../SSC/Src/sdoserv.c **** 					/* Normal Download */
+ 714:../SSC/Src/sdoserv.c **** 					/* downloadSize gets the real size of the downloaded data */
+ 715:../SSC/Src/sdoserv.c **** 					/* '&' operator was too much */
+ 716:../SSC/Src/sdoserv.c **** 
+ 717:../SSC/Src/sdoserv.c **** 					UINT32 downloadSize = ((UINT32)(SWAPWORD(((TINITSDODOWNLOADNORMREQMBX MBXMEM *) pSdoInd)->Comp
+ 1220              	 .loc 1 717 0
+ 1221 0190 7B68     	 ldr r3,[r7,#4]
+ 1222 0192 DB89     	 ldrh r3,[r3,#14]
+ 1223 0194 1B04     	 lsls r3,r3,#16
+ 1224 0196 7A68     	 ldr r2,[r7,#4]
+ 1225 0198 9289     	 ldrh r2,[r2,#12]
+ 1226 019a 1344     	 add r3,r3,r2
+ 1227 019c FB60     	 str r3,[r7,#12]
+ 718:../SSC/Src/sdoserv.c **** 
+ 719:../SSC/Src/sdoserv.c **** 					/* HBu 29.03.06: if it is a segmented download the mbxSize has to be the complete mailbox size
+ 720:../SSC/Src/sdoserv.c **** 					if ((MBX_HEADER_SIZE + EXPEDITED_FRAME_SIZE + downloadSize) > u16ReceiveMbxSize)
+ 1228              	 .loc 1 720 0
+ 1229 019e FB68     	 ldr r3,[r7,#12]
+ 1230 01a0 1033     	 adds r3,r3,#16
+ 1231 01a2 554A     	 ldr r2,.L97+8
+ 1232 01a4 1288     	 ldrh r2,[r2]
+ 1233 01a6 9342     	 cmp r3,r2
+ 1234 01a8 07D9     	 bls .L73
+ 721:../SSC/Src/sdoserv.c **** 					{
+ 722:../SSC/Src/sdoserv.c **** 						if (mbxSize != (u16ReceiveMbxSize - MBX_HEADER_SIZE))
+ 1235              	 .loc 1 722 0
+ 1236 01aa FA8B     	 ldrh r2,[r7,#30]
+ 1237 01ac 524B     	 ldr r3,.L97+8
+ 1238 01ae 1B88     	 ldrh r3,[r3]
+ 1239 01b0 063B     	 subs r3,r3,#6
+ 1240 01b2 9A42     	 cmp r2,r3
+ 1241 01b4 08D0     	 beq .L74
+ 723:../SSC/Src/sdoserv.c **** 						{
+ 724:../SSC/Src/sdoserv.c **** 							return MBXERR_INVALIDSIZE;
+ 1242              	 .loc 1 724 0
+ 1243 01b6 0823     	 movs r3,#8
+ 1244 01b8 EBE1     	 b .L55
+ 1245              	.L73:
+ 725:../SSC/Src/sdoserv.c **** 						}
+ 726:../SSC/Src/sdoserv.c **** 					}
+ 727:../SSC/Src/sdoserv.c **** 					else
+ 728:../SSC/Src/sdoserv.c **** 					{
+ 729:../SSC/Src/sdoserv.c **** 						if (mbxSize != (EXPEDITED_FRAME_SIZE + downloadSize))
+ 1246              	 .loc 1 729 0
+ 1247 01ba FA8B     	 ldrh r2,[r7,#30]
+ 1248 01bc FB68     	 ldr r3,[r7,#12]
+ 1249 01be 0A33     	 adds r3,r3,#10
+ 1250 01c0 9A42     	 cmp r2,r3
+ 1251 01c2 01D0     	 beq .L74
+ 730:../SSC/Src/sdoserv.c **** 						{
+ 731:../SSC/Src/sdoserv.c **** 							/* the mbxSize and the downloadSize are not consistent (mbxSize = downloadSize + 2 byte CoE-
+ 732:../SSC/Src/sdoserv.c **** 							return MBXERR_INVALIDSIZE;
+ 1252              	 .loc 1 732 0
+ 1253 01c4 0823     	 movs r3,#8
+ 1254 01c6 E4E1     	 b .L55
+ 1255              	.L74:
+ 733:../SSC/Src/sdoserv.c **** 						}
+ 734:../SSC/Src/sdoserv.c **** 					}
+ 735:../SSC/Src/sdoserv.c **** 
+ 736:../SSC/Src/sdoserv.c **** 					/* pData is the pointer to the downloaded object data */
+ 737:../SSC/Src/sdoserv.c **** 					pData = (UINT16 MBXMEM *) ((TINITSDODOWNLOADNORMREQMBX MBXMEM *) pSdoInd)->Data;
+ 1256              	 .loc 1 737 0
+ 1257 01c8 7B68     	 ldr r3,[r7,#4]
+ 1258 01ca 1033     	 adds r3,r3,#16
+ 1259 01cc 7B62     	 str r3,[r7,#36]
+ 738:../SSC/Src/sdoserv.c **** 					/* the received dataSize will be checked in the object specific functions called from
+ 739:../SSC/Src/sdoserv.c **** 					   OBJ_Write (in objdef.c) */
+ 740:../SSC/Src/sdoserv.c **** 					dataSize = downloadSize;
+ 1260              	 .loc 1 740 0
+ 1261 01ce FB68     	 ldr r3,[r7,#12]
+ 1262 01d0 FB62     	 str r3,[r7,#44]
+ 741:../SSC/Src/sdoserv.c **** 					if (dataSize > (UINT32)(mbxSize - DOWNLOAD_NORM_REQ_SIZE))
+ 1263              	 .loc 1 741 0
+ 1264 01d2 FB8B     	 ldrh r3,[r7,#30]
+ 1265 01d4 0A3B     	 subs r3,r3,#10
+ 1266 01d6 1A46     	 mov r2,r3
+ 1267 01d8 FB6A     	 ldr r3,[r7,#44]
+ 1268 01da 9A42     	 cmp r2,r3
+ 1269 01dc 02D2     	 bcs .L70
+ 742:../SSC/Src/sdoserv.c **** 					{
+ 743:../SSC/Src/sdoserv.c **** 						/* Segmented Download */
+ 744:../SSC/Src/sdoserv.c **** 						segTransfer = 1;
+ 1270              	 .loc 1 744 0
+ 1271 01de 0123     	 movs r3,#1
+ 1272 01e0 87F82330 	 strb r3,[r7,#35]
+ 1273              	.L70:
+ 1274              	.LBE7:
+ 745:../SSC/Src/sdoserv.c **** 					}
+ 746:../SSC/Src/sdoserv.c **** 				}
+ 747:../SSC/Src/sdoserv.c **** 			}
+ 748:../SSC/Src/sdoserv.c **** 
+ 749:../SSC/Src/sdoserv.c **** /* ECATCHANGE_START(V5.13) COE5*/
+ 750:../SSC/Src/sdoserv.c **** 			if ((abort == 0) && (bCompleteAccess == 1))
+ 1275              	 .loc 1 750 0
+ 1276 01e4 97F83730 	 ldrb r3,[r7,#55]
+ 1277 01e8 002B     	 cmp r3,#0
+ 1278 01ea 09D1     	 bne .L75
+ 1279              	 .loc 1 750 0 is_stmt 0 discriminator 1
+ 1280 01ec 97F83630 	 ldrb r3,[r7,#54]
+ 1281 01f0 012B     	 cmp r3,#1
+ 1282 01f2 05D1     	 bne .L75
+ 751:../SSC/Src/sdoserv.c **** /* ECATCHANGE_END(V5.13) COE5*/
+ 752:../SSC/Src/sdoserv.c **** 			{
+ 753:../SSC/Src/sdoserv.c **** 				// HBu 02.05.06: Complete Access is only supported with subindex 0 and 1
+ 754:../SSC/Src/sdoserv.c **** 				if (subindex > 1)
+ 1283              	 .loc 1 754 0 is_stmt 1
+ 1284 01f4 FB7E     	 ldrb r3,[r7,#27]
+ 1285 01f6 012B     	 cmp r3,#1
+ 1286 01f8 02D9     	 bls .L75
+ 755:../SSC/Src/sdoserv.c **** 				{
+ 756:../SSC/Src/sdoserv.c **** 					abort = ABORTIDX_UNSUPPORTED_ACCESS;
+ 1287              	 .loc 1 756 0
+ 1288 01fa 0523     	 movs r3,#5
+ 1289 01fc 87F83730 	 strb r3,[r7,#55]
+ 1290              	.L75:
+ 757:../SSC/Src/sdoserv.c **** 				}
+ 758:../SSC/Src/sdoserv.c **** 			}
+ 759:../SSC/Src/sdoserv.c **** 
+ 760:../SSC/Src/sdoserv.c **** 			if (abort == 0)
+ 1291              	 .loc 1 760 0
+ 1292 0200 97F83730 	 ldrb r3,[r7,#55]
+ 1293 0204 002B     	 cmp r3,#0
+ 1294 0206 40F08781 	 bne .L76
+ 761:../SSC/Src/sdoserv.c **** 			{
+ 762:../SSC/Src/sdoserv.c **** 				if (segTransfer)
+ 1295              	 .loc 1 762 0
+ 1296 020a 97F82330 	 ldrb r3,[r7,#35]
+ 1297 020e 002B     	 cmp r3,#0
+ 1298 0210 00F0DB80 	 beq .L77
+ 763:../SSC/Src/sdoserv.c **** 				{
+ 764:../SSC/Src/sdoserv.c **** 					bSdoSegFollows = TRUE;
+ 1299              	 .loc 1 764 0
+ 1300 0214 394B     	 ldr r3,.L97+12
+ 1301 0216 0122     	 movs r2,#1
+ 1302 0218 1A70     	 strb r2,[r3]
+ 765:../SSC/Src/sdoserv.c **** 					bSdoSegLastToggle = 1;
+ 1303              	 .loc 1 765 0
+ 1304 021a 394B     	 ldr r3,.L97+16
+ 1305 021c 0122     	 movs r2,#1
+ 1306 021e 1A70     	 strb r2,[r3]
+ 766:../SSC/Src/sdoserv.c **** 					bSdoSegAccess = bCompleteAccess;
+ 1307              	 .loc 1 766 0
+ 1308 0220 384A     	 ldr r2,.L97+20
+ 1309 0222 97F83630 	 ldrb r3,[r7,#54]
+ 1310 0226 1370     	 strb r3,[r2]
+ 767:../SSC/Src/sdoserv.c **** 					nSdoSegIndex = index;
+ 1311              	 .loc 1 767 0
+ 1312 0228 374A     	 ldr r2,.L97+24
+ 1313 022a BB8B     	 ldrh r3,[r7,#28]
+ 1314 022c 1380     	 strh r3,[r2]
+ 768:../SSC/Src/sdoserv.c **** 					nSdoSegSubindex = subindex;
+ 1315              	 .loc 1 768 0
+ 1316 022e 374A     	 ldr r2,.L97+28
+ 1317 0230 FB7E     	 ldrb r3,[r7,#27]
+ 1318 0232 1370     	 strb r3,[r2]
+ 769:../SSC/Src/sdoserv.c **** 					pSdoSegObjEntry = pObjEntry;
+ 1319              	 .loc 1 769 0
+ 1320 0234 364A     	 ldr r2,.L97+32
+ 1321 0236 7B69     	 ldr r3,[r7,#20]
+ 1322 0238 1360     	 str r3,[r2]
+ 770:../SSC/Src/sdoserv.c **** 					if (command == SDOSERVICE_INITIATEUPLOADREQ)
+ 1323              	 .loc 1 770 0
+ 1324 023a 97F82130 	 ldrb r3,[r7,#33]
+ 1325 023e 402B     	 cmp r3,#64
+ 1326 0240 03D1     	 bne .L78
+ 771:../SSC/Src/sdoserv.c **** 					{
+ 772:../SSC/Src/sdoserv.c **** 						nSdoSegCompleteSize = objLength;
+ 1327              	 .loc 1 772 0
+ 1328 0242 344A     	 ldr r2,.L97+36
+ 1329 0244 3B6B     	 ldr r3,[r7,#48]
+ 1330 0246 1360     	 str r3,[r2]
+ 1331 0248 02E0     	 b .L79
+ 1332              	.L78:
+ 773:../SSC/Src/sdoserv.c **** 					}
+ 774:../SSC/Src/sdoserv.c **** 					else
+ 775:../SSC/Src/sdoserv.c **** 					{
+ 776:../SSC/Src/sdoserv.c **** 						nSdoSegCompleteSize = dataSize;
+ 1333              	 .loc 1 776 0
+ 1334 024a 324A     	 ldr r2,.L97+36
+ 1335 024c FB6A     	 ldr r3,[r7,#44]
+ 1336 024e 1360     	 str r3,[r2]
+ 1337              	.L79:
+ 777:../SSC/Src/sdoserv.c **** 					}
+ 778:../SSC/Src/sdoserv.c **** 
+ 779:../SSC/Src/sdoserv.c **** 					if (pSdoSegData != NULL)
+ 1338              	 .loc 1 779 0
+ 1339 0250 314B     	 ldr r3,.L97+40
+ 1340 0252 1B68     	 ldr r3,[r3]
+ 1341 0254 002B     	 cmp r3,#0
+ 1342 0256 07D0     	 beq .L80
+ 780:../SSC/Src/sdoserv.c **** 					{
+ 781:../SSC/Src/sdoserv.c **** 						FREEMEM((UINT16 VARMEM *) pSdoSegData);
+ 1343              	 .loc 1 781 0
+ 1344 0258 2F4B     	 ldr r3,.L97+40
+ 1345 025a 1B68     	 ldr r3,[r3]
+ 1346 025c 1846     	 mov r0,r3
+ 1347 025e FFF7FEFF 	 bl free
+ 782:../SSC/Src/sdoserv.c **** 						pSdoSegData = NULL;
+ 1348              	 .loc 1 782 0
+ 1349 0262 2D4B     	 ldr r3,.L97+40
+ 1350 0264 0022     	 movs r2,#0
+ 1351 0266 1A60     	 str r2,[r3]
+ 1352              	.L80:
+ 783:../SSC/Src/sdoserv.c **** 					}
+ 784:../SSC/Src/sdoserv.c **** 					pSdoSegData = (UINT16 VARMEM *) ALLOCMEM(ROUNDUPBYTE2WORD(nSdoSegCompleteSize));
+ 1353              	 .loc 1 784 0
+ 1354 0268 2A4B     	 ldr r3,.L97+36
+ 1355 026a 1B68     	 ldr r3,[r3]
+ 1356 026c 0133     	 adds r3,r3,#1
+ 1357 026e 23F00103 	 bic r3,r3,#1
+ 1358 0272 1846     	 mov r0,r3
+ 1359 0274 FFF7FEFF 	 bl malloc
+ 1360 0278 0346     	 mov r3,r0
+ 1361 027a 1A46     	 mov r2,r3
+ 1362 027c 264B     	 ldr r3,.L97+40
+ 1363 027e 1A60     	 str r2,[r3]
+ 785:../SSC/Src/sdoserv.c **** 
+ 786:../SSC/Src/sdoserv.c **** 					if (pSdoSegData == NULL)
+ 1364              	 .loc 1 786 0
+ 1365 0280 254B     	 ldr r3,.L97+40
+ 1366 0282 1B68     	 ldr r3,[r3]
+ 1367 0284 002B     	 cmp r3,#0
+ 1368 0286 0BD1     	 bne .L81
+ 787:../SSC/Src/sdoserv.c **** 					{
+ 788:../SSC/Src/sdoserv.c **** 						if (bCompleteAccess)
+ 1369              	 .loc 1 788 0
+ 1370 0288 97F83630 	 ldrb r3,[r7,#54]
+ 1371 028c 002B     	 cmp r3,#0
+ 1372 028e 03D0     	 beq .L82
+ 789:../SSC/Src/sdoserv.c **** 						{
+ 790:../SSC/Src/sdoserv.c **** 							abort = ABORTIDX_UNSUPPORTED_ACCESS;
+ 1373              	 .loc 1 790 0
+ 1374 0290 0523     	 movs r3,#5
+ 1375 0292 87F83730 	 strb r3,[r7,#55]
+ 1376 0296 3FE1     	 b .L76
+ 1377              	.L82:
+ 791:../SSC/Src/sdoserv.c **** 						}
+ 792:../SSC/Src/sdoserv.c **** 						else
+ 793:../SSC/Src/sdoserv.c **** 						{
+ 794:../SSC/Src/sdoserv.c **** 							abort = ABORTIDX_OUT_OF_MEMORY;
+ 1378              	 .loc 1 794 0
+ 1379 0298 0423     	 movs r3,#4
+ 1380 029a 87F83730 	 strb r3,[r7,#55]
+ 1381 029e 3BE1     	 b .L76
+ 1382              	.L81:
+ 795:../SSC/Src/sdoserv.c **** 						}
+ 796:../SSC/Src/sdoserv.c **** 					}
+ 797:../SSC/Src/sdoserv.c **** 					else
+ 798:../SSC/Src/sdoserv.c **** 					{
+ 799:../SSC/Src/sdoserv.c **** 						if (command == SDOSERVICE_INITIATEUPLOADREQ)
+ 1383              	 .loc 1 799 0
+ 1384 02a0 97F82130 	 ldrb r3,[r7,#33]
+ 1385 02a4 402B     	 cmp r3,#64
+ 1386 02a6 7AD1     	 bne .L85
+ 800:../SSC/Src/sdoserv.c **** 						{
+ 801:../SSC/Src/sdoserv.c **** 							/* Segmented Upload */
+ 802:../SSC/Src/sdoserv.c **** 							abort = OBJ_Read(index, subindex, objLength, pObjEntry, (UINT16 MBXMEM *) pSdoSegData, bComp
+ 1387              	 .loc 1 802 0
+ 1388 02a8 1B4B     	 ldr r3,.L97+40
+ 1389 02aa 1B68     	 ldr r3,[r3]
+ 1390 02ac B98B     	 ldrh r1,[r7,#28]
+ 1391 02ae FA7E     	 ldrb r2,[r7,#27]
+ 1392 02b0 0093     	 str r3,[sp]
+ 1393 02b2 97F83630 	 ldrb r3,[r7,#54]
+ 1394 02b6 0193     	 str r3,[sp,#4]
+ 1395 02b8 0846     	 mov r0,r1
+ 1396 02ba 1146     	 mov r1,r2
+ 1397 02bc 3A6B     	 ldr r2,[r7,#48]
+ 1398 02be 7B69     	 ldr r3,[r7,#20]
+ 1399 02c0 FFF7FEFF 	 bl OBJ_Read
+ 1400 02c4 0346     	 mov r3,r0
+ 1401 02c6 87F83730 	 strb r3,[r7,#55]
+ 803:../SSC/Src/sdoserv.c **** 							if (abort == 0)
+ 1402              	 .loc 1 803 0
+ 1403 02ca 97F83730 	 ldrb r3,[r7,#55]
+ 1404 02ce 002B     	 cmp r3,#0
+ 1405 02d0 26D1     	 bne .L86
+ 804:../SSC/Src/sdoserv.c **** 							{
+ 805:../SSC/Src/sdoserv.c **** 								MBXMEMCPY((UINT16 *)((TINITSDOUPLOADNORMRESMBX MBXMEM *) pSdoInd)->Data, pSdoSegData, dataS
+ 1406              	 .loc 1 805 0
+ 1407 02d2 7B68     	 ldr r3,[r7,#4]
+ 1408 02d4 03F11002 	 add r2,r3,#16
+ 1409 02d8 0F4B     	 ldr r3,.L97+40
+ 1410 02da 1B68     	 ldr r3,[r3]
+ 1411 02dc 1046     	 mov r0,r2
+ 1412 02de 1946     	 mov r1,r3
+ 1413 02e0 FA6A     	 ldr r2,[r7,#44]
+ 1414 02e2 FFF7FEFF 	 bl memcpy
+ 806:../SSC/Src/sdoserv.c **** 								nSdoSegService = SDOSERVICE_UPLOADSEGMENTREQ;
+ 1415              	 .loc 1 806 0
+ 1416 02e6 0D4B     	 ldr r3,.L97+44
+ 1417 02e8 6022     	 movs r2,#96
+ 1418 02ea 1A70     	 strb r2,[r3]
+ 1419 02ec 69E0     	 b .L87
+ 1420              	.L98:
+ 1421 02ee 00BF     	 .align 2
+ 1422              	.L97:
+ 1423 02f0 00000000 	 .word bSdoInWork
+ 1424 02f4 00000000 	 .word u16SendMbxSize
+ 1425 02f8 00000000 	 .word u16ReceiveMbxSize
+ 1426 02fc 00000000 	 .word bSdoSegFollows
+ 1427 0300 00000000 	 .word bSdoSegLastToggle
+ 1428 0304 00000000 	 .word bSdoSegAccess
+ 1429 0308 00000000 	 .word nSdoSegIndex
+ 1430 030c 00000000 	 .word nSdoSegSubindex
+ 1431 0310 00000000 	 .word pSdoSegObjEntry
+ 1432 0314 00000000 	 .word nSdoSegCompleteSize
+ 1433 0318 00000000 	 .word pSdoSegData
+ 1434 031c 00000000 	 .word nSdoSegService
+ 1435              	.L86:
+ 807:../SSC/Src/sdoserv.c **** 							}
+ 808:../SSC/Src/sdoserv.c **** 							else if (abort == ABORTIDX_WORKING)
+ 1436              	 .loc 1 808 0
+ 1437 0320 97F83730 	 ldrb r3,[r7,#55]
+ 1438 0324 FF2B     	 cmp r3,#255
+ 1439 0326 4CD1     	 bne .L87
+ 809:../SSC/Src/sdoserv.c **** 							{
+ 810:../SSC/Src/sdoserv.c **** 								/* the application generates the SDO-Response later on by calling SDOS_SdoRes (only possibl
+ 811:../SSC/Src/sdoserv.c **** 								u8PendingSdo = SDO_PENDING_SEG_READ;
+ 1440              	 .loc 1 811 0
+ 1441 0328 9C4B     	 ldr r3,.L99
+ 1442 032a 0422     	 movs r2,#4
+ 1443 032c 1A70     	 strb r2,[r3]
+ 812:../SSC/Src/sdoserv.c **** 								bStoreCompleteAccess = bCompleteAccess;
+ 1444              	 .loc 1 812 0
+ 1445 032e 97F83630 	 ldrb r3,[r7,#54]
+ 1446 0332 002B     	 cmp r3,#0
+ 1447 0334 14BF     	 ite ne
+ 1448 0336 0123     	 movne r3,#1
+ 1449 0338 0023     	 moveq r3,#0
+ 1450 033a DAB2     	 uxtb r2,r3
+ 1451 033c 984B     	 ldr r3,.L99+4
+ 1452 033e 1A70     	 strb r2,[r3]
+ 813:../SSC/Src/sdoserv.c **** 								u8StoreSubindex = subindex;
+ 1453              	 .loc 1 813 0
+ 1454 0340 984A     	 ldr r2,.L99+8
+ 1455 0342 FB7E     	 ldrb r3,[r7,#27]
+ 1456 0344 1370     	 strb r3,[r2]
+ 814:../SSC/Src/sdoserv.c **** 								u16StoreIndex = index;
+ 1457              	 .loc 1 814 0
+ 1458 0346 984A     	 ldr r2,.L99+12
+ 1459 0348 BB8B     	 ldrh r3,[r7,#28]
+ 1460 034a 1380     	 strh r3,[r2]
+ 815:../SSC/Src/sdoserv.c **** 								u32StoreDataSize = objLength;
+ 1461              	 .loc 1 815 0
+ 1462 034c 974A     	 ldr r2,.L99+16
+ 1463 034e 3B6B     	 ldr r3,[r7,#48]
+ 1464 0350 1360     	 str r3,[r2]
+ 816:../SSC/Src/sdoserv.c **** 								pStoreData = pSdoSegData;
+ 1465              	 .loc 1 816 0
+ 1466 0352 974B     	 ldr r3,.L99+20
+ 1467 0354 1B68     	 ldr r3,[r3]
+ 1468 0356 974A     	 ldr r2,.L99+24
+ 1469 0358 1360     	 str r3,[r2]
+ 817:../SSC/Src/sdoserv.c **** 								pSdoPendFunc = pObjEntry->Read;
+ 1470              	 .loc 1 817 0
+ 1471 035a 7B69     	 ldr r3,[r7,#20]
+ 1472 035c DB69     	 ldr r3,[r3,#28]
+ 1473 035e 964A     	 ldr r2,.L99+28
+ 1474 0360 1360     	 str r3,[r2]
+ 818:../SSC/Src/sdoserv.c **** 
+ 819:../SSC/Src/sdoserv.c **** 								bSdoInWork = TRUE;
+ 1475              	 .loc 1 819 0
+ 1476 0362 964B     	 ldr r3,.L99+32
+ 1477 0364 0122     	 movs r2,#1
+ 1478 0366 1A70     	 strb r2,[r3]
+ 820:../SSC/Src/sdoserv.c **** 								/* we have to store the buffer and the response header */
+ 821:../SSC/Src/sdoserv.c **** 								pSdoResStored = pSdoInd;
+ 1479              	 .loc 1 821 0
+ 1480 0368 954A     	 ldr r2,.L99+36
+ 1481 036a 7B68     	 ldr r3,[r7,#4]
+ 1482 036c 1360     	 str r3,[r2]
+ 822:../SSC/Src/sdoserv.c **** 
+ 823:../SSC/Src/sdoserv.c **** 								/*update command field*/
+ 824:../SSC/Src/sdoserv.c **** 								pSdoResStored->SdoHeader.Sdo[SDOHEADER_COMMANDOFFSET] &= ~SDOHEADER_COMMANDMASK;
+ 1483              	 .loc 1 824 0
+ 1484 036e 944B     	 ldr r3,.L99+36
+ 1485 0370 1B68     	 ldr r3,[r3]
+ 1486 0372 0022     	 movs r2,#0
+ 1487 0374 1A72     	 strb r2,[r3,#8]
+ 825:../SSC/Src/sdoserv.c **** 								pSdoResStored->SdoHeader.Sdo[SDOHEADER_COMMANDOFFSET] |= (sdoHeader & (SDOHEADER_COMPLETEAC
+ 1488              	 .loc 1 825 0
+ 1489 0376 924B     	 ldr r3,.L99+36
+ 1490 0378 1B68     	 ldr r3,[r3]
+ 1491 037a 914A     	 ldr r2,.L99+36
+ 1492 037c 1268     	 ldr r2,[r2]
+ 1493 037e 127A     	 ldrb r2,[r2,#8]
+ 1494 0380 D1B2     	 uxtb r1,r2
+ 1495 0382 97F82220 	 ldrb r2,[r7,#34]
+ 1496 0386 22F00F02 	 bic r2,r2,#15
+ 1497 038a D2B2     	 uxtb r2,r2
+ 1498 038c 0A43     	 orrs r2,r2,r1
+ 1499 038e D2B2     	 uxtb r2,r2
+ 1500 0390 D2B2     	 uxtb r2,r2
+ 1501 0392 1A72     	 strb r2,[r3,#8]
+ 826:../SSC/Src/sdoserv.c **** 								nSdoSegService = SDOSERVICE_UPLOADSEGMENTREQ;
+ 1502              	 .loc 1 826 0
+ 1503 0394 8B4B     	 ldr r3,.L99+40
+ 1504 0396 6022     	 movs r2,#96
+ 1505 0398 1A70     	 strb r2,[r3]
+ 827:../SSC/Src/sdoserv.c **** 								return 0;
+ 1506              	 .loc 1 827 0
+ 1507 039a 0023     	 movs r3,#0
+ 1508 039c F9E0     	 b .L55
+ 1509              	.L85:
+ 828:../SSC/Src/sdoserv.c **** 							}
+ 829:../SSC/Src/sdoserv.c **** 						}
+ 830:../SSC/Src/sdoserv.c **** 						else
+ 831:../SSC/Src/sdoserv.c **** 						{
+ 832:../SSC/Src/sdoserv.c **** 							/* Segmented Download */
+ 833:../SSC/Src/sdoserv.c **** 							MBXMEMCPY(pSdoSegData, (UINT16 *)((TINITSDODOWNLOADNORMREQMBX MBXMEM *) pSdoInd)->Data, mbxS
+ 1510              	 .loc 1 833 0
+ 1511 039e 844B     	 ldr r3,.L99+20
+ 1512 03a0 1968     	 ldr r1,[r3]
+ 1513 03a2 7B68     	 ldr r3,[r7,#4]
+ 1514 03a4 03F11002 	 add r2,r3,#16
+ 1515 03a8 FB8B     	 ldrh r3,[r7,#30]
+ 1516 03aa 0A3B     	 subs r3,r3,#10
+ 1517 03ac 0846     	 mov r0,r1
+ 1518 03ae 1146     	 mov r1,r2
+ 1519 03b0 1A46     	 mov r2,r3
+ 1520 03b2 FFF7FEFF 	 bl memcpy
+ 834:../SSC/Src/sdoserv.c **** 							nSdoSegService = SDOSERVICE_DOWNLOADSEGMENTREQ;
+ 1521              	 .loc 1 834 0
+ 1522 03b6 834B     	 ldr r3,.L99+40
+ 1523 03b8 0022     	 movs r2,#0
+ 1524 03ba 1A70     	 strb r2,[r3]
+ 835:../SSC/Src/sdoserv.c **** 							dataSize = (mbxSize - DOWNLOAD_NORM_REQ_SIZE);
+ 1525              	 .loc 1 835 0
+ 1526 03bc FB8B     	 ldrh r3,[r7,#30]
+ 1527 03be 0A3B     	 subs r3,r3,#10
+ 1528 03c0 FB62     	 str r3,[r7,#44]
+ 1529              	.L87:
+ 836:../SSC/Src/sdoserv.c **** 						}
+ 837:../SSC/Src/sdoserv.c **** 
+ 838:../SSC/Src/sdoserv.c **** 						nSdoSegBytesToHandle = dataSize;
+ 1530              	 .loc 1 838 0
+ 1531 03c2 814A     	 ldr r2,.L99+44
+ 1532 03c4 FB6A     	 ldr r3,[r7,#44]
+ 1533 03c6 1360     	 str r3,[r2]
+ 1534              	.LBE5:
+ 1535 03c8 ABE0     	 b .L90
+ 1536              	.L77:
+ 1537              	.LBB8:
+ 839:../SSC/Src/sdoserv.c **** 					}
+ 840:../SSC/Src/sdoserv.c **** 				}
+ 841:../SSC/Src/sdoserv.c **** 				else
+ 842:../SSC/Src/sdoserv.c **** 				{
+ 843:../SSC/Src/sdoserv.c **** 					if (objLength == 0)
+ 1538              	 .loc 1 843 0
+ 1539 03ca 3B6B     	 ldr r3,[r7,#48]
+ 1540 03cc 002B     	 cmp r3,#0
+ 1541 03ce 08D1     	 bne .L88
+ 844:../SSC/Src/sdoserv.c **** 					{
+ 845:../SSC/Src/sdoserv.c **** 						/* the objLength is not known, therefore the variables for a possible segmented transfer
+ 846:../SSC/Src/sdoserv.c **** 							should be initialized */
+ 847:../SSC/Src/sdoserv.c **** 						nSdoSegIndex = index;
+ 1542              	 .loc 1 847 0
+ 1543 03d0 7E4A     	 ldr r2,.L99+48
+ 1544 03d2 BB8B     	 ldrh r3,[r7,#28]
+ 1545 03d4 1380     	 strh r3,[r2]
+ 848:../SSC/Src/sdoserv.c **** 						nSdoSegSubindex = subindex;
+ 1546              	 .loc 1 848 0
+ 1547 03d6 7E4A     	 ldr r2,.L99+52
+ 1548 03d8 FB7E     	 ldrb r3,[r7,#27]
+ 1549 03da 1370     	 strb r3,[r2]
+ 849:../SSC/Src/sdoserv.c **** 						pSdoSegObjEntry = pObjEntry;
+ 1550              	 .loc 1 849 0
+ 1551 03dc 7D4A     	 ldr r2,.L99+56
+ 1552 03de 7B69     	 ldr r3,[r7,#20]
+ 1553 03e0 1360     	 str r3,[r2]
+ 1554              	.L88:
+ 850:../SSC/Src/sdoserv.c **** 					}
+ 851:../SSC/Src/sdoserv.c **** 					if (command == SDOSERVICE_INITIATEUPLOADREQ)
+ 1555              	 .loc 1 851 0
+ 1556 03e2 97F82130 	 ldrb r3,[r7,#33]
+ 1557 03e6 402B     	 cmp r3,#64
+ 1558 03e8 4BD1     	 bne .L89
+ 852:../SSC/Src/sdoserv.c **** 					{
+ 853:../SSC/Src/sdoserv.c **** 						/* Expedited or Normal Upload */
+ 854:../SSC/Src/sdoserv.c **** 						abort = OBJ_Read(index, subindex, objLength, pObjEntry, pData, bCompleteAccess);
+ 1559              	 .loc 1 854 0
+ 1560 03ea B98B     	 ldrh r1,[r7,#28]
+ 1561 03ec FA7E     	 ldrb r2,[r7,#27]
+ 1562 03ee 7B6A     	 ldr r3,[r7,#36]
+ 1563 03f0 0093     	 str r3,[sp]
+ 1564 03f2 97F83630 	 ldrb r3,[r7,#54]
+ 1565 03f6 0193     	 str r3,[sp,#4]
+ 1566 03f8 0846     	 mov r0,r1
+ 1567 03fa 1146     	 mov r1,r2
+ 1568 03fc 3A6B     	 ldr r2,[r7,#48]
+ 1569 03fe 7B69     	 ldr r3,[r7,#20]
+ 1570 0400 FFF7FEFF 	 bl OBJ_Read
+ 1571 0404 0346     	 mov r3,r0
+ 1572 0406 87F83730 	 strb r3,[r7,#55]
+ 855:../SSC/Src/sdoserv.c **** 						if (abort == ABORTIDX_WORKING)
+ 1573              	 .loc 1 855 0
+ 1574 040a 97F83730 	 ldrb r3,[r7,#55]
+ 1575 040e FF2B     	 cmp r3,#255
+ 1576 0410 40F08280 	 bne .L76
+ 856:../SSC/Src/sdoserv.c **** 						{
+ 857:../SSC/Src/sdoserv.c **** 							/* the application generates the SDO-Response later on by calling SDOS_SdoRes (only possible
+ 858:../SSC/Src/sdoserv.c **** 							u8PendingSdo = SDO_PENDING_READ;
+ 1577              	 .loc 1 858 0
+ 1578 0414 614B     	 ldr r3,.L99
+ 1579 0416 0322     	 movs r2,#3
+ 1580 0418 1A70     	 strb r2,[r3]
+ 859:../SSC/Src/sdoserv.c **** 							bStoreCompleteAccess = bCompleteAccess;
+ 1581              	 .loc 1 859 0
+ 1582 041a 97F83630 	 ldrb r3,[r7,#54]
+ 1583 041e 002B     	 cmp r3,#0
+ 1584 0420 14BF     	 ite ne
+ 1585 0422 0123     	 movne r3,#1
+ 1586 0424 0023     	 moveq r3,#0
+ 1587 0426 DAB2     	 uxtb r2,r3
+ 1588 0428 5D4B     	 ldr r3,.L99+4
+ 1589 042a 1A70     	 strb r2,[r3]
+ 860:../SSC/Src/sdoserv.c **** 							u8StoreSubindex = subindex;
+ 1590              	 .loc 1 860 0
+ 1591 042c 5D4A     	 ldr r2,.L99+8
+ 1592 042e FB7E     	 ldrb r3,[r7,#27]
+ 1593 0430 1370     	 strb r3,[r2]
+ 861:../SSC/Src/sdoserv.c **** 							u16StoreIndex = index;
+ 1594              	 .loc 1 861 0
+ 1595 0432 5D4A     	 ldr r2,.L99+12
+ 1596 0434 BB8B     	 ldrh r3,[r7,#28]
+ 1597 0436 1380     	 strh r3,[r2]
+ 862:../SSC/Src/sdoserv.c **** 							u32StoreDataSize = objLength;
+ 1598              	 .loc 1 862 0
+ 1599 0438 5C4A     	 ldr r2,.L99+16
+ 1600 043a 3B6B     	 ldr r3,[r7,#48]
+ 1601 043c 1360     	 str r3,[r2]
+ 863:../SSC/Src/sdoserv.c **** 							pStoreData = pData;
+ 1602              	 .loc 1 863 0
+ 1603 043e 5D4A     	 ldr r2,.L99+24
+ 1604 0440 7B6A     	 ldr r3,[r7,#36]
+ 1605 0442 1360     	 str r3,[r2]
+ 864:../SSC/Src/sdoserv.c **** 							pSdoPendFunc = pObjEntry->Read;
+ 1606              	 .loc 1 864 0
+ 1607 0444 7B69     	 ldr r3,[r7,#20]
+ 1608 0446 DB69     	 ldr r3,[r3,#28]
+ 1609 0448 5B4A     	 ldr r2,.L99+28
+ 1610 044a 1360     	 str r3,[r2]
+ 865:../SSC/Src/sdoserv.c **** 
+ 866:../SSC/Src/sdoserv.c **** 							bSdoInWork = TRUE;
+ 1611              	 .loc 1 866 0
+ 1612 044c 5B4B     	 ldr r3,.L99+32
+ 1613 044e 0122     	 movs r2,#1
+ 1614 0450 1A70     	 strb r2,[r3]
+ 867:../SSC/Src/sdoserv.c **** 							/* we have to store the buffer and the response header */
+ 868:../SSC/Src/sdoserv.c **** 							pSdoResStored = pSdoInd;
+ 1615              	 .loc 1 868 0
+ 1616 0452 5B4A     	 ldr r2,.L99+36
+ 1617 0454 7B68     	 ldr r3,[r7,#4]
+ 1618 0456 1360     	 str r3,[r2]
+ 869:../SSC/Src/sdoserv.c **** 
+ 870:../SSC/Src/sdoserv.c **** 							/*update command field*/
+ 871:../SSC/Src/sdoserv.c **** 							pSdoResStored->SdoHeader.Sdo[SDOHEADER_COMMANDOFFSET] &= ~SDOHEADER_COMMANDMASK;
+ 1619              	 .loc 1 871 0
+ 1620 0458 594B     	 ldr r3,.L99+36
+ 1621 045a 1B68     	 ldr r3,[r3]
+ 1622 045c 0022     	 movs r2,#0
+ 1623 045e 1A72     	 strb r2,[r3,#8]
+ 872:../SSC/Src/sdoserv.c **** 							pSdoResStored->SdoHeader.Sdo[SDOHEADER_COMMANDOFFSET] |= (sdoHeader & (SDOHEADER_COMPLETEACC
+ 1624              	 .loc 1 872 0
+ 1625 0460 574B     	 ldr r3,.L99+36
+ 1626 0462 1B68     	 ldr r3,[r3]
+ 1627 0464 564A     	 ldr r2,.L99+36
+ 1628 0466 1268     	 ldr r2,[r2]
+ 1629 0468 127A     	 ldrb r2,[r2,#8]
+ 1630 046a D1B2     	 uxtb r1,r2
+ 1631 046c 97F82220 	 ldrb r2,[r7,#34]
+ 1632 0470 22F00F02 	 bic r2,r2,#15
+ 1633 0474 D2B2     	 uxtb r2,r2
+ 1634 0476 0A43     	 orrs r2,r2,r1
+ 1635 0478 D2B2     	 uxtb r2,r2
+ 1636 047a D2B2     	 uxtb r2,r2
+ 1637 047c 1A72     	 strb r2,[r3,#8]
+ 873:../SSC/Src/sdoserv.c **** 							return 0;
+ 1638              	 .loc 1 873 0
+ 1639 047e 0023     	 movs r3,#0
+ 1640 0480 87E0     	 b .L55
+ 1641              	.L89:
+ 874:../SSC/Src/sdoserv.c **** 						}
+ 875:../SSC/Src/sdoserv.c **** 					}
+ 876:../SSC/Src/sdoserv.c **** 					else
+ 877:../SSC/Src/sdoserv.c **** 					{
+ 878:../SSC/Src/sdoserv.c **** 						/* Expedited or Normal Download */
+ 879:../SSC/Src/sdoserv.c **** 						abort = OBJ_Write(index, subindex, dataSize, pObjEntry, pData, bCompleteAccess);
+ 1642              	 .loc 1 879 0
+ 1643 0482 B98B     	 ldrh r1,[r7,#28]
+ 1644 0484 FA7E     	 ldrb r2,[r7,#27]
+ 1645 0486 7B6A     	 ldr r3,[r7,#36]
+ 1646 0488 0093     	 str r3,[sp]
+ 1647 048a 97F83630 	 ldrb r3,[r7,#54]
+ 1648 048e 0193     	 str r3,[sp,#4]
+ 1649 0490 0846     	 mov r0,r1
+ 1650 0492 1146     	 mov r1,r2
+ 1651 0494 FA6A     	 ldr r2,[r7,#44]
+ 1652 0496 7B69     	 ldr r3,[r7,#20]
+ 1653 0498 FFF7FEFF 	 bl OBJ_Write
+ 1654 049c 0346     	 mov r3,r0
+ 1655 049e 87F83730 	 strb r3,[r7,#55]
+ 880:../SSC/Src/sdoserv.c **** 						if (abort == ABORTIDX_WORKING)
+ 1656              	 .loc 1 880 0
+ 1657 04a2 97F83730 	 ldrb r3,[r7,#55]
+ 1658 04a6 FF2B     	 cmp r3,#255
+ 1659 04a8 36D1     	 bne .L76
+ 881:../SSC/Src/sdoserv.c **** 						{
+ 882:../SSC/Src/sdoserv.c **** 							/* the application generates the SDO-Response later on by calling SDOS_SdoRes (only possible
+ 883:../SSC/Src/sdoserv.c **** 							u8PendingSdo = SDO_PENDING_WRITE;
+ 1660              	 .loc 1 883 0
+ 1661 04aa 3C4B     	 ldr r3,.L99
+ 1662 04ac 0122     	 movs r2,#1
+ 1663 04ae 1A70     	 strb r2,[r3]
+ 884:../SSC/Src/sdoserv.c **** 							bStoreCompleteAccess = bCompleteAccess;
+ 1664              	 .loc 1 884 0
+ 1665 04b0 97F83630 	 ldrb r3,[r7,#54]
+ 1666 04b4 002B     	 cmp r3,#0
+ 1667 04b6 14BF     	 ite ne
+ 1668 04b8 0123     	 movne r3,#1
+ 1669 04ba 0023     	 moveq r3,#0
+ 1670 04bc DAB2     	 uxtb r2,r3
+ 1671 04be 384B     	 ldr r3,.L99+4
+ 1672 04c0 1A70     	 strb r2,[r3]
+ 885:../SSC/Src/sdoserv.c **** 							u8StoreSubindex = subindex;
+ 1673              	 .loc 1 885 0
+ 1674 04c2 384A     	 ldr r2,.L99+8
+ 1675 04c4 FB7E     	 ldrb r3,[r7,#27]
+ 1676 04c6 1370     	 strb r3,[r2]
+ 886:../SSC/Src/sdoserv.c **** 							u16StoreIndex = index;
+ 1677              	 .loc 1 886 0
+ 1678 04c8 374A     	 ldr r2,.L99+12
+ 1679 04ca BB8B     	 ldrh r3,[r7,#28]
+ 1680 04cc 1380     	 strh r3,[r2]
+ 887:../SSC/Src/sdoserv.c **** 							u32StoreDataSize = dataSize;
+ 1681              	 .loc 1 887 0
+ 1682 04ce 374A     	 ldr r2,.L99+16
+ 1683 04d0 FB6A     	 ldr r3,[r7,#44]
+ 1684 04d2 1360     	 str r3,[r2]
+ 888:../SSC/Src/sdoserv.c **** 							pStoreData = pData;
+ 1685              	 .loc 1 888 0
+ 1686 04d4 374A     	 ldr r2,.L99+24
+ 1687 04d6 7B6A     	 ldr r3,[r7,#36]
+ 1688 04d8 1360     	 str r3,[r2]
+ 889:../SSC/Src/sdoserv.c **** 							pSdoPendFunc = pObjEntry->Write;
+ 1689              	 .loc 1 889 0
+ 1690 04da 7B69     	 ldr r3,[r7,#20]
+ 1691 04dc 1B6A     	 ldr r3,[r3,#32]
+ 1692 04de 364A     	 ldr r2,.L99+28
+ 1693 04e0 1360     	 str r3,[r2]
+ 890:../SSC/Src/sdoserv.c **** 
+ 891:../SSC/Src/sdoserv.c **** 							bSdoInWork = TRUE;
+ 1694              	 .loc 1 891 0
+ 1695 04e2 364B     	 ldr r3,.L99+32
+ 1696 04e4 0122     	 movs r2,#1
+ 1697 04e6 1A70     	 strb r2,[r3]
+ 892:../SSC/Src/sdoserv.c **** 							/* we have to store the buffer and the response header */
+ 893:../SSC/Src/sdoserv.c **** 							pSdoResStored = pSdoInd;
+ 1698              	 .loc 1 893 0
+ 1699 04e8 354A     	 ldr r2,.L99+36
+ 1700 04ea 7B68     	 ldr r3,[r7,#4]
+ 1701 04ec 1360     	 str r3,[r2]
+ 894:../SSC/Src/sdoserv.c **** 
+ 895:../SSC/Src/sdoserv.c **** 							/*update command field*/
+ 896:../SSC/Src/sdoserv.c **** 							pSdoResStored->SdoHeader.Sdo[SDOHEADER_COMMANDOFFSET] &= ~SDOHEADER_COMMANDMASK;
+ 1702              	 .loc 1 896 0
+ 1703 04ee 344B     	 ldr r3,.L99+36
+ 1704 04f0 1B68     	 ldr r3,[r3]
+ 1705 04f2 0022     	 movs r2,#0
+ 1706 04f4 1A72     	 strb r2,[r3,#8]
+ 897:../SSC/Src/sdoserv.c **** 							pSdoResStored->SdoHeader.Sdo[SDOHEADER_COMMANDOFFSET] |= (sdoHeader & (SDOHEADER_COMPLETEACC
+ 1707              	 .loc 1 897 0
+ 1708 04f6 324B     	 ldr r3,.L99+36
+ 1709 04f8 1B68     	 ldr r3,[r3]
+ 1710 04fa 314A     	 ldr r2,.L99+36
+ 1711 04fc 1268     	 ldr r2,[r2]
+ 1712 04fe 127A     	 ldrb r2,[r2,#8]
+ 1713 0500 D1B2     	 uxtb r1,r2
+ 1714 0502 97F82220 	 ldrb r2,[r7,#34]
+ 1715 0506 22F00F02 	 bic r2,r2,#15
+ 1716 050a D2B2     	 uxtb r2,r2
+ 1717 050c 0A43     	 orrs r2,r2,r1
+ 1718 050e D2B2     	 uxtb r2,r2
+ 1719 0510 D2B2     	 uxtb r2,r2
+ 1720 0512 1A72     	 strb r2,[r3,#8]
+ 898:../SSC/Src/sdoserv.c **** 							return 0;
+ 1721              	 .loc 1 898 0
+ 1722 0514 0023     	 movs r3,#0
+ 1723 0516 3CE0     	 b .L55
+ 1724              	.L76:
+ 1725              	.LBE8:
+ 1726 0518 03E0     	 b .L90
+ 1727              	.L61:
+ 899:../SSC/Src/sdoserv.c **** 						}
+ 900:../SSC/Src/sdoserv.c **** 					}
+ 901:../SSC/Src/sdoserv.c **** 				} /* else if ( objLength == 0 ) */
+ 902:../SSC/Src/sdoserv.c **** 			} /* if ( abort == 0 ) */
+ 903:../SSC/Src/sdoserv.c **** 
+ 904:../SSC/Src/sdoserv.c **** 		} //if(pObjEntry) (Object handle found)
+ 905:../SSC/Src/sdoserv.c **** 		else
+ 906:../SSC/Src/sdoserv.c **** 		{
+ 907:../SSC/Src/sdoserv.c **** 			abort = ABORTIDX_OBJECT_NOT_EXISTING;
+ 1728              	 .loc 1 907 0
+ 1729 051a 0823     	 movs r3,#8
+ 1730 051c 87F83730 	 strb r3,[r7,#55]
+ 908:../SSC/Src/sdoserv.c **** 		}
+ 909:../SSC/Src/sdoserv.c **** 		break;
+ 1731              	 .loc 1 909 0
+ 1732 0520 20E0     	 b .L91
+ 1733              	.L90:
+ 1734              	 .loc 1 909 0 is_stmt 0 discriminator 4
+ 1735 0522 1FE0     	 b .L91
+ 1736              	.L60:
+ 910:../SSC/Src/sdoserv.c **** 
+ 911:../SSC/Src/sdoserv.c **** 	case SDOSERVICE_DOWNLOADSEGMENTREQ:
+ 912:../SSC/Src/sdoserv.c **** 	case SDOSERVICE_UPLOADSEGMENTREQ:
+ 913:../SSC/Src/sdoserv.c **** 		if (command == nSdoSegService)
+ 1737              	 .loc 1 913 0 is_stmt 1
+ 1738 0524 274B     	 ldr r3,.L99+40
+ 1739 0526 1B78     	 ldrb r3,[r3]
+ 1740 0528 97F82120 	 ldrb r2,[r7,#33]
+ 1741 052c 9A42     	 cmp r2,r3
+ 1742 052e 11D1     	 bne .L92
+ 914:../SSC/Src/sdoserv.c **** 		{
+ 915:../SSC/Src/sdoserv.c **** 			if (command == SDOSERVICE_DOWNLOADSEGMENTREQ)
+ 1743              	 .loc 1 915 0
+ 1744 0530 97F82130 	 ldrb r3,[r7,#33]
+ 1745 0534 002B     	 cmp r3,#0
+ 1746 0536 06D1     	 bne .L93
+ 916:../SSC/Src/sdoserv.c **** 			{
+ 917:../SSC/Src/sdoserv.c **** 				abort = SdoDownloadSegmentInd((TDOWNLOADSDOSEGREQMBX MBXMEM *) pSdoInd);
+ 1747              	 .loc 1 917 0
+ 1748 0538 7868     	 ldr r0,[r7,#4]
+ 1749 053a FFF7FEFF 	 bl SdoDownloadSegmentInd
+ 1750 053e 0346     	 mov r3,r0
+ 1751 0540 87F83730 	 strb r3,[r7,#55]
+ 918:../SSC/Src/sdoserv.c **** 			}
+ 919:../SSC/Src/sdoserv.c **** 			else
+ 920:../SSC/Src/sdoserv.c **** 			{
+ 921:../SSC/Src/sdoserv.c **** 				abort = SdoUploadSegmentInd((TUPLOADSDOSEGREQMBX MBXMEM *) pSdoInd);
+ 922:../SSC/Src/sdoserv.c **** 			}
+ 923:../SSC/Src/sdoserv.c **** 		}
+ 924:../SSC/Src/sdoserv.c **** 		else
+ 925:../SSC/Src/sdoserv.c **** 		{
+ 926:../SSC/Src/sdoserv.c **** 			abort = ABORTIDX_COMMAND_SPECIFIER_UNKNOWN;
+ 927:../SSC/Src/sdoserv.c **** 		}
+ 928:../SSC/Src/sdoserv.c **** 		break;
+ 1752              	 .loc 1 928 0
+ 1753 0544 0EE0     	 b .L91
+ 1754              	.L93:
+ 921:../SSC/Src/sdoserv.c **** 			}
+ 1755              	 .loc 1 921 0
+ 1756 0546 7868     	 ldr r0,[r7,#4]
+ 1757 0548 FFF7FEFF 	 bl SdoUploadSegmentInd
+ 1758 054c 0346     	 mov r3,r0
+ 1759 054e 87F83730 	 strb r3,[r7,#55]
+ 1760              	 .loc 1 928 0
+ 1761 0552 07E0     	 b .L91
+ 1762              	.L92:
+ 926:../SSC/Src/sdoserv.c **** 		}
+ 1763              	 .loc 1 926 0
+ 1764 0554 0323     	 movs r3,#3
+ 1765 0556 87F83730 	 strb r3,[r7,#55]
+ 1766              	 .loc 1 928 0
+ 1767 055a 03E0     	 b .L91
+ 1768              	.L57:
+ 929:../SSC/Src/sdoserv.c **** 
+ 930:../SSC/Src/sdoserv.c **** 	default:
+ 931:../SSC/Src/sdoserv.c **** 		abort = ABORTIDX_COMMAND_SPECIFIER_UNKNOWN;
+ 1769              	 .loc 1 931 0
+ 1770 055c 0323     	 movs r3,#3
+ 1771 055e 87F83730 	 strb r3,[r7,#55]
+ 932:../SSC/Src/sdoserv.c **** 		break;
+ 1772              	 .loc 1 932 0
+ 1773 0562 00BF     	 nop
+ 1774              	.L91:
+ 933:../SSC/Src/sdoserv.c **** 	}
+ 934:../SSC/Src/sdoserv.c **** 
+ 935:../SSC/Src/sdoserv.c **** 	if (abort != ABORTIDX_WORKING)
+ 1775              	 .loc 1 935 0
+ 1776 0564 97F83730 	 ldrb r3,[r7,#55]
+ 1777 0568 FF2B     	 cmp r3,#255
+ 1778 056a 11D0     	 beq .L96
+ 936:../SSC/Src/sdoserv.c **** 	{
+ 937:../SSC/Src/sdoserv.c **** 		/*  type cast was added because of warning */
+ 938:../SSC/Src/sdoserv.c **** 		SdoRes(abort, command, (UINT8)(sdoHeader & SDOHEADER_COMPLETEACCESS), (UINT16)dataSize, objLength
+ 1779              	 .loc 1 938 0
+ 1780 056c 97F82230 	 ldrb r3,[r7,#34]
+ 1781 0570 03F01003 	 and r3,r3,#16
+ 1782 0574 DAB2     	 uxtb r2,r3
+ 1783 0576 FB6A     	 ldr r3,[r7,#44]
+ 1784 0578 9CB2     	 uxth r4,r3
+ 1785 057a 97F83700 	 ldrb r0,[r7,#55]
+ 1786 057e 97F82110 	 ldrb r1,[r7,#33]
+ 1787 0582 3B6B     	 ldr r3,[r7,#48]
+ 1788 0584 0093     	 str r3,[sp]
+ 1789 0586 7B68     	 ldr r3,[r7,#4]
+ 1790 0588 0193     	 str r3,[sp,#4]
+ 1791 058a 2346     	 mov r3,r4
+ 1792 058c FFF7FEFF 	 bl SdoRes
+ 1793              	.L96:
+ 939:../SSC/Src/sdoserv.c **** 	}
+ 940:../SSC/Src/sdoserv.c **** 
+ 941:../SSC/Src/sdoserv.c **** 	return 0;
+ 1794              	 .loc 1 941 0
+ 1795 0590 0023     	 movs r3,#0
+ 1796              	.L55:
+ 942:../SSC/Src/sdoserv.c **** }
+ 1797              	 .loc 1 942 0
+ 1798 0592 1846     	 mov r0,r3
+ 1799 0594 3C37     	 adds r7,r7,#60
+ 1800              	.LCFI18:
+ 1801              	 .cfi_def_cfa_offset 12
+ 1802 0596 BD46     	 mov sp,r7
+ 1803              	.LCFI19:
+ 1804              	 .cfi_def_cfa_register 13
+ 1805              	 
+ 1806 0598 90BD     	 pop {r4,r7,pc}
+ 1807              	.L100:
+ 1808 059a 00BF     	 .align 2
+ 1809              	.L99:
+ 1810 059c 00000000 	 .word u8PendingSdo
+ 1811 05a0 00000000 	 .word bStoreCompleteAccess
+ 1812 05a4 00000000 	 .word u8StoreSubindex
+ 1813 05a8 00000000 	 .word u16StoreIndex
+ 1814 05ac 00000000 	 .word u32StoreDataSize
+ 1815 05b0 00000000 	 .word pSdoSegData
+ 1816 05b4 00000000 	 .word pStoreData
+ 1817 05b8 00000000 	 .word pSdoPendFunc
+ 1818 05bc 00000000 	 .word bSdoInWork
+ 1819 05c0 00000000 	 .word pSdoResStored
+ 1820 05c4 00000000 	 .word nSdoSegService
+ 1821 05c8 00000000 	 .word nSdoSegBytesToHandle
+ 1822 05cc 00000000 	 .word nSdoSegIndex
+ 1823 05d0 00000000 	 .word nSdoSegSubindex
+ 1824 05d4 00000000 	 .word pSdoSegObjEntry
+ 1825              	 .cfi_endproc
+ 1826              	.LFE178:
+ 1828              	 .section .text.SDOS_SdoRes,"ax",%progbits
+ 1829              	 .align 2
+ 1830              	 .global SDOS_SdoRes
+ 1831              	 .thumb
+ 1832              	 .thumb_func
+ 1834              	SDOS_SdoRes:
+ 1835              	.LFB179:
+ 943:../SSC/Src/sdoserv.c **** 
+ 944:../SSC/Src/sdoserv.c **** /////////////////////////////////////////////////////////////////////////////////////////
+ 945:../SSC/Src/sdoserv.c **** /**
+ 946:../SSC/Src/sdoserv.c ****  \param    abort                Result of the SDO access
+ 947:../SSC/Src/sdoserv.c ****  \param    objLength            Complete size of the object
+ 948:../SSC/Src/sdoserv.c ****  \param    pData                Pointer to the mailbox buffer
+ 949:../SSC/Src/sdoserv.c **** 
+ 950:../SSC/Src/sdoserv.c ****  \brief    This function is called when a SDO response shall be sent
+ 951:../SSC/Src/sdoserv.c **** *////////////////////////////////////////////////////////////////////////////////////////
+ 952:../SSC/Src/sdoserv.c **** 
+ 953:../SSC/Src/sdoserv.c **** void SDOS_SdoRes(UINT8 abort, UINT32 objLength, UINT16 MBXMEM *pData)
+ 954:../SSC/Src/sdoserv.c **** {
+ 1836              	 .loc 1 954 0
+ 1837              	 .cfi_startproc
+ 1838              	 
+ 1839              	 
+ 1840 0000 B0B5     	 push {r4,r5,r7,lr}
+ 1841              	.LCFI20:
+ 1842              	 .cfi_def_cfa_offset 16
+ 1843              	 .cfi_offset 4,-16
+ 1844              	 .cfi_offset 5,-12
+ 1845              	 .cfi_offset 7,-8
+ 1846              	 .cfi_offset 14,-4
+ 1847 0002 88B0     	 sub sp,sp,#32
+ 1848              	.LCFI21:
+ 1849              	 .cfi_def_cfa_offset 48
+ 1850 0004 02AF     	 add r7,sp,#8
+ 1851              	.LCFI22:
+ 1852              	 .cfi_def_cfa 7,40
+ 1853 0006 0346     	 mov r3,r0
+ 1854 0008 B960     	 str r1,[r7,#8]
+ 1855 000a 7A60     	 str r2,[r7,#4]
+ 1856 000c FB73     	 strb r3,[r7,#15]
+ 955:../SSC/Src/sdoserv.c **** 	UINT16 dataSize = 0;
+ 1857              	 .loc 1 955 0
+ 1858 000e 0023     	 movs r3,#0
+ 1859 0010 FB82     	 strh r3,[r7,#22]
+ 956:../SSC/Src/sdoserv.c **** 
+ 957:../SSC/Src/sdoserv.c **** 	if (bSdoInWork)
+ 1860              	 .loc 1 957 0
+ 1861 0012 3A4B     	 ldr r3,.L107
+ 1862 0014 1B78     	 ldrb r3,[r3]
+ 1863 0016 002B     	 cmp r3,#0
+ 1864 0018 6CD0     	 beq .L101
+ 1865              	.LBB9:
+ 958:../SSC/Src/sdoserv.c **** 	{
+ 959:../SSC/Src/sdoserv.c **** 		/* SDO-Response is expected */
+ 960:../SSC/Src/sdoserv.c **** 		UINT8 command = pSdoResStored->SdoHeader.Sdo[SDOHEADER_COMMANDOFFSET] & SDOHEADER_COMMAND;
+ 1866              	 .loc 1 960 0
+ 1867 001a 394B     	 ldr r3,.L107+4
+ 1868 001c 1B68     	 ldr r3,[r3]
+ 1869 001e 1B7A     	 ldrb r3,[r3,#8]
+ 1870 0020 23F01F03 	 bic r3,r3,#31
+ 1871 0024 7B75     	 strb r3,[r7,#21]
+ 961:../SSC/Src/sdoserv.c **** 		UINT8 completeAccess = pSdoResStored->SdoHeader.Sdo[SDOHEADER_COMMANDOFFSET] & SDOHEADER_COMPLETE
+ 1872              	 .loc 1 961 0
+ 1873 0026 364B     	 ldr r3,.L107+4
+ 1874 0028 1B68     	 ldr r3,[r3]
+ 1875 002a 1B7A     	 ldrb r3,[r3,#8]
+ 1876 002c 03F01003 	 and r3,r3,#16
+ 1877 0030 3B75     	 strb r3,[r7,#20]
+ 962:../SSC/Src/sdoserv.c **** 
+ 963:../SSC/Src/sdoserv.c **** 		if (command == SDOSERVICE_INITIATEUPLOADREQ)
+ 1878              	 .loc 1 963 0
+ 1879 0032 7B7D     	 ldrb r3,[r7,#21]
+ 1880 0034 402B     	 cmp r3,#64
+ 1881 0036 4DD1     	 bne .L103
+ 964:../SSC/Src/sdoserv.c **** 		{
+ 965:../SSC/Src/sdoserv.c **** 			/* dataSize contains the available size in one mailbox */
+ 966:../SSC/Src/sdoserv.c **** 			dataSize = u16SendMbxSize - MBX_HEADER_SIZE - UPLOAD_NORM_RES_SIZE;
+ 1882              	 .loc 1 966 0
+ 1883 0038 324B     	 ldr r3,.L107+8
+ 1884 003a 1B88     	 ldrh r3,[r3]
+ 1885 003c 103B     	 subs r3,r3,#16
+ 1886 003e FB82     	 strh r3,[r7,#22]
+ 967:../SSC/Src/sdoserv.c **** 			if (dataSize < objLength)
+ 1887              	 .loc 1 967 0
+ 1888 0040 FA8A     	 ldrh r2,[r7,#22]
+ 1889 0042 BB68     	 ldr r3,[r7,#8]
+ 1890 0044 9A42     	 cmp r2,r3
+ 1891 0046 1FD2     	 bcs .L104
+ 968:../SSC/Src/sdoserv.c **** 			{
+ 969:../SSC/Src/sdoserv.c **** 				/* Segmented Upload, the variables for the segmented transfer should be initialized */
+ 970:../SSC/Src/sdoserv.c **** 				bSdoSegFollows = TRUE;
+ 1892              	 .loc 1 970 0
+ 1893 0048 2F4B     	 ldr r3,.L107+12
+ 1894 004a 0122     	 movs r2,#1
+ 1895 004c 1A70     	 strb r2,[r3]
+ 971:../SSC/Src/sdoserv.c **** 				bSdoSegLastToggle = 1;
+ 1896              	 .loc 1 971 0
+ 1897 004e 2F4B     	 ldr r3,.L107+16
+ 1898 0050 0122     	 movs r2,#1
+ 1899 0052 1A70     	 strb r2,[r3]
+ 972:../SSC/Src/sdoserv.c **** 				bSdoSegAccess = completeAccess;
+ 1900              	 .loc 1 972 0
+ 1901 0054 2E4A     	 ldr r2,.L107+20
+ 1902 0056 3B7D     	 ldrb r3,[r7,#20]
+ 1903 0058 1370     	 strb r3,[r2]
+ 973:../SSC/Src/sdoserv.c **** 				nSdoSegCompleteSize = objLength;
+ 1904              	 .loc 1 973 0
+ 1905 005a 2E4A     	 ldr r2,.L107+24
+ 1906 005c BB68     	 ldr r3,[r7,#8]
+ 1907 005e 1360     	 str r3,[r2]
+ 974:../SSC/Src/sdoserv.c **** 				nSdoSegService = SDOSERVICE_UPLOADSEGMENTREQ;
+ 1908              	 .loc 1 974 0
+ 1909 0060 2D4B     	 ldr r3,.L107+28
+ 1910 0062 6022     	 movs r2,#96
+ 1911 0064 1A70     	 strb r2,[r3]
+ 975:../SSC/Src/sdoserv.c **** 				pSdoSegData = (UINT16 VARMEM *) pData;
+ 1912              	 .loc 1 975 0
+ 1913 0066 2D4A     	 ldr r2,.L107+32
+ 1914 0068 7B68     	 ldr r3,[r7,#4]
+ 1915 006a 1360     	 str r3,[r2]
+ 976:../SSC/Src/sdoserv.c **** 				/* the first segment shall be copied */
+ 977:../SSC/Src/sdoserv.c **** 				MBXMEMCPY((UINT16 *)((TINITSDOUPLOADNORMRESMBX MBXMEM *) pSdoResStored)->Data, pData, dataSize)
+ 1916              	 .loc 1 977 0
+ 1917 006c 244B     	 ldr r3,.L107+4
+ 1918 006e 1B68     	 ldr r3,[r3]
+ 1919 0070 03F11002 	 add r2,r3,#16
+ 1920 0074 FB8A     	 ldrh r3,[r7,#22]
+ 1921 0076 1046     	 mov r0,r2
+ 1922 0078 7968     	 ldr r1,[r7,#4]
+ 1923 007a 1A46     	 mov r2,r3
+ 1924 007c FFF7FEFF 	 bl memcpy
+ 978:../SSC/Src/sdoserv.c **** 				nSdoSegBytesToHandle = dataSize;
+ 1925              	 .loc 1 978 0
+ 1926 0080 FB8A     	 ldrh r3,[r7,#22]
+ 1927 0082 274A     	 ldr r2,.L107+36
+ 1928 0084 1360     	 str r3,[r2]
+ 1929 0086 25E0     	 b .L103
+ 1930              	.L104:
+ 979:../SSC/Src/sdoserv.c **** 			}
+ 980:../SSC/Src/sdoserv.c **** 			else
+ 981:../SSC/Src/sdoserv.c **** 				if ((objLength <= 4) && (objLength > 0))
+ 1931              	 .loc 1 981 0
+ 1932 0088 BB68     	 ldr r3,[r7,#8]
+ 1933 008a 042B     	 cmp r3,#4
+ 1934 008c 13D8     	 bhi .L105
+ 1935              	 .loc 1 981 0 is_stmt 0 discriminator 1
+ 1936 008e BB68     	 ldr r3,[r7,#8]
+ 1937 0090 002B     	 cmp r3,#0
+ 1938 0092 10D0     	 beq .L105
+ 982:../SSC/Src/sdoserv.c **** 				{
+ 983:../SSC/Src/sdoserv.c **** 					/* Expedited response */
+ 984:../SSC/Src/sdoserv.c **** 					if (pData != ((TINITSDOUPLOADEXPRESMBX MBXMEM *) pSdoResStored)->Data)
+ 1939              	 .loc 1 984 0 is_stmt 1
+ 1940 0094 1A4B     	 ldr r3,.L107+4
+ 1941 0096 1B68     	 ldr r3,[r3]
+ 1942 0098 03F10C02 	 add r2,r3,#12
+ 1943 009c 7B68     	 ldr r3,[r7,#4]
+ 1944 009e 9A42     	 cmp r2,r3
+ 1945 00a0 08D0     	 beq .L106
+ 985:../SSC/Src/sdoserv.c **** 					{
+ 986:../SSC/Src/sdoserv.c **** 						/* the data is not in the response buffer yet, it shall be copied */
+ 987:../SSC/Src/sdoserv.c **** 						MBXMEMCPY((UINT16 *)((TINITSDOUPLOADEXPRESMBX MBXMEM *) pSdoResStored)->Data, pData, objLengt
+ 1946              	 .loc 1 987 0
+ 1947 00a2 174B     	 ldr r3,.L107+4
+ 1948 00a4 1B68     	 ldr r3,[r3]
+ 1949 00a6 0C33     	 adds r3,r3,#12
+ 1950 00a8 1846     	 mov r0,r3
+ 1951 00aa 7968     	 ldr r1,[r7,#4]
+ 1952 00ac BA68     	 ldr r2,[r7,#8]
+ 1953 00ae FFF7FEFF 	 bl memcpy
+ 984:../SSC/Src/sdoserv.c **** 					{
+ 1954              	 .loc 1 984 0
+ 1955 00b2 0FE0     	 b .L103
+ 1956              	.L106:
+ 1957 00b4 0EE0     	 b .L103
+ 1958              	.L105:
+ 988:../SSC/Src/sdoserv.c **** 					}
+ 989:../SSC/Src/sdoserv.c **** 				}
+ 990:../SSC/Src/sdoserv.c **** 				else
+ 991:../SSC/Src/sdoserv.c **** 				{
+ 992:../SSC/Src/sdoserv.c **** 					/* Normal response */
+ 993:../SSC/Src/sdoserv.c **** 					if (pData != ((TINITSDOUPLOADNORMRESMBX MBXMEM *) pSdoResStored)->Data)
+ 1959              	 .loc 1 993 0
+ 1960 00b6 124B     	 ldr r3,.L107+4
+ 1961 00b8 1B68     	 ldr r3,[r3]
+ 1962 00ba 03F11002 	 add r2,r3,#16
+ 1963 00be 7B68     	 ldr r3,[r7,#4]
+ 1964 00c0 9A42     	 cmp r2,r3
+ 1965 00c2 07D0     	 beq .L103
+ 994:../SSC/Src/sdoserv.c **** 					{
+ 995:../SSC/Src/sdoserv.c **** 						/* the data is not in the response buffer yet, it shall be copied */
+ 996:../SSC/Src/sdoserv.c **** 						MBXMEMCPY((UINT16 *)((TINITSDOUPLOADNORMRESMBX MBXMEM *) pSdoResStored)->Data, pData, objLeng
+ 1966              	 .loc 1 996 0
+ 1967 00c4 0E4B     	 ldr r3,.L107+4
+ 1968 00c6 1B68     	 ldr r3,[r3]
+ 1969 00c8 1033     	 adds r3,r3,#16
+ 1970 00ca 1846     	 mov r0,r3
+ 1971 00cc 7968     	 ldr r1,[r7,#4]
+ 1972 00ce BA68     	 ldr r2,[r7,#8]
+ 1973 00d0 FFF7FEFF 	 bl memcpy
+ 1974              	.L103:
+ 997:../SSC/Src/sdoserv.c **** 					}
+ 998:../SSC/Src/sdoserv.c **** 				}
+ 999:../SSC/Src/sdoserv.c **** 		}
+1000:../SSC/Src/sdoserv.c **** 
+1001:../SSC/Src/sdoserv.c **** 		/* SDO access is finished, send the response */
+1002:../SSC/Src/sdoserv.c **** 		bSdoInWork = FALSE;
+ 1975              	 .loc 1 1002 0
+ 1976 00d4 094B     	 ldr r3,.L107
+ 1977 00d6 0022     	 movs r2,#0
+ 1978 00d8 1A70     	 strb r2,[r3]
+1003:../SSC/Src/sdoserv.c **** 		SdoRes(abort, command, completeAccess, dataSize, objLength, pSdoResStored);
+ 1979              	 .loc 1 1003 0
+ 1980 00da 094B     	 ldr r3,.L107+4
+ 1981 00dc 1B68     	 ldr r3,[r3]
+ 1982 00de F87B     	 ldrb r0,[r7,#15]
+ 1983 00e0 797D     	 ldrb r1,[r7,#21]
+ 1984 00e2 3D7D     	 ldrb r5,[r7,#20]
+ 1985 00e4 FC8A     	 ldrh r4,[r7,#22]
+ 1986 00e6 BA68     	 ldr r2,[r7,#8]
+ 1987 00e8 0092     	 str r2,[sp]
+ 1988 00ea 0193     	 str r3,[sp,#4]
+ 1989 00ec 2A46     	 mov r2,r5
+ 1990 00ee 2346     	 mov r3,r4
+ 1991 00f0 FFF7FEFF 	 bl SdoRes
+ 1992              	.L101:
+ 1993              	.LBE9:
+1004:../SSC/Src/sdoserv.c **** 	}
+1005:../SSC/Src/sdoserv.c **** }
+ 1994              	 .loc 1 1005 0
+ 1995 00f4 1837     	 adds r7,r7,#24
+ 1996              	.LCFI23:
+ 1997              	 .cfi_def_cfa_offset 16
+ 1998 00f6 BD46     	 mov sp,r7
+ 1999              	.LCFI24:
+ 2000              	 .cfi_def_cfa_register 13
+ 2001              	 
+ 2002 00f8 B0BD     	 pop {r4,r5,r7,pc}
+ 2003              	.L108:
+ 2004 00fa 00BF     	 .align 2
+ 2005              	.L107:
+ 2006 00fc 00000000 	 .word bSdoInWork
+ 2007 0100 00000000 	 .word pSdoResStored
+ 2008 0104 00000000 	 .word u16SendMbxSize
+ 2009 0108 00000000 	 .word bSdoSegFollows
+ 2010 010c 00000000 	 .word bSdoSegLastToggle
+ 2011 0110 00000000 	 .word bSdoSegAccess
+ 2012 0114 00000000 	 .word nSdoSegCompleteSize
+ 2013 0118 00000000 	 .word nSdoSegService
+ 2014 011c 00000000 	 .word pSdoSegData
+ 2015 0120 00000000 	 .word nSdoSegBytesToHandle
+ 2016              	 .cfi_endproc
+ 2017              	.LFE179:
+ 2019              	 .section .text.SDOS_ClearPendingResponse,"ax",%progbits
+ 2020              	 .align 2
+ 2021              	 .global SDOS_ClearPendingResponse
+ 2022              	 .thumb
+ 2023              	 .thumb_func
+ 2025              	SDOS_ClearPendingResponse:
+ 2026              	.LFB180:
+1006:../SSC/Src/sdoserv.c **** 
+1007:../SSC/Src/sdoserv.c **** /////////////////////////////////////////////////////////////////////////////////////////
+1008:../SSC/Src/sdoserv.c **** /**
+1009:../SSC/Src/sdoserv.c **** \brief    Clear the variables handling a pending SDO Response
+1010:../SSC/Src/sdoserv.c **** 		   This function shall be called before the other mailbox data pointer are set to NULL
+1011:../SSC/Src/sdoserv.c **** *////////////////////////////////////////////////////////////////////////////////////////
+1012:../SSC/Src/sdoserv.c **** 
+1013:../SSC/Src/sdoserv.c **** void  SDOS_ClearPendingResponse(void)
+1014:../SSC/Src/sdoserv.c **** {
+ 2027              	 .loc 1 1014 0
+ 2028              	 .cfi_startproc
+ 2029              	 
+ 2030              	 
+ 2031 0000 80B5     	 push {r7,lr}
+ 2032              	.LCFI25:
+ 2033              	 .cfi_def_cfa_offset 8
+ 2034              	 .cfi_offset 7,-8
+ 2035              	 .cfi_offset 14,-4
+ 2036 0002 00AF     	 add r7,sp,#0
+ 2037              	.LCFI26:
+ 2038              	 .cfi_def_cfa_register 7
+1015:../SSC/Src/sdoserv.c **** 	if ((bSdoInWork == TRUE) && (pSdoResStored != NULL) && (((TMBX MBXMEM *)pSdoResStored) != psRepeat
+ 2039              	 .loc 1 1015 0
+ 2040 0004 234B     	 ldr r3,.L112
+ 2041 0006 1B78     	 ldrb r3,[r3]
+ 2042 0008 002B     	 cmp r3,#0
+ 2043 000a 17D0     	 beq .L110
+ 2044              	 .loc 1 1015 0 is_stmt 0 discriminator 1
+ 2045 000c 224B     	 ldr r3,.L112+4
+ 2046 000e 1B68     	 ldr r3,[r3]
+ 2047 0010 002B     	 cmp r3,#0
+ 2048 0012 13D0     	 beq .L110
+ 2049              	 .loc 1 1015 0 discriminator 2
+ 2050 0014 204B     	 ldr r3,.L112+4
+ 2051 0016 1A68     	 ldr r2,[r3]
+ 2052 0018 204B     	 ldr r3,.L112+8
+ 2053 001a 1B68     	 ldr r3,[r3]
+ 2054 001c 9A42     	 cmp r2,r3
+ 2055 001e 0DD0     	 beq .L110
+ 2056              	 .loc 1 1015 0 discriminator 3
+ 2057 0020 1D4B     	 ldr r3,.L112+4
+ 2058 0022 1A68     	 ldr r2,[r3]
+ 2059 0024 1E4B     	 ldr r3,.L112+12
+ 2060 0026 1B68     	 ldr r3,[r3]
+ 2061 0028 9A42     	 cmp r2,r3
+ 2062 002a 07D0     	 beq .L110
+1016:../SSC/Src/sdoserv.c **** 	{
+1017:../SSC/Src/sdoserv.c **** 		APPL_FreeMailboxBuffer(pSdoResStored);
+ 2063              	 .loc 1 1017 0 is_stmt 1
+ 2064 002c 1A4B     	 ldr r3,.L112+4
+ 2065 002e 1B68     	 ldr r3,[r3]
+ 2066 0030 1846     	 mov r0,r3
+ 2067 0032 FFF7FEFF 	 bl free
+1018:../SSC/Src/sdoserv.c **** 		pSdoResStored = NULL;
+ 2068              	 .loc 1 1018 0
+ 2069 0036 184B     	 ldr r3,.L112+4
+ 2070 0038 0022     	 movs r2,#0
+ 2071 003a 1A60     	 str r2,[r3]
+ 2072              	.L110:
+1019:../SSC/Src/sdoserv.c **** 	}
+1020:../SSC/Src/sdoserv.c **** 
+1021:../SSC/Src/sdoserv.c **** 	u8PendingSdo = 0;
+ 2073              	 .loc 1 1021 0
+ 2074 003c 194B     	 ldr r3,.L112+16
+ 2075 003e 0022     	 movs r2,#0
+ 2076 0040 1A70     	 strb r2,[r3]
+1022:../SSC/Src/sdoserv.c **** 	bStoreCompleteAccess = FALSE;
+ 2077              	 .loc 1 1022 0
+ 2078 0042 194B     	 ldr r3,.L112+20
+ 2079 0044 0022     	 movs r2,#0
+ 2080 0046 1A70     	 strb r2,[r3]
+1023:../SSC/Src/sdoserv.c **** 	u16StoreIndex = 0;
+ 2081              	 .loc 1 1023 0
+ 2082 0048 184B     	 ldr r3,.L112+24
+ 2083 004a 0022     	 movs r2,#0
+ 2084 004c 1A80     	 strh r2,[r3]
+1024:../SSC/Src/sdoserv.c **** 	u8StoreSubindex = 0;
+ 2085              	 .loc 1 1024 0
+ 2086 004e 184B     	 ldr r3,.L112+28
+ 2087 0050 0022     	 movs r2,#0
+ 2088 0052 1A70     	 strb r2,[r3]
+1025:../SSC/Src/sdoserv.c **** 	u32StoreDataSize = 0;
+ 2089              	 .loc 1 1025 0
+ 2090 0054 174B     	 ldr r3,.L112+32
+ 2091 0056 0022     	 movs r2,#0
+ 2092 0058 1A60     	 str r2,[r3]
+1026:../SSC/Src/sdoserv.c **** 	pStoreData = NULL;
+ 2093              	 .loc 1 1026 0
+ 2094 005a 174B     	 ldr r3,.L112+36
+ 2095 005c 0022     	 movs r2,#0
+ 2096 005e 1A60     	 str r2,[r3]
+1027:../SSC/Src/sdoserv.c **** 	pSdoPendFunc = NULL;
+ 2097              	 .loc 1 1027 0
+ 2098 0060 164B     	 ldr r3,.L112+40
+ 2099 0062 0022     	 movs r2,#0
+ 2100 0064 1A60     	 str r2,[r3]
+1028:../SSC/Src/sdoserv.c **** 	bSdoInWork = FALSE;
+ 2101              	 .loc 1 1028 0
+ 2102 0066 0B4B     	 ldr r3,.L112
+ 2103 0068 0022     	 movs r2,#0
+ 2104 006a 1A70     	 strb r2,[r3]
+1029:../SSC/Src/sdoserv.c **** 
+1030:../SSC/Src/sdoserv.c **** 	if (pSdoSegData != NULL)
+ 2105              	 .loc 1 1030 0
+ 2106 006c 144B     	 ldr r3,.L112+44
+ 2107 006e 1B68     	 ldr r3,[r3]
+ 2108 0070 002B     	 cmp r3,#0
+ 2109 0072 07D0     	 beq .L111
+1031:../SSC/Src/sdoserv.c **** 	{
+1032:../SSC/Src/sdoserv.c **** 		FREEMEM((UINT16 VARMEM *) pSdoSegData);
+ 2110              	 .loc 1 1032 0
+ 2111 0074 124B     	 ldr r3,.L112+44
+ 2112 0076 1B68     	 ldr r3,[r3]
+ 2113 0078 1846     	 mov r0,r3
+ 2114 007a FFF7FEFF 	 bl free
+1033:../SSC/Src/sdoserv.c **** 		pSdoSegData = NULL;
+ 2115              	 .loc 1 1033 0
+ 2116 007e 104B     	 ldr r3,.L112+44
+ 2117 0080 0022     	 movs r2,#0
+ 2118 0082 1A60     	 str r2,[r3]
+ 2119              	.L111:
+1034:../SSC/Src/sdoserv.c **** 	}
+1035:../SSC/Src/sdoserv.c **** 
+1036:../SSC/Src/sdoserv.c **** 	nSdoSegBytesToHandle = 0;
+ 2120              	 .loc 1 1036 0
+ 2121 0084 0F4B     	 ldr r3,.L112+48
+ 2122 0086 0022     	 movs r2,#0
+ 2123 0088 1A60     	 str r2,[r3]
+1037:../SSC/Src/sdoserv.c **** 	nSdoSegService = 0;
+ 2124              	 .loc 1 1037 0
+ 2125 008a 0F4B     	 ldr r3,.L112+52
+ 2126 008c 0022     	 movs r2,#0
+ 2127 008e 1A70     	 strb r2,[r3]
+1038:../SSC/Src/sdoserv.c **** 
+1039:../SSC/Src/sdoserv.c **** }
+ 2128              	 .loc 1 1039 0
+ 2129 0090 80BD     	 pop {r7,pc}
+ 2130              	.L113:
+ 2131 0092 00BF     	 .align 2
+ 2132              	.L112:
+ 2133 0094 00000000 	 .word bSdoInWork
+ 2134 0098 00000000 	 .word pSdoResStored
+ 2135 009c 00000000 	 .word psRepeatMbx
+ 2136 00a0 00000000 	 .word psStoreMbx
+ 2137 00a4 00000000 	 .word u8PendingSdo
+ 2138 00a8 00000000 	 .word bStoreCompleteAccess
+ 2139 00ac 00000000 	 .word u16StoreIndex
+ 2140 00b0 00000000 	 .word u8StoreSubindex
+ 2141 00b4 00000000 	 .word u32StoreDataSize
+ 2142 00b8 00000000 	 .word pStoreData
+ 2143 00bc 00000000 	 .word pSdoPendFunc
+ 2144 00c0 00000000 	 .word pSdoSegData
+ 2145 00c4 00000000 	 .word nSdoSegBytesToHandle
+ 2146 00c8 00000000 	 .word nSdoSegService
+ 2147              	 .cfi_endproc
+ 2148              	.LFE180:
+ 2150              	 .section .text.SDOS_SdoInfoInd,"ax",%progbits
+ 2151              	 .align 2
+ 2152              	 .global SDOS_SdoInfoInd
+ 2153              	 .thumb
+ 2154              	 .thumb_func
+ 2156              	SDOS_SdoInfoInd:
+ 2157              	.LFB181:
+1040:../SSC/Src/sdoserv.c **** 
+1041:../SSC/Src/sdoserv.c **** /////////////////////////////////////////////////////////////////////////////////////////
+1042:../SSC/Src/sdoserv.c **** /**
+1043:../SSC/Src/sdoserv.c ****  \param    pSdoInfoInd      Pointer to the received mailbox data from the master.
+1044:../SSC/Src/sdoserv.c **** 
+1045:../SSC/Src/sdoserv.c ****  \return    Indicates if an error occurred while the operation ( good = 0 ).
+1046:../SSC/Src/sdoserv.c **** 
+1047:../SSC/Src/sdoserv.c ****  \brief    This function is called when a SDO-Info request service
+1048:../SSC/Src/sdoserv.c **** 			is received from the master and calls depending from
+1049:../SSC/Src/sdoserv.c **** 			the opcode the concerning function.
+1050:../SSC/Src/sdoserv.c **** *////////////////////////////////////////////////////////////////////////////////////////
+1051:../SSC/Src/sdoserv.c **** 
+1052:../SSC/Src/sdoserv.c **** UINT8 SDOS_SdoInfoInd(TSDOINFORMATION MBXMEM *pSdoInfoInd)
+1053:../SSC/Src/sdoserv.c **** {
+ 2158              	 .loc 1 1053 0
+ 2159              	 .cfi_startproc
+ 2160              	 
+ 2161              	 
+ 2162 0000 90B5     	 push {r4,r7,lr}
+ 2163              	.LCFI27:
+ 2164              	 .cfi_def_cfa_offset 12
+ 2165              	 .cfi_offset 4,-12
+ 2166              	 .cfi_offset 7,-8
+ 2167              	 .cfi_offset 14,-4
+ 2168 0002 8FB0     	 sub sp,sp,#60
+ 2169              	.LCFI28:
+ 2170              	 .cfi_def_cfa_offset 72
+ 2171 0004 02AF     	 add r7,sp,#8
+ 2172              	.LCFI29:
+ 2173              	 .cfi_def_cfa 7,64
+ 2174 0006 7860     	 str r0,[r7,#4]
+1054:../SSC/Src/sdoserv.c **** 	UINT8 abort = 0;
+ 2175              	 .loc 1 1054 0
+ 2176 0008 0023     	 movs r3,#0
+ 2177 000a FB73     	 strb r3,[r7,#15]
+1055:../SSC/Src/sdoserv.c **** 	/* the variable opCode contains the requested SDO Information type */
+1056:../SSC/Src/sdoserv.c **** 	UINT8 opCode = (UINT8)((pSdoInfoInd->SdoHeader.InfoHead & INFOHEAD_OPCODE_MASK) >> INFOHEAD_OPCODE
+ 2178              	 .loc 1 1056 0
+ 2179 000c 7B68     	 ldr r3,[r7,#4]
+ 2180 000e 1B89     	 ldrh r3,[r3,#8]
+ 2181 0010 DBB2     	 uxtb r3,r3
+ 2182 0012 03F07F03 	 and r3,r3,#127
+ 2183 0016 87F82130 	 strb r3,[r7,#33]
+1057:../SSC/Src/sdoserv.c **** 	OBJCONST TOBJECT OBJMEM * pObjEntry;
+1058:../SSC/Src/sdoserv.c **** 	UINT16 index;
+1059:../SSC/Src/sdoserv.c **** 	UINT8 flags = COE_SERVICE;
+ 2184              	 .loc 1 1059 0
+ 2185 001a 0223     	 movs r3,#2
+ 2186 001c 87F82F30 	 strb r3,[r7,#47]
+1060:../SSC/Src/sdoserv.c **** 
+1061:../SSC/Src/sdoserv.c **** 	/* it has to be checked if the mailbox protocol is correct, the sent mailbox data length has to
+1062:../SSC/Src/sdoserv.c **** 	   great enough for the service header of the requested SDO Information type */
+1063:../SSC/Src/sdoserv.c **** 	if (opCode == SDOINFOSERVICE_ENTRYDESCRIPTION_Q)
+ 2187              	 .loc 1 1063 0
+ 2188 0020 97F82130 	 ldrb r3,[r7,#33]
+ 2189 0024 052B     	 cmp r3,#5
+ 2190 0026 05D1     	 bne .L115
+1064:../SSC/Src/sdoserv.c **** 	{
+1065:../SSC/Src/sdoserv.c **** 		if (pSdoInfoInd->MbxHeader.Length < SIZEOF_SDOINFOENTRYREQSTRUCT)
+ 2191              	 .loc 1 1065 0
+ 2192 0028 7B68     	 ldr r3,[r7,#4]
+ 2193 002a 1B88     	 ldrh r3,[r3]
+ 2194 002c 092B     	 cmp r3,#9
+ 2195 002e 07D8     	 bhi .L116
+1066:../SSC/Src/sdoserv.c **** 		{
+1067:../SSC/Src/sdoserv.c **** 			return MBXERR_SIZETOOSHORT;
+ 2196              	 .loc 1 1067 0
+ 2197 0030 0623     	 movs r3,#6
+ 2198 0032 D9E1     	 b .L145
+ 2199              	.L115:
+1068:../SSC/Src/sdoserv.c **** 		}
+1069:../SSC/Src/sdoserv.c **** 	}
+1070:../SSC/Src/sdoserv.c **** 	else
+1071:../SSC/Src/sdoserv.c **** 	{
+1072:../SSC/Src/sdoserv.c **** 		if (pSdoInfoInd->MbxHeader.Length < SIZEOF_SDOINFOLISTSTRUCT)
+ 2200              	 .loc 1 1072 0
+ 2201 0034 7B68     	 ldr r3,[r7,#4]
+ 2202 0036 1B88     	 ldrh r3,[r3]
+ 2203 0038 072B     	 cmp r3,#7
+ 2204 003a 01D8     	 bhi .L116
+1073:../SSC/Src/sdoserv.c **** 		{
+1074:../SSC/Src/sdoserv.c **** 			return MBXERR_SIZETOOSHORT;
+ 2205              	 .loc 1 1074 0
+ 2206 003c 0623     	 movs r3,#6
+ 2207 003e D3E1     	 b .L145
+ 2208              	.L116:
+1075:../SSC/Src/sdoserv.c **** 		}
+1076:../SSC/Src/sdoserv.c **** 	}
+1077:../SSC/Src/sdoserv.c **** 
+1078:../SSC/Src/sdoserv.c **** 	switch (opCode)
+ 2209              	 .loc 1 1078 0
+ 2210 0040 97F82130 	 ldrb r3,[r7,#33]
+ 2211 0044 032B     	 cmp r3,#3
+ 2212 0046 00F0CA80 	 beq .L119
+ 2213 004a 052B     	 cmp r3,#5
+ 2214 004c 00F0C780 	 beq .L119
+ 2215 0050 012B     	 cmp r3,#1
+ 2216 0052 40F09981 	 bne .L146
+1079:../SSC/Src/sdoserv.c **** 	{
+1080:../SSC/Src/sdoserv.c **** 	case SDOINFOSERVICE_OBJDICTIONARYLIST_Q:
+1081:../SSC/Src/sdoserv.c **** 		/* an object list is requested, check if the list type is supported */
+1082:../SSC/Src/sdoserv.c **** 		if (SWAPWORD(pSdoInfoInd->SdoHeader.Data.List.ListType) <= INFO_LIST_TYPE_MAX)
+ 2217              	 .loc 1 1082 0
+ 2218 0056 7B68     	 ldr r3,[r7,#4]
+ 2219 0058 9B89     	 ldrh r3,[r3,#12]
+ 2220 005a 052B     	 cmp r3,#5
+ 2221 005c 00F2BE80 	 bhi .L121
+ 2222              	.LBB10:
+1083:../SSC/Src/sdoserv.c **** 		{
+1084:../SSC/Src/sdoserv.c **** 			UINT16 size = 0;
+ 2223              	 .loc 1 1084 0
+ 2224 0060 0023     	 movs r3,#0
+ 2225 0062 BB85     	 strh r3,[r7,#44]
+1085:../SSC/Src/sdoserv.c **** 			/* the variable listType contains the requested listType */
+1086:../SSC/Src/sdoserv.c **** 			UINT8 listType = (UINT8)SWAPWORD(pSdoInfoInd->SdoHeader.Data.List.ListType);
+ 2226              	 .loc 1 1086 0
+ 2227 0064 7B68     	 ldr r3,[r7,#4]
+ 2228 0066 9B89     	 ldrh r3,[r3,#12]
+ 2229 0068 87F82030 	 strb r3,[r7,#32]
+1087:../SSC/Src/sdoserv.c **** 
+1088:../SSC/Src/sdoserv.c **** 			/* the SDO Information Header has to be stored because this function will be
+1089:../SSC/Src/sdoserv.c **** 			   called again if the response could not be sent with one mailbox service, the
+1090:../SSC/Src/sdoserv.c **** 			   variable nSdoInfoFragmentsLeft is 0 zero for the first call and unequal 0
+1091:../SSC/Src/sdoserv.c **** 			   for the following calls */
+1092:../SSC/Src/sdoserv.c **** 			MBXMEMCPY(aSdoInfoHeader, pSdoInfoInd, SDO_INFO_HEADER_BYTE_SIZE);
+ 2230              	 .loc 1 1092 0
+ 2231 006c A848     	 ldr r0,.L147
+ 2232 006e 7968     	 ldr r1,[r7,#4]
+ 2233 0070 0E22     	 movs r2,#14
+ 2234 0072 FFF7FEFF 	 bl memcpy
+1093:../SSC/Src/sdoserv.c **** 			if (listType-- == 0)
+ 2235              	 .loc 1 1093 0
+ 2236 0076 97F82030 	 ldrb r3,[r7,#32]
+ 2237 007a 5A1E     	 subs r2,r3,#1
+ 2238 007c 87F82020 	 strb r2,[r7,#32]
+ 2239 0080 002B     	 cmp r3,#0
+ 2240 0082 22D1     	 bne .L122
+ 2241              	.LBB11:
+1094:../SSC/Src/sdoserv.c **** 			{
+1095:../SSC/Src/sdoserv.c **** 				/* List-Type 0: length of the lists */
+1096:../SSC/Src/sdoserv.c **** 				UINT8 i;
+1097:../SSC/Src/sdoserv.c **** 
+1098:../SSC/Src/sdoserv.c **** 				/* the needed mailbox size for List-Type 0 response is just 24 bytes, the mailbox has always
+1099:../SSC/Src/sdoserv.c **** 				   to be at least 24 bytes to support the SDO Information service */
+1100:../SSC/Src/sdoserv.c **** 				nSdoInfoFragmentsLeft = 0;
+ 2242              	 .loc 1 1100 0
+ 2243 0084 A34B     	 ldr r3,.L147+4
+ 2244 0086 0022     	 movs r2,#0
+ 2245 0088 1A80     	 strh r2,[r3]
+1101:../SSC/Src/sdoserv.c **** 				for (i = 0; i < INFO_LIST_TYPE_MAX; i++)
+ 2246              	 .loc 1 1101 0
+ 2247 008a 0023     	 movs r3,#0
+ 2248 008c 87F82B30 	 strb r3,[r7,#43]
+ 2249 0090 14E0     	 b .L123
+ 2250              	.L124:
+ 2251              	.LBB12:
+1102:../SSC/Src/sdoserv.c **** 				{
+1103:../SSC/Src/sdoserv.c **** 					UINT16 n = OBJ_GetNoOfObjects(i);
+ 2252              	 .loc 1 1103 0 discriminator 3
+ 2253 0092 97F82B30 	 ldrb r3,[r7,#43]
+ 2254 0096 1846     	 mov r0,r3
+ 2255 0098 FFF7FEFF 	 bl OBJ_GetNoOfObjects
+ 2256 009c 0346     	 mov r3,r0
+ 2257 009e FB83     	 strh r3,[r7,#30]
+1104:../SSC/Src/sdoserv.c **** 
+1105:../SSC/Src/sdoserv.c **** 					/* copy the number of objects of the list type in the SDO Information response */
+1106:../SSC/Src/sdoserv.c **** 					((UINT16 MBXMEM *) &pSdoInfoInd->CoeHeader)[(SIZEOF_SDOINFOLISTSTRUCT >> 1) + i] = SWAPWORD(n)
+ 2258              	 .loc 1 1106 0 discriminator 3
+ 2259 00a0 7B68     	 ldr r3,[r7,#4]
+ 2260 00a2 9A1D     	 adds r2,r3,#6
+ 2261 00a4 97F82B30 	 ldrb r3,[r7,#43]
+ 2262 00a8 0433     	 adds r3,r3,#4
+ 2263 00aa 5B00     	 lsls r3,r3,#1
+ 2264 00ac 1344     	 add r3,r3,r2
+ 2265 00ae FA8B     	 ldrh r2,[r7,#30]
+ 2266 00b0 1A80     	 strh r2,[r3]
+ 2267              	.LBE12:
+1101:../SSC/Src/sdoserv.c **** 				{
+ 2268              	 .loc 1 1101 0 discriminator 3
+ 2269 00b2 97F82B30 	 ldrb r3,[r7,#43]
+ 2270 00b6 0133     	 adds r3,r3,#1
+ 2271 00b8 87F82B30 	 strb r3,[r7,#43]
+ 2272              	.L123:
+1101:../SSC/Src/sdoserv.c **** 				{
+ 2273              	 .loc 1 1101 0 is_stmt 0 discriminator 1
+ 2274 00bc 97F82B30 	 ldrb r3,[r7,#43]
+ 2275 00c0 042B     	 cmp r3,#4
+ 2276 00c2 E6D9     	 bls .L124
+1107:../SSC/Src/sdoserv.c **** 				}
+1108:../SSC/Src/sdoserv.c **** 
+1109:../SSC/Src/sdoserv.c **** 				/* size of the mailbox service response */
+1110:../SSC/Src/sdoserv.c **** 				size = (INFO_LIST_TYPE_MAX << 1) + SIZEOF_SDOINFOLISTSTRUCT;
+ 2277              	 .loc 1 1110 0 is_stmt 1
+ 2278 00c4 1223     	 movs r3,#18
+ 2279 00c6 BB85     	 strh r3,[r7,#44]
+ 2280              	.LBE11:
+ 2281 00c8 5AE0     	 b .L125
+ 2282              	.L122:
+ 2283              	.LBB13:
+1111:../SSC/Src/sdoserv.c **** 			}
+1112:../SSC/Src/sdoserv.c **** 			else
+1113:../SSC/Src/sdoserv.c **** 			{
+1114:../SSC/Src/sdoserv.c **** 				/* object list with indexes is requested */
+1115:../SSC/Src/sdoserv.c **** 				UINT16 MBXMEM * pData;
+1116:../SSC/Src/sdoserv.c **** 				UINT16 n = 0;
+ 2284              	 .loc 1 1116 0
+ 2285 00ca 0023     	 movs r3,#0
+ 2286 00cc BB83     	 strh r3,[r7,#28]
+1117:../SSC/Src/sdoserv.c **** 
+1118:../SSC/Src/sdoserv.c **** 				if (nSdoInfoFragmentsLeft)
+ 2287              	 .loc 1 1118 0
+ 2288 00ce 914B     	 ldr r3,.L147+4
+ 2289 00d0 1B88     	 ldrh r3,[r3]
+ 2290 00d2 002B     	 cmp r3,#0
+ 2291 00d4 11D0     	 beq .L126
+1119:../SSC/Src/sdoserv.c **** 				{
+1120:../SSC/Src/sdoserv.c **** 					/* the next fragment of the SDO Information response shall be sent */
+1121:../SSC/Src/sdoserv.c **** 					/* initialize size with the maximum size fits into one mailbox service */
+1122:../SSC/Src/sdoserv.c **** 					{
+1123:../SSC/Src/sdoserv.c **** 						size = u16SendMbxSize - SIZEOF_SDOINFO - MBX_HEADER_SIZE;
+ 2292              	 .loc 1 1123 0
+ 2293 00d6 904B     	 ldr r3,.L147+8
+ 2294 00d8 1B88     	 ldrh r3,[r3]
+ 2295 00da 0C3B     	 subs r3,r3,#12
+ 2296 00dc BB85     	 strh r3,[r7,#44]
+1124:../SSC/Src/sdoserv.c **** 					}
+1125:../SSC/Src/sdoserv.c **** 					/* initialize pData with the pointer where the fragment has to be copied */
+1126:../SSC/Src/sdoserv.c **** 					pData = &((UINT16 MBXMEM *) &pSdoInfoInd->CoeHeader)[SIZEOF_SDOINFO >> 1];
+ 2297              	 .loc 1 1126 0
+ 2298 00de 7B68     	 ldr r3,[r7,#4]
+ 2299 00e0 0633     	 adds r3,r3,#6
+ 2300 00e2 0633     	 adds r3,r3,#6
+ 2301 00e4 7B62     	 str r3,[r7,#36]
+1127:../SSC/Src/sdoserv.c **** 					/* initialize index with the next index to be sent */
+1128:../SSC/Src/sdoserv.c **** 					index = nSdoInfoIndex;
+ 2302              	 .loc 1 1128 0
+ 2303 00e6 8D4B     	 ldr r3,.L147+12
+ 2304 00e8 1B88     	 ldrh r3,[r3]
+ 2305 00ea BB81     	 strh r3,[r7,#12]
+1129:../SSC/Src/sdoserv.c **** 					/* decrement the number of fragments to be sent */
+1130:../SSC/Src/sdoserv.c **** 					nSdoInfoFragmentsLeft--;
+ 2306              	 .loc 1 1130 0
+ 2307 00ec 894B     	 ldr r3,.L147+4
+ 2308 00ee 1B88     	 ldrh r3,[r3]
+ 2309 00f0 013B     	 subs r3,r3,#1
+ 2310 00f2 9AB2     	 uxth r2,r3
+ 2311 00f4 874B     	 ldr r3,.L147+4
+ 2312 00f6 1A80     	 strh r2,[r3]
+ 2313 00f8 2AE0     	 b .L127
+ 2314              	.L126:
+1131:../SSC/Src/sdoserv.c **** 				}
+1132:../SSC/Src/sdoserv.c **** 				else
+1133:../SSC/Src/sdoserv.c **** 				{
+1134:../SSC/Src/sdoserv.c **** 					/* the first fragment of the SDO Information response has to be sent */
+1135:../SSC/Src/sdoserv.c **** 					/* get the number of objects of the requested object list */
+1136:../SSC/Src/sdoserv.c **** 					n = OBJ_GetNoOfObjects(listType);
+ 2315              	 .loc 1 1136 0
+ 2316 00fa 97F82030 	 ldrb r3,[r7,#32]
+ 2317 00fe 1846     	 mov r0,r3
+ 2318 0100 FFF7FEFF 	 bl OBJ_GetNoOfObjects
+ 2319 0104 0346     	 mov r3,r0
+ 2320 0106 BB83     	 strh r3,[r7,#28]
+1137:../SSC/Src/sdoserv.c **** 					/* we start with index 0x1000 */
+1138:../SSC/Src/sdoserv.c **** 					index = 0x1000;
+ 2321              	 .loc 1 1138 0
+ 2322 0108 4FF48053 	 mov r3,#4096
+ 2323 010c BB81     	 strh r3,[r7,#12]
+1139:../SSC/Src/sdoserv.c **** 					/* initialize size with the maximum size fits into one mailbox service */
+1140:../SSC/Src/sdoserv.c **** 					{
+1141:../SSC/Src/sdoserv.c **** 						size = u16SendMbxSize - SIZEOF_SDOINFOLISTSTRUCT - MBX_HEADER_SIZE;
+ 2324              	 .loc 1 1141 0
+ 2325 010e 824B     	 ldr r3,.L147+8
+ 2326 0110 1B88     	 ldrh r3,[r3]
+ 2327 0112 0E3B     	 subs r3,r3,#14
+ 2328 0114 BB85     	 strh r3,[r7,#44]
+1142:../SSC/Src/sdoserv.c **** 					}
+1143:../SSC/Src/sdoserv.c **** 					/* initialize pData with the pointer where the fragment has to be copied */
+1144:../SSC/Src/sdoserv.c **** 					pData = &((UINT16 MBXMEM *) &pSdoInfoInd->CoeHeader)[SIZEOF_SDOINFOLISTSTRUCT >> 1];
+ 2329              	 .loc 1 1144 0
+ 2330 0116 7B68     	 ldr r3,[r7,#4]
+ 2331 0118 0633     	 adds r3,r3,#6
+ 2332 011a 0833     	 adds r3,r3,#8
+ 2333 011c 7B62     	 str r3,[r7,#36]
+1145:../SSC/Src/sdoserv.c **** 					/*Check if List need to be send in fragments*/
+1146:../SSC/Src/sdoserv.c **** 					if ((n << 1) > size)
+ 2334              	 .loc 1 1146 0
+ 2335 011e BB8B     	 ldrh r3,[r7,#28]
+ 2336 0120 5A00     	 lsls r2,r3,#1
+ 2337 0122 BB8D     	 ldrh r3,[r7,#44]
+ 2338 0124 9A42     	 cmp r2,r3
+ 2339 0126 10DD     	 ble .L128
+ 2340              	.LBB14:
+1147:../SSC/Src/sdoserv.c **** 					{
+1148:../SSC/Src/sdoserv.c **** 						/*number of Bytes to transmit don't fit into one mailbox datagram*/
+1149:../SSC/Src/sdoserv.c **** 
+1150:../SSC/Src/sdoserv.c **** 						/*calculate number of fragments which need to be send
+1151:../SSC/Src/sdoserv.c **** 						total number of bytes - bytes which will be transmitted with the current response plus the fr
+1152:../SSC/Src/sdoserv.c **** 						*/
+1153:../SSC/Src/sdoserv.c **** 						UINT16 Fragsize = size + 2;
+ 2341              	 .loc 1 1153 0
+ 2342 0128 BB8D     	 ldrh r3,[r7,#44]
+ 2343 012a 0233     	 adds r3,r3,#2
+ 2344 012c 7B83     	 strh r3,[r7,#26]
+1154:../SSC/Src/sdoserv.c **** 
+1155:../SSC/Src/sdoserv.c **** 						nSdoInfoFragmentsLeft = (((n << 1) - size + (Fragsize - 1)) / Fragsize);
+ 2345              	 .loc 1 1155 0
+ 2346 012e BB8B     	 ldrh r3,[r7,#28]
+ 2347 0130 5A00     	 lsls r2,r3,#1
+ 2348 0132 BB8D     	 ldrh r3,[r7,#44]
+ 2349 0134 D21A     	 subs r2,r2,r3
+ 2350 0136 7B8B     	 ldrh r3,[r7,#26]
+ 2351 0138 013B     	 subs r3,r3,#1
+ 2352 013a 1A44     	 add r2,r2,r3
+ 2353 013c 7B8B     	 ldrh r3,[r7,#26]
+ 2354 013e 92FBF3F3 	 sdiv r3,r2,r3
+ 2355 0142 9AB2     	 uxth r2,r3
+ 2356 0144 734B     	 ldr r3,.L147+4
+ 2357 0146 1A80     	 strh r2,[r3]
+ 2358              	.LBE14:
+ 2359 0148 02E0     	 b .L127
+ 2360              	.L128:
+1156:../SSC/Src/sdoserv.c **** 					}
+1157:../SSC/Src/sdoserv.c **** 					else
+1158:../SSC/Src/sdoserv.c **** 					{
+1159:../SSC/Src/sdoserv.c **** 						nSdoInfoFragmentsLeft = 0;
+ 2361              	 .loc 1 1159 0
+ 2362 014a 724B     	 ldr r3,.L147+4
+ 2363 014c 0022     	 movs r2,#0
+ 2364 014e 1A80     	 strh r2,[r3]
+ 2365              	.L127:
+1160:../SSC/Src/sdoserv.c **** 					}
+1161:../SSC/Src/sdoserv.c **** 				}
+1162:../SSC/Src/sdoserv.c **** 
+1163:../SSC/Src/sdoserv.c **** 				/* get the next part of the requested object list */
+1164:../SSC/Src/sdoserv.c **** 				size = OBJ_GetObjectList(listType, &index, size, pData, &abort);
+ 2366              	 .loc 1 1164 0
+ 2367 0150 97F82030 	 ldrb r3,[r7,#32]
+ 2368 0154 98B2     	 uxth r0,r3
+ 2369 0156 07F10C01 	 add r1,r7,#12
+ 2370 015a BA8D     	 ldrh r2,[r7,#44]
+ 2371 015c 07F10F03 	 add r3,r7,#15
+ 2372 0160 0093     	 str r3,[sp]
+ 2373 0162 7B6A     	 ldr r3,[r7,#36]
+ 2374 0164 FFF7FEFF 	 bl OBJ_GetObjectList
+ 2375 0168 0346     	 mov r3,r0
+ 2376 016a BB85     	 strh r3,[r7,#44]
+1165:../SSC/Src/sdoserv.c **** 
+1166:../SSC/Src/sdoserv.c **** 				/* store index for next fragment */
+1167:../SSC/Src/sdoserv.c **** 				nSdoInfoIndex = index;
+ 2377              	 .loc 1 1167 0
+ 2378 016c BA89     	 ldrh r2,[r7,#12]
+ 2379 016e 6B4B     	 ldr r3,.L147+12
+ 2380 0170 1A80     	 strh r2,[r3]
+1168:../SSC/Src/sdoserv.c **** 				/* size contains before the instruction the size still available in the mailbox buffer
+1169:../SSC/Src/sdoserv.c **** 					and shall contain the size of the mailbox response data after the next instruction */
+1170:../SSC/Src/sdoserv.c **** 				{
+1171:../SSC/Src/sdoserv.c **** 					size = u16SendMbxSize - size - MBX_HEADER_SIZE;
+ 2381              	 .loc 1 1171 0
+ 2382 0172 694B     	 ldr r3,.L147+8
+ 2383 0174 1A88     	 ldrh r2,[r3]
+ 2384 0176 BB8D     	 ldrh r3,[r7,#44]
+ 2385 0178 D31A     	 subs r3,r2,r3
+ 2386 017a 9BB2     	 uxth r3,r3
+ 2387 017c 063B     	 subs r3,r3,#6
+ 2388 017e BB85     	 strh r3,[r7,#44]
+ 2389              	.L125:
+ 2390              	.LBE13:
+1172:../SSC/Src/sdoserv.c **** 				}
+1173:../SSC/Src/sdoserv.c **** 			}
+1174:../SSC/Src/sdoserv.c **** 
+1175:../SSC/Src/sdoserv.c **** 			/* size of the mailbox response data */
+1176:../SSC/Src/sdoserv.c **** 			pSdoInfoInd->MbxHeader.Length = size;
+ 2391              	 .loc 1 1176 0
+ 2392 0180 7B68     	 ldr r3,[r7,#4]
+ 2393 0182 BA8D     	 ldrh r2,[r7,#44]
+ 2394 0184 1A80     	 strh r2,[r3]
+1177:../SSC/Src/sdoserv.c **** 
+1178:../SSC/Src/sdoserv.c **** 			if (abort == 0)
+ 2395              	 .loc 1 1178 0
+ 2396 0186 FB7B     	 ldrb r3,[r7,#15]
+ 2397 0188 002B     	 cmp r3,#0
+ 2398 018a 27D1     	 bne .L121
+1179:../SSC/Src/sdoserv.c **** 			{
+1180:../SSC/Src/sdoserv.c **** 				pSdoInfoInd->SdoHeader.InfoHead &= ~INFOHEAD_OPCODE_MASK;
+ 2399              	 .loc 1 1180 0
+ 2400 018c 7B68     	 ldr r3,[r7,#4]
+ 2401 018e 1B89     	 ldrh r3,[r3,#8]
+ 2402 0190 23F07F03 	 bic r3,r3,#127
+ 2403 0194 9AB2     	 uxth r2,r3
+ 2404 0196 7B68     	 ldr r3,[r7,#4]
+ 2405 0198 1A81     	 strh r2,[r3,#8]
+1181:../SSC/Src/sdoserv.c **** 				pSdoInfoInd->SdoHeader.InfoHead |= (UINT16)(SDOINFOSERVICE_OBJDICTIONARYLIST_S << INFOHEAD_OPCO
+ 2406              	 .loc 1 1181 0
+ 2407 019a 7B68     	 ldr r3,[r7,#4]
+ 2408 019c 1B89     	 ldrh r3,[r3,#8]
+ 2409 019e 43F00203 	 orr r3,r3,#2
+ 2410 01a2 9AB2     	 uxth r2,r3
+ 2411 01a4 7B68     	 ldr r3,[r7,#4]
+ 2412 01a6 1A81     	 strh r2,[r3,#8]
+1182:../SSC/Src/sdoserv.c **** 				/* number of fragments still has to be sent */
+1183:../SSC/Src/sdoserv.c **** 				pSdoInfoInd->SdoHeader.FragmentsLeft = SWAPWORD(nSdoInfoFragmentsLeft);
+ 2413              	 .loc 1 1183 0
+ 2414 01a8 5A4B     	 ldr r3,.L147+4
+ 2415 01aa 1A88     	 ldrh r2,[r3]
+ 2416 01ac 7B68     	 ldr r3,[r7,#4]
+ 2417 01ae 5A81     	 strh r2,[r3,#10]
+1184:../SSC/Src/sdoserv.c **** 
+1185:../SSC/Src/sdoserv.c **** 				if (nSdoInfoFragmentsLeft)
+ 2418              	 .loc 1 1185 0
+ 2419 01b0 584B     	 ldr r3,.L147+4
+ 2420 01b2 1B88     	 ldrh r3,[r3]
+ 2421 01b4 002B     	 cmp r3,#0
+ 2422 01b6 11D0     	 beq .L121
+1186:../SSC/Src/sdoserv.c **** 				{
+1187:../SSC/Src/sdoserv.c **** 					/* there still are fragments to be sent,
+1188:../SSC/Src/sdoserv.c **** 					   the InComplete flag in the SDO Information response has to be sent */
+1189:../SSC/Src/sdoserv.c **** 					pSdoInfoInd->SdoHeader.InfoHead &= ~INFOHEADER_INCOMPLETE_MASK;
+ 2423              	 .loc 1 1189 0
+ 2424 01b8 7B68     	 ldr r3,[r7,#4]
+ 2425 01ba 1B89     	 ldrh r3,[r3,#8]
+ 2426 01bc 23F08003 	 bic r3,r3,#128
+ 2427 01c0 9AB2     	 uxth r2,r3
+ 2428 01c2 7B68     	 ldr r3,[r7,#4]
+ 2429 01c4 1A81     	 strh r2,[r3,#8]
+1190:../SSC/Src/sdoserv.c **** 					pSdoInfoInd->SdoHeader.InfoHead |= (UINT16)(SDOINFOSERVICE_INCOMPLETE << INFOHEAD_OPCODE_SHIFT
+ 2430              	 .loc 1 1190 0
+ 2431 01c6 7B68     	 ldr r3,[r7,#4]
+ 2432 01c8 1B89     	 ldrh r3,[r3,#8]
+ 2433 01ca 43F08003 	 orr r3,r3,#128
+ 2434 01ce 9AB2     	 uxth r2,r3
+ 2435 01d0 7B68     	 ldr r3,[r7,#4]
+ 2436 01d2 1A81     	 strh r2,[r3,#8]
+1191:../SSC/Src/sdoserv.c **** 					/* the FRAGMENTS_FOLLOW flag has to be set for the function MBX_MailboxSendReq to
+1192:../SSC/Src/sdoserv.c **** 					   indicate the mailbox handler that still fragments has to be sent so that this
+1193:../SSC/Src/sdoserv.c **** 						function shall be called again from COE_ContinueInd when the actual mailbox buffer
+1194:../SSC/Src/sdoserv.c **** 						was sent */
+1195:../SSC/Src/sdoserv.c **** 					flags = FRAGMENTS_FOLLOW | COE_SERVICE;
+ 2437              	 .loc 1 1195 0
+ 2438 01d4 8223     	 movs r3,#130
+ 2439 01d6 87F82F30 	 strb r3,[r7,#47]
+ 2440              	.LBE10:
+1196:../SSC/Src/sdoserv.c **** 				}
+1197:../SSC/Src/sdoserv.c **** 			}
+1198:../SSC/Src/sdoserv.c **** 		}
+1199:../SSC/Src/sdoserv.c **** 		break;
+ 2441              	 .loc 1 1199 0
+ 2442 01da D7E0     	 b .L129
+ 2443              	.L121:
+ 2444 01dc D6E0     	 b .L129
+ 2445              	.L119:
+1200:../SSC/Src/sdoserv.c **** 
+1201:../SSC/Src/sdoserv.c **** 	case SDOINFOSERVICE_OBJDESCRIPTION_Q:
+1202:../SSC/Src/sdoserv.c **** 	case SDOINFOSERVICE_ENTRYDESCRIPTION_Q:
+1203:../SSC/Src/sdoserv.c **** 		/* get the requested index */
+1204:../SSC/Src/sdoserv.c **** 		index = SWAPWORD(pSdoInfoInd->SdoHeader.Data.Obj.Index);
+ 2446              	 .loc 1 1204 0
+ 2447 01de 7B68     	 ldr r3,[r7,#4]
+ 2448 01e0 9B89     	 ldrh r3,[r3,#12]
+ 2449 01e2 BB81     	 strh r3,[r7,#12]
+1205:../SSC/Src/sdoserv.c **** 
+1206:../SSC/Src/sdoserv.c **** 
+1207:../SSC/Src/sdoserv.c **** 
+1208:../SSC/Src/sdoserv.c **** 		if (index < 0x1000)
+ 2450              	 .loc 1 1208 0
+ 2451 01e4 BB89     	 ldrh r3,[r7,#12]
+ 2452 01e6 B3F5805F 	 cmp r3,#4096
+ 2453 01ea 02D2     	 bcs .L130
+1209:../SSC/Src/sdoserv.c **** 		{
+1210:../SSC/Src/sdoserv.c **** 			/*SDO Info access is only allowed for objects >= 0x1000*/
+1211:../SSC/Src/sdoserv.c **** 			abort = ABORTIDX_UNSUPPORTED_ACCESS;
+ 2454              	 .loc 1 1211 0
+ 2455 01ec 0523     	 movs r3,#5
+ 2456 01ee FB73     	 strb r3,[r7,#15]
+ 2457 01f0 C9E0     	 b .L131
+ 2458              	.L130:
+1212:../SSC/Src/sdoserv.c **** 		}
+1213:../SSC/Src/sdoserv.c **** 		else
+1214:../SSC/Src/sdoserv.c **** 		{
+1215:../SSC/Src/sdoserv.c **** 			/* get the object handle of the requested index */
+1216:../SSC/Src/sdoserv.c **** 			pObjEntry = OBJ_GetObjectHandle(index);
+ 2459              	 .loc 1 1216 0
+ 2460 01f2 BB89     	 ldrh r3,[r7,#12]
+ 2461 01f4 1846     	 mov r0,r3
+ 2462 01f6 FFF7FEFF 	 bl OBJ_GetObjectHandle
+ 2463 01fa 7861     	 str r0,[r7,#20]
+1217:../SSC/Src/sdoserv.c **** 
+1218:../SSC/Src/sdoserv.c **** 			if (pObjEntry)
+ 2464              	 .loc 1 1218 0
+ 2465 01fc 7B69     	 ldr r3,[r7,#20]
+ 2466 01fe 002B     	 cmp r3,#0
+ 2467 0200 00F0BE80 	 beq .L132
+ 2468              	.LBB15:
+1219:../SSC/Src/sdoserv.c **** 			{
+1220:../SSC/Src/sdoserv.c **** 				/* object exists */
+1221:../SSC/Src/sdoserv.c **** 				UINT16 size = 0;
+ 2469              	 .loc 1 1221 0
+ 2470 0204 0023     	 movs r3,#0
+ 2471 0206 7B84     	 strh r3,[r7,#34]
+1222:../SSC/Src/sdoserv.c **** 
+1223:../SSC/Src/sdoserv.c **** 				if (opCode == SDOINFOSERVICE_OBJDESCRIPTION_Q)
+ 2472              	 .loc 1 1223 0
+ 2473 0208 97F82130 	 ldrb r3,[r7,#33]
+ 2474 020c 032B     	 cmp r3,#3
+ 2475 020e 2BD1     	 bne .L133
+1224:../SSC/Src/sdoserv.c **** 				{
+1225:../SSC/Src/sdoserv.c **** 					/* object description is requested */
+1226:../SSC/Src/sdoserv.c **** 					OBJTOMBXMEMCPY(&pSdoInfoInd->SdoHeader.Data.Obj.Res, OBJ_GetObjDesc(pObjEntry), SDO_INFO_OBJ_D
+ 2476              	 .loc 1 1226 0
+ 2477 0210 7B68     	 ldr r3,[r7,#4]
+ 2478 0212 03F10E04 	 add r4,r3,#14
+ 2479 0216 7869     	 ldr r0,[r7,#20]
+ 2480 0218 FFF7FEFF 	 bl OBJ_GetObjDesc
+ 2481 021c 0346     	 mov r3,r0
+ 2482 021e 2046     	 mov r0,r4
+ 2483 0220 1946     	 mov r1,r3
+ 2484 0222 0422     	 movs r2,#4
+ 2485 0224 FFF7FEFF 	 bl memcpy
+1227:../SSC/Src/sdoserv.c **** 
+1228:../SSC/Src/sdoserv.c **** 
+1229:../SSC/Src/sdoserv.c **** 					/* the mailbox should be big enough that the maximum object description
+1230:../SSC/Src/sdoserv.c **** 					fits in the mailbox (the fragmentation is not done in the sample code),
+1231:../SSC/Src/sdoserv.c **** 					so it will be checked only if the object description fits */
+1232:../SSC/Src/sdoserv.c **** 					size = OBJ_GetDesc(index, 0, pObjEntry, NULL) + SIZEOF_SDOINFOOBJSTRUCT;
+ 2486              	 .loc 1 1232 0
+ 2487 0228 BB89     	 ldrh r3,[r7,#12]
+ 2488 022a 1846     	 mov r0,r3
+ 2489 022c 0021     	 movs r1,#0
+ 2490 022e 7A69     	 ldr r2,[r7,#20]
+ 2491 0230 0023     	 movs r3,#0
+ 2492 0232 FFF7FEFF 	 bl OBJ_GetDesc
+ 2493 0236 0346     	 mov r3,r0
+ 2494 0238 0C33     	 adds r3,r3,#12
+ 2495 023a 7B84     	 strh r3,[r7,#34]
+1233:../SSC/Src/sdoserv.c **** 
+1234:../SSC/Src/sdoserv.c **** 					if (size > (u16SendMbxSize - MBX_HEADER_SIZE))
+ 2496              	 .loc 1 1234 0
+ 2497 023c 7A8C     	 ldrh r2,[r7,#34]
+ 2498 023e 364B     	 ldr r3,.L147+8
+ 2499 0240 1B88     	 ldrh r3,[r3]
+ 2500 0242 063B     	 subs r3,r3,#6
+ 2501 0244 9A42     	 cmp r2,r3
+ 2502 0246 02DD     	 ble .L134
+1235:../SSC/Src/sdoserv.c **** 					{
+1236:../SSC/Src/sdoserv.c **** 						/* size of the object description does not fit in the mailbox,
+1237:../SSC/Src/sdoserv.c **** 						the object description will be sent without the name */
+1238:../SSC/Src/sdoserv.c **** 						size = SIZEOF_SDOINFOOBJSTRUCT;
+ 2503              	 .loc 1 1238 0
+ 2504 0248 0C23     	 movs r3,#12
+ 2505 024a 7B84     	 strh r3,[r7,#34]
+ 2506 024c 7BE0     	 b .L136
+ 2507              	.L134:
+1239:../SSC/Src/sdoserv.c **** 					}
+1240:../SSC/Src/sdoserv.c **** 					else
+1241:../SSC/Src/sdoserv.c **** 					{
+1242:../SSC/Src/sdoserv.c **** 						/* object description fits in the mailbox, get the name of the object */
+1243:../SSC/Src/sdoserv.c **** 						size = OBJ_GetDesc(index, 0, pObjEntry, ((UINT16 MBXMEM *) &(&pSdoInfoInd->SdoHeader.Data.Obj
+ 2508              	 .loc 1 1243 0
+ 2509 024e BA89     	 ldrh r2,[r7,#12]
+ 2510 0250 7B68     	 ldr r3,[r7,#4]
+ 2511 0252 0E33     	 adds r3,r3,#14
+ 2512 0254 0433     	 adds r3,r3,#4
+ 2513 0256 1046     	 mov r0,r2
+ 2514 0258 0021     	 movs r1,#0
+ 2515 025a 7A69     	 ldr r2,[r7,#20]
+ 2516 025c FFF7FEFF 	 bl OBJ_GetDesc
+ 2517 0260 0346     	 mov r3,r0
+ 2518 0262 0C33     	 adds r3,r3,#12
+ 2519 0264 7B84     	 strh r3,[r7,#34]
+ 2520 0266 6EE0     	 b .L136
+ 2521              	.L133:
+ 2522              	.LBB16:
+1244:../SSC/Src/sdoserv.c **** 					}
+1245:../SSC/Src/sdoserv.c **** 				}
+1246:../SSC/Src/sdoserv.c **** 				else
+1247:../SSC/Src/sdoserv.c **** 				{
+1248:../SSC/Src/sdoserv.c **** 					/* entry description is requested,
+1249:../SSC/Src/sdoserv.c **** 					get the requested subindex */
+1250:../SSC/Src/sdoserv.c **** 					UINT8 subindex = (UINT8)((pSdoInfoInd->SdoHeader.Data.Entry.Info & ENTRY_MASK_SUBINDEX) >> ENT
+ 2523              	 .loc 1 1250 0
+ 2524 0268 7B68     	 ldr r3,[r7,#4]
+ 2525 026a DB89     	 ldrh r3,[r3,#14]
+ 2526 026c FB74     	 strb r3,[r7,#19]
+1251:../SSC/Src/sdoserv.c **** 
+1252:../SSC/Src/sdoserv.c **** 					/* get the maximum subindex */
+1253:../SSC/Src/sdoserv.c **** 					UINT8 maxSubindex = (OBJ_GetObjDesc(pObjEntry)->ObjFlags & OBJFLAGS_MAXSUBINDEXMASK) >> OBJFLA
+ 2527              	 .loc 1 1253 0
+ 2528 026e 7869     	 ldr r0,[r7,#20]
+ 2529 0270 FFF7FEFF 	 bl OBJ_GetObjDesc
+ 2530 0274 0346     	 mov r3,r0
+ 2531 0276 5B88     	 ldrh r3,[r3,#2]
+ 2532 0278 BB74     	 strb r3,[r7,#18]
+1254:../SSC/Src/sdoserv.c **** 
+1255:../SSC/Src/sdoserv.c **** 					if (subindex <= maxSubindex)
+ 2533              	 .loc 1 1255 0
+ 2534 027a FA7C     	 ldrb r2,[r7,#19]
+ 2535 027c BB7C     	 ldrb r3,[r7,#18]
+ 2536 027e 9A42     	 cmp r2,r3
+ 2537 0280 5FD8     	 bhi .L137
+ 2538              	.LBB17:
+1256:../SSC/Src/sdoserv.c **** 					{
+1257:../SSC/Src/sdoserv.c **** 						UINT16 ObjectFlags;
+1258:../SSC/Src/sdoserv.c **** 						/* requested subindex is not too great */
+1259:../SSC/Src/sdoserv.c **** 						/* get the entry description of the requested entry */
+1260:../SSC/Src/sdoserv.c **** 						OBJTOMBXMEMCPY(&pSdoInfoInd->SdoHeader.Data.Entry.Res, OBJ_GetEntryDesc(pObjEntry, subindex),
+ 2539              	 .loc 1 1260 0
+ 2540 0282 7B68     	 ldr r3,[r7,#4]
+ 2541 0284 03F11004 	 add r4,r3,#16
+ 2542 0288 FB7C     	 ldrb r3,[r7,#19]
+ 2543 028a 7869     	 ldr r0,[r7,#20]
+ 2544 028c 1946     	 mov r1,r3
+ 2545 028e FFF7FEFF 	 bl OBJ_GetEntryDesc
+ 2546 0292 0346     	 mov r3,r0
+ 2547 0294 2046     	 mov r0,r4
+ 2548 0296 1946     	 mov r1,r3
+ 2549 0298 0622     	 movs r2,#6
+ 2550 029a FFF7FEFF 	 bl memcpy
+1261:../SSC/Src/sdoserv.c **** 
+1262:../SSC/Src/sdoserv.c **** 						/* the transmission of the value info is not supported yet of the sample code */
+1263:../SSC/Src/sdoserv.c **** 						pSdoInfoInd->SdoHeader.Data.Entry.Info &= ~ENTRY_MASK_VALUEINFO;
+ 2551              	 .loc 1 1263 0
+ 2552 029e 7B68     	 ldr r3,[r7,#4]
+ 2553 02a0 DB89     	 ldrh r3,[r3,#14]
+ 2554 02a2 DBB2     	 uxtb r3,r3
+ 2555 02a4 9AB2     	 uxth r2,r3
+ 2556 02a6 7B68     	 ldr r3,[r7,#4]
+ 2557 02a8 DA81     	 strh r2,[r3,#14]
+1264:../SSC/Src/sdoserv.c **** 						ObjectFlags = OBJ_GetObjDesc(pObjEntry)->ObjFlags;
+ 2558              	 .loc 1 1264 0
+ 2559 02aa 7869     	 ldr r0,[r7,#20]
+ 2560 02ac FFF7FEFF 	 bl OBJ_GetObjDesc
+ 2561 02b0 0346     	 mov r3,r0
+ 2562 02b2 5B88     	 ldrh r3,[r3,#2]
+ 2563 02b4 3B82     	 strh r3,[r7,#16]
+1265:../SSC/Src/sdoserv.c **** 						ObjectFlags = (ObjectFlags & OBJFLAGS_OBJCODEMASK) >> OBJFLAGS_OBJCODESHIFT;
+ 2564              	 .loc 1 1265 0
+ 2565 02b6 3B8A     	 ldrh r3,[r7,#16]
+ 2566 02b8 03F47063 	 and r3,r3,#3840
+ 2567 02bc 1B12     	 asrs r3,r3,#8
+ 2568 02be 3B82     	 strh r3,[r7,#16]
+1266:../SSC/Src/sdoserv.c **** 
+1267:../SSC/Src/sdoserv.c **** 						if (((ObjectFlags == OBJCODE_ARR) || (ObjectFlags == OBJCODE_REC)) && (subindex == 0))
+ 2569              	 .loc 1 1267 0
+ 2570 02c0 3B8A     	 ldrh r3,[r7,#16]
+ 2571 02c2 082B     	 cmp r3,#8
+ 2572 02c4 02D0     	 beq .L138
+ 2573              	 .loc 1 1267 0 is_stmt 0 discriminator 2
+ 2574 02c6 3B8A     	 ldrh r3,[r7,#16]
+ 2575 02c8 092B     	 cmp r3,#9
+ 2576 02ca 0DD1     	 bne .L139
+ 2577              	.L138:
+ 2578              	 .loc 1 1267 0 discriminator 3
+ 2579 02cc FB7C     	 ldrb r3,[r7,#19]
+ 2580 02ce 002B     	 cmp r3,#0
+ 2581 02d0 0AD1     	 bne .L139
+1268:../SSC/Src/sdoserv.c **** 						{
+1269:../SSC/Src/sdoserv.c **** 							OBJTOMBXSTRCPY(((UINT16 MBXMEM *) &(&pSdoInfoInd->SdoHeader.Data.Entry.Res)[1]), aSubindexDe
+ 2582              	 .loc 1 1269 0 is_stmt 1
+ 2583 02d2 7B68     	 ldr r3,[r7,#4]
+ 2584 02d4 1033     	 adds r3,r3,#16
+ 2585 02d6 0633     	 adds r3,r3,#6
+ 2586 02d8 1846     	 mov r0,r3
+ 2587 02da 1149     	 ldr r1,.L147+16
+ 2588 02dc 0D22     	 movs r2,#13
+ 2589 02de FFF7FEFF 	 bl memcpy
+1270:../SSC/Src/sdoserv.c **** 							size = 12 + SIZEOF_SDOINFO + SIZEOF(TSDOINFOENTRY); // 12: Length of "SubIndex 000"
+ 2590              	 .loc 1 1270 0
+ 2591 02e2 1C23     	 movs r3,#28
+ 2592 02e4 7B84     	 strh r3,[r7,#34]
+ 2593 02e6 2BE0     	 b .L140
+ 2594              	.L139:
+1271:../SSC/Src/sdoserv.c **** 						}
+1272:../SSC/Src/sdoserv.c **** 						else
+1273:../SSC/Src/sdoserv.c **** 						{
+1274:../SSC/Src/sdoserv.c **** 							/* the mailbox should be big enough that the maximum entry description
+1275:../SSC/Src/sdoserv.c **** 							fits in the mailbox (the fragmentation is not done in the sample code),
+1276:../SSC/Src/sdoserv.c **** 							so it will be checked only if the entry description fits */
+1277:../SSC/Src/sdoserv.c **** 							size = OBJ_GetDesc(index, subindex, pObjEntry, NULL) + SIZEOF_SDOINFO + SIZEOF(TSDOINFOENTRY
+ 2595              	 .loc 1 1277 0
+ 2596 02e8 BA89     	 ldrh r2,[r7,#12]
+ 2597 02ea FB7C     	 ldrb r3,[r7,#19]
+ 2598 02ec 1046     	 mov r0,r2
+ 2599 02ee 1946     	 mov r1,r3
+ 2600 02f0 7A69     	 ldr r2,[r7,#20]
+ 2601 02f2 0023     	 movs r3,#0
+ 2602 02f4 FFF7FEFF 	 bl OBJ_GetDesc
+ 2603 02f8 0346     	 mov r3,r0
+ 2604 02fa 1033     	 adds r3,r3,#16
+ 2605 02fc 7B84     	 strh r3,[r7,#34]
+1278:../SSC/Src/sdoserv.c **** 							if (size > (u16SendMbxSize - MBX_HEADER_SIZE))
+ 2606              	 .loc 1 1278 0
+ 2607 02fe 7A8C     	 ldrh r2,[r7,#34]
+ 2608 0300 054B     	 ldr r3,.L147+8
+ 2609 0302 1B88     	 ldrh r3,[r3]
+ 2610 0304 063B     	 subs r3,r3,#6
+ 2611 0306 9A42     	 cmp r2,r3
+ 2612 0308 0CDD     	 ble .L141
+1279:../SSC/Src/sdoserv.c **** 							{
+1280:../SSC/Src/sdoserv.c **** 								/* size of the object description does not fit in the mailbox,
+1281:../SSC/Src/sdoserv.c **** 								the object description will be sent without the name */
+1282:../SSC/Src/sdoserv.c **** 								size = SIZEOF_SDOINFO + SIZEOF(TSDOINFOENTRY);
+ 2613              	 .loc 1 1282 0
+ 2614 030a 1023     	 movs r3,#16
+ 2615 030c 7B84     	 strh r3,[r7,#34]
+ 2616 030e 17E0     	 b .L140
+ 2617              	.L148:
+ 2618              	 .align 2
+ 2619              	.L147:
+ 2620 0310 00000000 	 .word aSdoInfoHeader
+ 2621 0314 00000000 	 .word nSdoInfoFragmentsLeft
+ 2622 0318 00000000 	 .word u16SendMbxSize
+ 2623 031c 00000000 	 .word nSdoInfoIndex
+ 2624 0320 00000000 	 .word aSubindexDesc
+ 2625              	.L141:
+1283:../SSC/Src/sdoserv.c **** 							}
+1284:../SSC/Src/sdoserv.c **** 							else
+1285:../SSC/Src/sdoserv.c **** 							{
+1286:../SSC/Src/sdoserv.c **** 								/* object description fits in the mailbox, get the name of the entry */
+1287:../SSC/Src/sdoserv.c **** 								size = OBJ_GetDesc(index, subindex, pObjEntry, ((UINT16 MBXMEM *) &(&pSdoInfoInd->SdoHeader
+ 2626              	 .loc 1 1287 0
+ 2627 0324 B989     	 ldrh r1,[r7,#12]
+ 2628 0326 7B68     	 ldr r3,[r7,#4]
+ 2629 0328 1033     	 adds r3,r3,#16
+ 2630 032a 0633     	 adds r3,r3,#6
+ 2631 032c FA7C     	 ldrb r2,[r7,#19]
+ 2632 032e 0846     	 mov r0,r1
+ 2633 0330 1146     	 mov r1,r2
+ 2634 0332 7A69     	 ldr r2,[r7,#20]
+ 2635 0334 FFF7FEFF 	 bl OBJ_GetDesc
+ 2636 0338 0346     	 mov r3,r0
+ 2637 033a 1033     	 adds r3,r3,#16
+ 2638 033c 7B84     	 strh r3,[r7,#34]
+ 2639              	.LBE17:
+ 2640 033e 02E0     	 b .L136
+ 2641              	.L140:
+ 2642 0340 01E0     	 b .L136
+ 2643              	.L137:
+1288:../SSC/Src/sdoserv.c **** 							}
+1289:../SSC/Src/sdoserv.c **** 						}
+1290:../SSC/Src/sdoserv.c **** 					}
+1291:../SSC/Src/sdoserv.c **** 					else
+1292:../SSC/Src/sdoserv.c **** 					{
+1293:../SSC/Src/sdoserv.c **** 						abort = ABORTIDX_SUBINDEX_NOT_EXISTING;
+ 2644              	 .loc 1 1293 0
+ 2645 0342 1123     	 movs r3,#17
+ 2646 0344 FB73     	 strb r3,[r7,#15]
+ 2647              	.L136:
+ 2648              	.LBE16:
+1294:../SSC/Src/sdoserv.c **** 					}
+1295:../SSC/Src/sdoserv.c **** 				}
+1296:../SSC/Src/sdoserv.c **** 
+1297:../SSC/Src/sdoserv.c **** 				if (abort == 0)
+ 2649              	 .loc 1 1297 0
+ 2650 0346 FB7B     	 ldrb r3,[r7,#15]
+ 2651 0348 002B     	 cmp r3,#0
+ 2652 034a 18D1     	 bne .L142
+1298:../SSC/Src/sdoserv.c **** 				{
+1299:../SSC/Src/sdoserv.c **** 					{
+1300:../SSC/Src/sdoserv.c **** 						/* for the object and entry description the sample code does not support the fragmentation,
+1301:../SSC/Src/sdoserv.c **** 						the mailbox has to be big enough */
+1302:../SSC/Src/sdoserv.c **** 						pSdoInfoInd->SdoHeader.FragmentsLeft = 0;
+ 2653              	 .loc 1 1302 0
+ 2654 034c 7B68     	 ldr r3,[r7,#4]
+ 2655 034e 0022     	 movs r2,#0
+ 2656 0350 5A81     	 strh r2,[r3,#10]
+1303:../SSC/Src/sdoserv.c **** 						/* store the size of the mailbox data in the mailbox buffer */
+1304:../SSC/Src/sdoserv.c **** 						pSdoInfoInd->MbxHeader.Length = size;
+ 2657              	 .loc 1 1304 0
+ 2658 0352 7B68     	 ldr r3,[r7,#4]
+ 2659 0354 7A8C     	 ldrh r2,[r7,#34]
+ 2660 0356 1A80     	 strh r2,[r3]
+1305:../SSC/Src/sdoserv.c **** 						/* set the opCode of the SDO Information response */
+1306:../SSC/Src/sdoserv.c **** 						pSdoInfoInd->SdoHeader.InfoHead &= ~INFOHEAD_OPCODE_MASK;
+ 2661              	 .loc 1 1306 0
+ 2662 0358 7B68     	 ldr r3,[r7,#4]
+ 2663 035a 1B89     	 ldrh r3,[r3,#8]
+ 2664 035c 23F07F03 	 bic r3,r3,#127
+ 2665 0360 9AB2     	 uxth r2,r3
+ 2666 0362 7B68     	 ldr r3,[r7,#4]
+ 2667 0364 1A81     	 strh r2,[r3,#8]
+1307:../SSC/Src/sdoserv.c **** 						pSdoInfoInd->SdoHeader.InfoHead |= (UINT16)((opCode + 1) << INFOHEAD_OPCODE_SHIFT);
+ 2668              	 .loc 1 1307 0
+ 2669 0366 7B68     	 ldr r3,[r7,#4]
+ 2670 0368 1A89     	 ldrh r2,[r3,#8]
+ 2671 036a 97F82130 	 ldrb r3,[r7,#33]
+ 2672 036e 9BB2     	 uxth r3,r3
+ 2673 0370 0133     	 adds r3,r3,#1
+ 2674 0372 9BB2     	 uxth r3,r3
+ 2675 0374 1343     	 orrs r3,r3,r2
+ 2676 0376 9AB2     	 uxth r2,r3
+ 2677 0378 7B68     	 ldr r3,[r7,#4]
+ 2678 037a 1A81     	 strh r2,[r3,#8]
+ 2679              	.LBE15:
+ 2680 037c 03E0     	 b .L131
+ 2681              	.L142:
+ 2682 037e 02E0     	 b .L131
+ 2683              	.L132:
+1308:../SSC/Src/sdoserv.c **** 					}
+1309:../SSC/Src/sdoserv.c **** 				}
+1310:../SSC/Src/sdoserv.c **** 			}
+1311:../SSC/Src/sdoserv.c **** 			else
+1312:../SSC/Src/sdoserv.c **** 			{
+1313:../SSC/Src/sdoserv.c **** 				abort = ABORTIDX_OBJECT_NOT_EXISTING;
+ 2684              	 .loc 1 1313 0
+ 2685 0380 0823     	 movs r3,#8
+ 2686 0382 FB73     	 strb r3,[r7,#15]
+1314:../SSC/Src/sdoserv.c **** 			}
+1315:../SSC/Src/sdoserv.c **** 		}
+1316:../SSC/Src/sdoserv.c **** 		break;
+ 2687              	 .loc 1 1316 0
+ 2688 0384 02E0     	 b .L129
+ 2689              	.L131:
+ 2690              	 .loc 1 1316 0 is_stmt 0 discriminator 1
+ 2691 0386 01E0     	 b .L129
+ 2692              	.L146:
+1317:../SSC/Src/sdoserv.c **** 	default:
+1318:../SSC/Src/sdoserv.c **** 		abort = ABORTIDX_COMMAND_SPECIFIER_UNKNOWN;
+ 2693              	 .loc 1 1318 0 is_stmt 1
+ 2694 0388 0323     	 movs r3,#3
+ 2695 038a FB73     	 strb r3,[r7,#15]
+ 2696              	.L129:
+1319:../SSC/Src/sdoserv.c **** 	}
+1320:../SSC/Src/sdoserv.c **** 
+1321:../SSC/Src/sdoserv.c **** 	if (abort)
+ 2697              	 .loc 1 1321 0
+ 2698 038c FB7B     	 ldrb r3,[r7,#15]
+ 2699 038e 002B     	 cmp r3,#0
+ 2700 0390 1DD0     	 beq .L143
+1322:../SSC/Src/sdoserv.c **** 	{
+1323:../SSC/Src/sdoserv.c **** 		/* send a SDO Information Error response */
+1324:../SSC/Src/sdoserv.c **** 		pSdoInfoInd->MbxHeader.Length = SIZEOF_SDOINFOERRORSTRUCT;
+ 2701              	 .loc 1 1324 0
+ 2702 0392 7B68     	 ldr r3,[r7,#4]
+ 2703 0394 0A22     	 movs r2,#10
+ 2704 0396 1A80     	 strh r2,[r3]
+1325:../SSC/Src/sdoserv.c **** 
+1326:../SSC/Src/sdoserv.c **** 		pSdoInfoInd->SdoHeader.InfoHead &= ~INFOHEAD_OPCODE_MASK;
+ 2705              	 .loc 1 1326 0
+ 2706 0398 7B68     	 ldr r3,[r7,#4]
+ 2707 039a 1B89     	 ldrh r3,[r3,#8]
+ 2708 039c 23F07F03 	 bic r3,r3,#127
+ 2709 03a0 9AB2     	 uxth r2,r3
+ 2710 03a2 7B68     	 ldr r3,[r7,#4]
+ 2711 03a4 1A81     	 strh r2,[r3,#8]
+1327:../SSC/Src/sdoserv.c **** 		pSdoInfoInd->SdoHeader.InfoHead |= (UINT16)((SDOINFOSERVICE_ERROR_Q) << INFOHEAD_OPCODE_SHIFT);
+ 2712              	 .loc 1 1327 0
+ 2713 03a6 7B68     	 ldr r3,[r7,#4]
+ 2714 03a8 1B89     	 ldrh r3,[r3,#8]
+ 2715 03aa 43F00703 	 orr r3,r3,#7
+ 2716 03ae 9AB2     	 uxth r2,r3
+ 2717 03b0 7B68     	 ldr r3,[r7,#4]
+ 2718 03b2 1A81     	 strh r2,[r3,#8]
+1328:../SSC/Src/sdoserv.c **** 
+1329:../SSC/Src/sdoserv.c **** 		pSdoInfoInd->SdoHeader.FragmentsLeft = 0;
+ 2719              	 .loc 1 1329 0
+ 2720 03b4 7B68     	 ldr r3,[r7,#4]
+ 2721 03b6 0022     	 movs r2,#0
+ 2722 03b8 5A81     	 strh r2,[r3,#10]
+1330:../SSC/Src/sdoserv.c **** 		pSdoInfoInd->SdoHeader.Data.Error.ErrorCode = SWAPDWORD(cAbortCode[abort]);
+ 2723              	 .loc 1 1330 0
+ 2724 03ba FB7B     	 ldrb r3,[r7,#15]
+ 2725 03bc 1A46     	 mov r2,r3
+ 2726 03be 0C4B     	 ldr r3,.L149
+ 2727 03c0 53F82220 	 ldr r2,[r3,r2,lsl#2]
+ 2728 03c4 7B68     	 ldr r3,[r7,#4]
+ 2729 03c6 DA60     	 str r2,[r3,#12]
+1331:../SSC/Src/sdoserv.c **** 
+1332:../SSC/Src/sdoserv.c **** 		nSdoInfoFragmentsLeft = 0;
+ 2730              	 .loc 1 1332 0
+ 2731 03c8 0A4B     	 ldr r3,.L149+4
+ 2732 03ca 0022     	 movs r2,#0
+ 2733 03cc 1A80     	 strh r2,[r3]
+ 2734              	.L143:
+1333:../SSC/Src/sdoserv.c **** 	}
+1334:../SSC/Src/sdoserv.c **** 
+1335:../SSC/Src/sdoserv.c **** 	if (MBX_MailboxSendReq((TMBX MBXMEM *) pSdoInfoInd, flags) != 0)
+ 2735              	 .loc 1 1335 0
+ 2736 03ce 97F82F30 	 ldrb r3,[r7,#47]
+ 2737 03d2 7868     	 ldr r0,[r7,#4]
+ 2738 03d4 1946     	 mov r1,r3
+ 2739 03d6 FFF7FEFF 	 bl MBX_MailboxSendReq
+ 2740 03da 0346     	 mov r3,r0
+ 2741 03dc 002B     	 cmp r3,#0
+ 2742 03de 02D0     	 beq .L144
+1336:../SSC/Src/sdoserv.c **** 	{
+1337:../SSC/Src/sdoserv.c **** 		/* if the mailbox response could not be sent (or stored), the response will be
+1338:../SSC/Src/sdoserv.c **** 		   stored in the variable pCoeSendStored and will be sent automatically
+1339:../SSC/Src/sdoserv.c **** 			from the mailbox handler (COE_ContinueInd) when the send mailbox will be read
+1340:../SSC/Src/sdoserv.c **** 			the next time from the master */
+1341:../SSC/Src/sdoserv.c **** 		pCoeSendStored = (TMBX MBXMEM *) pSdoInfoInd;
+ 2743              	 .loc 1 1341 0
+ 2744 03e0 054A     	 ldr r2,.L149+8
+ 2745 03e2 7B68     	 ldr r3,[r7,#4]
+ 2746 03e4 1360     	 str r3,[r2]
+ 2747              	.L144:
+1342:../SSC/Src/sdoserv.c **** 	}
+1343:../SSC/Src/sdoserv.c **** 
+1344:../SSC/Src/sdoserv.c **** 	return 0;
+ 2748              	 .loc 1 1344 0
+ 2749 03e6 0023     	 movs r3,#0
+ 2750              	.L145:
+1345:../SSC/Src/sdoserv.c **** }
+ 2751              	 .loc 1 1345 0 discriminator 2
+ 2752 03e8 1846     	 mov r0,r3
+ 2753 03ea 3437     	 adds r7,r7,#52
+ 2754              	.LCFI30:
+ 2755              	 .cfi_def_cfa_offset 12
+ 2756 03ec BD46     	 mov sp,r7
+ 2757              	.LCFI31:
+ 2758              	 .cfi_def_cfa_register 13
+ 2759              	 
+ 2760 03ee 90BD     	 pop {r4,r7,pc}
+ 2761              	.L150:
+ 2762              	 .align 2
+ 2763              	.L149:
+ 2764 03f0 00000000 	 .word cAbortCode
+ 2765 03f4 00000000 	 .word nSdoInfoFragmentsLeft
+ 2766 03f8 00000000 	 .word pCoeSendStored
+ 2767              	 .cfi_endproc
+ 2768              	.LFE181:
+ 2770              	 .text
+ 2771              	.Letext0:
+ 2772              	 .file 2 "d:\\infineon\\tools\\dave ide\\4.5.0.202105191637\\eclipse\\arm-gcc-49\\arm-none-eabi\\include\\machine\\_default_types.h"
+ 2773              	 .file 3 "d:\\infineon\\tools\\dave ide\\4.5.0.202105191637\\eclipse\\arm-gcc-49\\arm-none-eabi\\include\\stdint.h"
+ 2774              	 .file 4 "../SSC/Src/mailbox.h"
+ 2775              	 .file 5 "../SSC/Src/ecatcoe.h"
+ 2776              	 .file 6 "../SSC/Src/sdoserv.h"
+ 2777              	 .file 7 "../SSC/Src/objdef.h"
+ 2778              	 .file 8 "D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/CMSIS/Include/cmsis_gcc.h"
+ 2779              	 .file 9 "D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/CMSIS/Include/core_cm4.h"
+DEFINED SYMBOLS
+                            *ABS*:00000000 sdoserv.c
+                            *COM*:00000001 u8PendingSdo
+                            *COM*:00000001 bStoreCompleteAccess
+                            *COM*:00000001 u8StoreSubindex
+                            *COM*:00000002 u16StoreIndex
+                            *COM*:00000004 u32StoreDataSize
+                            *COM*:00000004 pStoreData
+                            *COM*:00000004 pSdoPendFunc
+                            *COM*:00000010 aSdoInfoHeader
+                            *COM*:00000004 pSdoSegData
+                            *COM*:00000002 nSdoInfoFragmentsLeft
+    {standard input}:34     .rodata.cAbortCode:00000000 cAbortCode
+    {standard input}:31     .rodata.cAbortCode:00000000 $d
+                            *COM*:00000002 nSdoInfoIndex
+                            *COM*:00000004 pSdoInfoObjEntry
+                            *COM*:00000004 pSdoResStored
+    {standard input}:72     .bss.bSdoInWork:00000000 bSdoInWork
+    {standard input}:73     .bss.bSdoInWork:00000000 $d
+                            *COM*:00000001 nSdoSegService
+                            *COM*:00000001 bSdoSegFollows
+                            *COM*:00000001 bSdoSegAccess
+                            *COM*:00000002 nSdoSegIndex
+                            *COM*:00000001 nSdoSegSubindex
+                            *COM*:00000004 nSdoSegBytesToHandle
+                            *COM*:00000001 bSdoSegLastToggle
+                            *COM*:00000004 nSdoSegCompleteSize
+                            *COM*:00000004 pSdoSegObjEntry
+    {standard input}:84     .text.SdoDownloadSegmentInd:00000000 $t
+    {standard input}:88     .text.SdoDownloadSegmentInd:00000000 SdoDownloadSegmentInd
+    {standard input}:467    .text.SdoDownloadSegmentInd:00000234 $d
+    {standard input}:491    .text.SdoUploadSegmentInd:00000000 $t
+    {standard input}:495    .text.SdoUploadSegmentInd:00000000 SdoUploadSegmentInd
+    {standard input}:715    .text.SdoUploadSegmentInd:0000014c $d
+    {standard input}:726    .text.SdoRes:00000000 $t
+    {standard input}:731    .text.SdoRes:00000000 SdoRes
+    {standard input}:963    .text.SdoRes:00000168 $d
+    {standard input}:969    .text.SDOS_SdoInd:00000000 $t
+    {standard input}:974    .text.SDOS_SdoInd:00000000 SDOS_SdoInd
+    {standard input}:1423   .text.SDOS_SdoInd:000002f0 $d
+    {standard input}:1437   .text.SDOS_SdoInd:00000320 $t
+    {standard input}:1810   .text.SDOS_SdoInd:0000059c $d
+    {standard input}:1829   .text.SDOS_SdoRes:00000000 $t
+    {standard input}:1834   .text.SDOS_SdoRes:00000000 SDOS_SdoRes
+    {standard input}:2006   .text.SDOS_SdoRes:000000fc $d
+    {standard input}:2020   .text.SDOS_ClearPendingResponse:00000000 $t
+    {standard input}:2025   .text.SDOS_ClearPendingResponse:00000000 SDOS_ClearPendingResponse
+    {standard input}:2133   .text.SDOS_ClearPendingResponse:00000094 $d
+    {standard input}:2151   .text.SDOS_SdoInfoInd:00000000 $t
+    {standard input}:2156   .text.SDOS_SdoInfoInd:00000000 SDOS_SdoInfoInd
+    {standard input}:2620   .text.SDOS_SdoInfoInd:00000310 $d
+    {standard input}:2627   .text.SDOS_SdoInfoInd:00000324 $t
+    {standard input}:2764   .text.SDOS_SdoInfoInd:000003f0 $d
+                     .debug_frame:00000010 $d
+
+UNDEFINED SYMBOLS
+memcpy
+OBJ_Write
+free
+u16ReceiveMbxSize
+u16SendMbxSize
+MBX_MailboxSendReq
+pCoeSendStored
+OBJ_GetObjectHandle
+OBJ_GetObjectLength
+malloc
+OBJ_Read
+psRepeatMbx
+psStoreMbx
+OBJ_GetNoOfObjects
+OBJ_GetObjectList
+OBJ_GetObjDesc
+OBJ_GetDesc
+OBJ_GetEntryDesc
+aSubindexDesc

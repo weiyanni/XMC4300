@@ -1,0 +1,1419 @@
+   1              	 .syntax unified
+   2              	 .cpu cortex-m4
+   3              	 .eabi_attribute 27,3
+   4              	 .fpu fpv4-sp-d16
+   5              	 .eabi_attribute 20,1
+   6              	 .eabi_attribute 21,1
+   7              	 .eabi_attribute 23,3
+   8              	 .eabi_attribute 24,1
+   9              	 .eabi_attribute 25,1
+  10              	 .eabi_attribute 26,1
+  11              	 .eabi_attribute 30,6
+  12              	 .eabi_attribute 34,1
+  13              	 .eabi_attribute 18,4
+  14              	 .thumb
+  15              	 .file "User_FoE_Impl.c"
+  16              	 .text
+  17              	.Ltext0:
+  18              	 .cfi_sections .debug_frame
+  19              	 .section .text.SharedConfig_CalcChecksum,"ax",%progbits
+  20              	 .align 2
+  21              	 .thumb
+  22              	 .thumb_func
+  24              	SharedConfig_CalcChecksum:
+  25              	.LFB475:
+  26              	 .file 1 "D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP/shared_conf.h"
+   1:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** #ifndef SHARED_CONF_H_
+   2:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** #define SHARED_CONF_H_
+   3:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** 
+   4:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** #include <stdint.h>
+   5:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** 
+   6:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** /* ==============================================================
+   7:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  * 1. Flash 内存地图定义 (Total 256KB Flash)
+   8:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  * 
+   9:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  * XMC4300 Flash 扇区布局 (每扇区 16KB):
+  10:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  *   - S0-S5 (96KB):  Bootloader 代码
+  11:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  *   - S6-S7 (32KB):  EEPROM 仿真区域 (SharedConfig 等)
+  12:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  *   - S8    (128KB): Application 代码
+  13:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  *
+  14:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  * 地址映射:
+  15:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  *   - Cached (0x08...): 用于代码执行和数据读取
+  16:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  *   - Uncached (0x0C...): 用于 Flash 编程/擦除操作
+  17:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  * ============================================================== */
+  18:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** 
+  19:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** /* --- Bootloader 区域 (96KB, S0-S5) --- */
+  20:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** #define BOOT_START_ADDR         0x08000000UL
+  21:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** #define BOOT_START_ADDR_UC      0x0C000000UL
+  22:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** #define BOOT_SIZE               0x00018000UL  // 96 KB (6 sectors * 16KB)
+  23:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** #define BOOT_END_ADDR           (BOOT_START_ADDR + BOOT_SIZE - 1)
+  24:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** 
+  25:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** /* --- EEPROM 仿真区域 (32KB, S6-S7) --- */
+  26:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** #define EEPROM_START_ADDR       0x0C018000UL  // Uncached 地址（用于写入/擦除）
+  27:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** #define EEPROM_START_ADDR_RD    0x08018000UL  // Cached 地址（用于读取）
+  28:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** #define EEPROM_SIZE             0x00008000UL  // 32 KB (2 sectors * 16KB)
+  29:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** #define EEPROM_END_ADDR         (EEPROM_START_ADDR + EEPROM_SIZE - 1)
+  30:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** 
+  31:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** /* --- App 区域 (128KB, S8) --- */
+  32:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** #define APP_START_ADDR          0x0C020000UL  // Uncached 地址（用于写入）
+  33:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** #define APP_START_ADDR_RD       0x08020000UL  // Cached 地址（用于读取/执行）
+  34:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** #define APP_MAX_SIZE            0x00020000UL  // 128 KB
+  35:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** #define APP_END_ADDR            (APP_START_ADDR + APP_MAX_SIZE - 1)
+  36:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** 
+  37:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** /* ==============================================================
+  38:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  * 1.5. RAM 标志位 (用于区分软件复位和断电重启)
+  39:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  * 
+  40:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  * 原理：
+  41:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  *   - 软件复位 (NVIC_SystemReset): RAM 数据保留
+  42:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  *   - 断电重启: RAM 数据丢失 (变成随机值)
+  43:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  * 
+  44:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  * 使用 .noinit 段：
+  45:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  *   - 编译器自动分配地址
+  46:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  *   - 启动代码不会清零这个变量
+  47:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  *   - Boot 和 App 都必须定义这个变量（同名同段）
+  48:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  * ============================================================== */
+  49:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** 
+  50:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** #define RAM_MAGIC_VAL  0xB007B007UL  // "BOOTBOOT" 的数字化表示
+  51:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** 
+  52:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** /* 
+  53:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  * 注意：这个变量在 Boot 和 App 中都需要定义一次（不能只在头文件声明）
+  54:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  * 在各自的 main.c 或 app_init.c / boot_init.c 中添加：
+  55:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  * uint32_t g_RamMagicFlag __attribute__((section(".noinit")));
+  56:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  */
+  57:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** 
+  58:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** /* ==============================================================
+  59:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  * 2. SharedConfig 在 EEPROM 中的存储布局
+  60:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  * 
+  61:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  * E_EEPROM_XMC4 使用块循环计数 + CRC 方式管理数据，
+  62:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  * 我们的 SharedConfig_t (13 字节) 存储在 EEPROM 数据区的开头。
+  63:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  * 
+  64:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  * 数据块布局 (假设 DATA_BLOCK_SIZE = 2048):
+  65:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  *   - Offset 0x00:  SharedConfig_t (13 字节)
+  66:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  *   - Offset 0x10+: 其他用户数据 (可扩展)
+  67:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  * ============================================================== */
+  68:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** 
+  69:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** /* SharedConfig_t 在 E_EEPROM 数据区中的偏移地址 */
+  70:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** /* EtherCAT SII 数据通常占用前 0x800 字节，因此我们将 SharedConfig 移到 0x1000 (4K
+  71:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** #define SHARED_CONFIG_EEPROM_OFFSET    0x1000U
+  72:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** 
+  73:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** /* ==============================================================
+  74:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  * 3. 共享配置结构体定义
+  75:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****  * ============================================================== */
+  76:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** 
+  77:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** #define SHARED_MAGIC_VALID      0x5AA5A55AUL  // App 有效标志
+  78:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** #define SHARED_MAGIC_UPDATING   0xEEEEEEEEUL  // 正在升级/损坏状态
+  79:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** 
+  80:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** typedef struct {
+  81:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****     uint32_t MagicHeader;       // 0x00: VALID, REQUEST, 或 0xFFFFFFFF
+  82:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****     uint32_t AppActualSize;     // 0x04: App 实际大小
+  83:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****     uint32_t AppCRC32;          // 0x08: CRC32 校验值
+  84:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****     uint8_t  Checksum;          // 0x0C: 前面所有字节的 8 位累加和
+  85:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** } __attribute__((packed)) SharedConfig_t;
+  86:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** 
+  87:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** /* 计算校验和 (不包含 Checksum 字段本身) */
+  88:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** static inline uint8_t SharedConfig_CalcChecksum(const SharedConfig_t *cfg)
+  89:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** {
+  27              	 .loc 1 89 0
+  28              	 .cfi_startproc
+  29              	 
+  30              	 
+  31              	 
+  32 0000 80B4     	 push {r7}
+  33              	.LCFI0:
+  34              	 .cfi_def_cfa_offset 4
+  35              	 .cfi_offset 7,-4
+  36 0002 85B0     	 sub sp,sp,#20
+  37              	.LCFI1:
+  38              	 .cfi_def_cfa_offset 24
+  39 0004 00AF     	 add r7,sp,#0
+  40              	.LCFI2:
+  41              	 .cfi_def_cfa_register 7
+  42 0006 7860     	 str r0,[r7,#4]
+  90:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****     const uint8_t *p = (const uint8_t *)cfg;
+  43              	 .loc 1 90 0
+  44 0008 7B68     	 ldr r3,[r7,#4]
+  45 000a BB60     	 str r3,[r7,#8]
+  91:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****     uint8_t sum = 0;
+  46              	 .loc 1 91 0
+  47 000c 0023     	 movs r3,#0
+  48 000e FB73     	 strb r3,[r7,#15]
+  49              	.LBB2:
+  92:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****     for (uint16_t i = 0; i < sizeof(SharedConfig_t) - 1; i++) {
+  50              	 .loc 1 92 0
+  51 0010 0023     	 movs r3,#0
+  52 0012 BB81     	 strh r3,[r7,#12]
+  53 0014 09E0     	 b .L2
+  54              	.L3:
+  93:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****         sum += p[i];
+  55              	 .loc 1 93 0 discriminator 3
+  56 0016 BB89     	 ldrh r3,[r7,#12]
+  57 0018 BA68     	 ldr r2,[r7,#8]
+  58 001a 1344     	 add r3,r3,r2
+  59 001c 1A78     	 ldrb r2,[r3]
+  60 001e FB7B     	 ldrb r3,[r7,#15]
+  61 0020 1344     	 add r3,r3,r2
+  62 0022 FB73     	 strb r3,[r7,#15]
+  92:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****     for (uint16_t i = 0; i < sizeof(SharedConfig_t) - 1; i++) {
+  63              	 .loc 1 92 0 discriminator 3
+  64 0024 BB89     	 ldrh r3,[r7,#12]
+  65 0026 0133     	 adds r3,r3,#1
+  66 0028 BB81     	 strh r3,[r7,#12]
+  67              	.L2:
+  92:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****     for (uint16_t i = 0; i < sizeof(SharedConfig_t) - 1; i++) {
+  68              	 .loc 1 92 0 is_stmt 0 discriminator 1
+  69 002a BB89     	 ldrh r3,[r7,#12]
+  70 002c 0B2B     	 cmp r3,#11
+  71 002e F2D9     	 bls .L3
+  72              	.LBE2:
+  94:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****     }
+  95:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h ****     return sum;
+  73              	 .loc 1 95 0 is_stmt 1
+  74 0030 FB7B     	 ldrb r3,[r7,#15]
+  96:D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/BSP\shared_conf.h **** }
+  75              	 .loc 1 96 0
+  76 0032 1846     	 mov r0,r3
+  77 0034 1437     	 adds r7,r7,#20
+  78              	.LCFI3:
+  79              	 .cfi_def_cfa_offset 4
+  80 0036 BD46     	 mov sp,r7
+  81              	.LCFI4:
+  82              	 .cfi_def_cfa_register 13
+  83              	 
+  84 0038 5DF8047B 	 ldr r7,[sp],#4
+  85              	.LCFI5:
+  86              	 .cfi_restore 7
+  87              	 .cfi_def_cfa_offset 0
+  88 003c 7047     	 bx lr
+  89              	 .cfi_endproc
+  90              	.LFE475:
+  92 003e 00BF     	 .section .bss.g_u32FlashWriteAddr,"aw",%nobits
+  93              	 .align 2
+  96              	g_u32FlashWriteAddr:
+  97 0000 00000000 	 .space 4
+  98              	 .section .bss.g_u32TotalReceived,"aw",%nobits
+  99              	 .align 2
+ 102              	g_u32TotalReceived:
+ 103 0000 00000000 	 .space 4
+ 104              	 .section .bss.g_PageBuf,"aw",%nobits
+ 105              	 .align 2
+ 108              	g_PageBuf:
+ 109 0000 00000000 	 .space 256
+ 109      00000000 
+ 109      00000000 
+ 109      00000000 
+ 109      00000000 
+ 110              	 .section .bss.g_PageBufOffset,"aw",%nobits
+ 111              	 .align 1
+ 114              	g_PageBufOffset:
+ 115 0000 0000     	 .space 2
+ 116              	 .section .bss.g_bFoeActive,"aw",%nobits
+ 119              	g_bFoeActive:
+ 120 0000 00       	 .space 1
+ 121              	 .global g_bResetRequest
+ 122              	 .section .bss.g_bResetRequest,"aw",%nobits
+ 125              	g_bResetRequest:
+ 126 0000 00       	 .space 1
+ 127              	 .global g_u32ResetStartTime
+ 128              	 .section .bss.g_u32ResetStartTime,"aw",%nobits
+ 129              	 .align 2
+ 132              	g_u32ResetStartTime:
+ 133 0000 00000000 	 .space 4
+ 134              	 .section .text.FlushPageBuffer,"ax",%progbits
+ 135              	 .align 2
+ 136              	 .thumb
+ 137              	 .thumb_func
+ 139              	FlushPageBuffer:
+ 140              	.LFB479:
+ 141              	 .file 2 "../Application/User_FoE_Impl.c"
+   1:../Application/User_FoE_Impl.c **** /* ============================================================================
+   2:../Application/User_FoE_Impl.c ****  * 文件名: User_FoE_Impl.c
+   3:../Application/User_FoE_Impl.c ****  * 描述: FoE 固件升级实现
+   4:../Application/User_FoE_Impl.c ****  * ============================================================================ */
+   5:../Application/User_FoE_Impl.c **** #include "DAVE.h"
+   6:../Application/User_FoE_Impl.c **** #include "SSC/Src/ecat_def.h"
+   7:../Application/User_FoE_Impl.c **** #include "SSC/Src/ecatslv.h"
+   8:../Application/User_FoE_Impl.c **** #include "SSC/Src/ecatfoe.h"
+   9:../Application/User_FoE_Impl.c **** #include "SSC/Src/mailbox.h"
+  10:../Application/User_FoE_Impl.c **** #include "BSP/shared_conf.h"
+  11:../Application/User_FoE_Impl.c **** #include "Dave/Generated/E_EEPROM_XMC4/e_eeprom_xmc4.h"
+  12:../Application/User_FoE_Impl.c **** #include <xmc_flash.h>
+  13:../Application/User_FoE_Impl.c **** #include <string.h>
+  14:../Application/User_FoE_Impl.c **** 
+  15:../Application/User_FoE_Impl.c **** /* ==============================================================
+  16:../Application/User_FoE_Impl.c ****  * 全局变量
+  17:../Application/User_FoE_Impl.c ****  * ============================================================== */
+  18:../Application/User_FoE_Impl.c **** static uint32_t g_u32FlashWriteAddr;
+  19:../Application/User_FoE_Impl.c **** static uint32_t g_u32TotalReceived;
+  20:../Application/User_FoE_Impl.c **** static uint8_t  g_PageBuf[256] __attribute__((aligned(4)));
+  21:../Application/User_FoE_Impl.c **** static uint16_t g_PageBufOffset;
+  22:../Application/User_FoE_Impl.c **** static uint8_t  g_bFoeActive;
+  23:../Application/User_FoE_Impl.c **** 
+  24:../Application/User_FoE_Impl.c **** /* 复位控制 */
+  25:../Application/User_FoE_Impl.c **** volatile uint8_t  g_bResetRequest = 0;
+  26:../Application/User_FoE_Impl.c **** volatile uint32_t g_u32ResetStartTime = 0;
+  27:../Application/User_FoE_Impl.c **** 
+  28:../Application/User_FoE_Impl.c **** extern uint32_t Get_Time_Ms(void);
+  29:../Application/User_FoE_Impl.c **** 
+  30:../Application/User_FoE_Impl.c **** /* ==============================================================
+  31:../Application/User_FoE_Impl.c ****  * 内部辅助函数
+  32:../Application/User_FoE_Impl.c ****  * ============================================================== */
+  33:../Application/User_FoE_Impl.c **** 
+  34:../Application/User_FoE_Impl.c **** /* 刷新页缓冲区到 Flash */
+  35:../Application/User_FoE_Impl.c **** static uint8_t FlushPageBuffer(void)
+  36:../Application/User_FoE_Impl.c **** {
+ 142              	 .loc 2 36 0
+ 143              	 .cfi_startproc
+ 144              	 
+ 145              	 
+ 146 0000 80B5     	 push {r7,lr}
+ 147              	.LCFI6:
+ 148              	 .cfi_def_cfa_offset 8
+ 149              	 .cfi_offset 7,-8
+ 150              	 .cfi_offset 14,-4
+ 151 0002 00AF     	 add r7,sp,#0
+ 152              	.LCFI7:
+ 153              	 .cfi_def_cfa_register 7
+  37:../Application/User_FoE_Impl.c ****     if (g_PageBufOffset == 0) return 0;
+ 154              	 .loc 2 37 0
+ 155 0004 144B     	 ldr r3,.L9
+ 156 0006 1B88     	 ldrh r3,[r3]
+ 157 0008 002B     	 cmp r3,#0
+ 158 000a 01D1     	 bne .L6
+ 159              	 .loc 2 37 0 is_stmt 0 discriminator 1
+ 160 000c 0023     	 movs r3,#0
+ 161 000e 21E0     	 b .L7
+ 162              	.L6:
+  38:../Application/User_FoE_Impl.c **** 
+  39:../Application/User_FoE_Impl.c ****     if (g_PageBufOffset < 256)
+ 163              	 .loc 2 39 0 is_stmt 1
+ 164 0010 114B     	 ldr r3,.L9
+ 165 0012 1B88     	 ldrh r3,[r3]
+ 166 0014 FF2B     	 cmp r3,#255
+ 167 0016 0DD8     	 bhi .L8
+  40:../Application/User_FoE_Impl.c ****     {
+  41:../Application/User_FoE_Impl.c ****         memset(&g_PageBuf[g_PageBufOffset], 0xFF, 256 - g_PageBufOffset);
+ 168              	 .loc 2 41 0
+ 169 0018 0F4B     	 ldr r3,.L9
+ 170 001a 1B88     	 ldrh r3,[r3]
+ 171 001c 1A46     	 mov r2,r3
+ 172 001e 0F4B     	 ldr r3,.L9+4
+ 173 0020 1A44     	 add r2,r2,r3
+ 174 0022 0D4B     	 ldr r3,.L9
+ 175 0024 1B88     	 ldrh r3,[r3]
+ 176 0026 C3F58073 	 rsb r3,r3,#256
+ 177 002a 1046     	 mov r0,r2
+ 178 002c FF21     	 movs r1,#255
+ 179 002e 1A46     	 mov r2,r3
+ 180 0030 FFF7FEFF 	 bl memset
+ 181              	.L8:
+  42:../Application/User_FoE_Impl.c ****     }
+  43:../Application/User_FoE_Impl.c **** 
+  44:../Application/User_FoE_Impl.c ****     XMC_FLASH_ProgramPage((uint32_t *)g_u32FlashWriteAddr, (uint32_t *)g_PageBuf);
+ 182              	 .loc 2 44 0
+ 183 0034 0A4B     	 ldr r3,.L9+8
+ 184 0036 1B68     	 ldr r3,[r3]
+ 185 0038 1846     	 mov r0,r3
+ 186 003a 0849     	 ldr r1,.L9+4
+ 187 003c FFF7FEFF 	 bl XMC_FLASH_ProgramPage
+  45:../Application/User_FoE_Impl.c **** 
+  46:../Application/User_FoE_Impl.c ****     g_u32FlashWriteAddr += 256;
+ 188              	 .loc 2 46 0
+ 189 0040 074B     	 ldr r3,.L9+8
+ 190 0042 1B68     	 ldr r3,[r3]
+ 191 0044 03F58073 	 add r3,r3,#256
+ 192 0048 054A     	 ldr r2,.L9+8
+ 193 004a 1360     	 str r3,[r2]
+  47:../Application/User_FoE_Impl.c ****     g_PageBufOffset = 0;
+ 194              	 .loc 2 47 0
+ 195 004c 024B     	 ldr r3,.L9
+ 196 004e 0022     	 movs r2,#0
+ 197 0050 1A80     	 strh r2,[r3]
+  48:../Application/User_FoE_Impl.c **** 
+  49:../Application/User_FoE_Impl.c ****     return 0;
+ 198              	 .loc 2 49 0
+ 199 0052 0023     	 movs r3,#0
+ 200              	.L7:
+  50:../Application/User_FoE_Impl.c **** }
+ 201              	 .loc 2 50 0
+ 202 0054 1846     	 mov r0,r3
+ 203 0056 80BD     	 pop {r7,pc}
+ 204              	.L10:
+ 205              	 .align 2
+ 206              	.L9:
+ 207 0058 00000000 	 .word g_PageBufOffset
+ 208 005c 00000000 	 .word g_PageBuf
+ 209 0060 00000000 	 .word g_u32FlashWriteAddr
+ 210              	 .cfi_endproc
+ 211              	.LFE479:
+ 213              	 .section .text.BufferData,"ax",%progbits
+ 214              	 .align 2
+ 215              	 .thumb
+ 216              	 .thumb_func
+ 218              	BufferData:
+ 219              	.LFB480:
+  51:../Application/User_FoE_Impl.c **** 
+  52:../Application/User_FoE_Impl.c **** /* 写入数据到页缓冲区 */
+  53:../Application/User_FoE_Impl.c **** static uint8_t BufferData(const uint8_t *data, uint16_t size)
+  54:../Application/User_FoE_Impl.c **** {
+ 220              	 .loc 2 54 0
+ 221              	 .cfi_startproc
+ 222              	 
+ 223              	 
+ 224 0000 80B5     	 push {r7,lr}
+ 225              	.LCFI8:
+ 226              	 .cfi_def_cfa_offset 8
+ 227              	 .cfi_offset 7,-8
+ 228              	 .cfi_offset 14,-4
+ 229 0002 84B0     	 sub sp,sp,#16
+ 230              	.LCFI9:
+ 231              	 .cfi_def_cfa_offset 24
+ 232 0004 00AF     	 add r7,sp,#0
+ 233              	.LCFI10:
+ 234              	 .cfi_def_cfa_register 7
+ 235 0006 7860     	 str r0,[r7,#4]
+ 236 0008 0B46     	 mov r3,r1
+ 237 000a 7B80     	 strh r3,[r7,#2]
+ 238              	.LBB3:
+  55:../Application/User_FoE_Impl.c ****     for (uint16_t i = 0; i < size; i++)
+ 239              	 .loc 2 55 0
+ 240 000c 0023     	 movs r3,#0
+ 241 000e FB81     	 strh r3,[r7,#14]
+ 242 0010 1AE0     	 b .L12
+ 243              	.L15:
+  56:../Application/User_FoE_Impl.c ****     {
+  57:../Application/User_FoE_Impl.c ****         g_PageBuf[g_PageBufOffset++] = data[i];
+ 244              	 .loc 2 57 0
+ 245 0012 124B     	 ldr r3,.L16
+ 246 0014 1B88     	 ldrh r3,[r3]
+ 247 0016 5A1C     	 adds r2,r3,#1
+ 248 0018 91B2     	 uxth r1,r2
+ 249 001a 104A     	 ldr r2,.L16
+ 250 001c 1180     	 strh r1,[r2]
+ 251 001e 1946     	 mov r1,r3
+ 252 0020 FB89     	 ldrh r3,[r7,#14]
+ 253 0022 7A68     	 ldr r2,[r7,#4]
+ 254 0024 1344     	 add r3,r3,r2
+ 255 0026 1A78     	 ldrb r2,[r3]
+ 256 0028 0D4B     	 ldr r3,.L16+4
+ 257 002a 5A54     	 strb r2,[r3,r1]
+  58:../Application/User_FoE_Impl.c **** 
+  59:../Application/User_FoE_Impl.c ****         if (g_PageBufOffset >= 256)
+ 258              	 .loc 2 59 0
+ 259 002c 0B4B     	 ldr r3,.L16
+ 260 002e 1B88     	 ldrh r3,[r3]
+ 261 0030 FF2B     	 cmp r3,#255
+ 262 0032 06D9     	 bls .L13
+  60:../Application/User_FoE_Impl.c ****         {
+  61:../Application/User_FoE_Impl.c ****             if (FlushPageBuffer()) return 1;
+ 263              	 .loc 2 61 0
+ 264 0034 FFF7FEFF 	 bl FlushPageBuffer
+ 265 0038 0346     	 mov r3,r0
+ 266 003a 002B     	 cmp r3,#0
+ 267 003c 01D0     	 beq .L13
+ 268              	 .loc 2 61 0 is_stmt 0 discriminator 1
+ 269 003e 0123     	 movs r3,#1
+ 270 0040 07E0     	 b .L14
+ 271              	.L13:
+  55:../Application/User_FoE_Impl.c **** FoE_Impl.c
+ 272              	 .loc 2 55 0 is_stmt 1 discriminator 2
+ 273 0042 FB89     	 ldrh r3,[r7,#14]
+ 274 0044 0133     	 adds r3,r3,#1
+ 275 0046 FB81     	 strh r3,[r7,#14]
+ 276              	.L12:
+  55:../Application/User_FoE_Impl.c **** FoE_Impl.c
+ 277              	 .loc 2 55 0 is_stmt 0 discriminator 1
+ 278 0048 FA89     	 ldrh r2,[r7,#14]
+ 279 004a 7B88     	 ldrh r3,[r7,#2]
+ 280 004c 9A42     	 cmp r2,r3
+ 281 004e E0D3     	 bcc .L15
+ 282              	.LBE3:
+  62:../Application/User_FoE_Impl.c ****         }
+  63:../Application/User_FoE_Impl.c ****     }
+  64:../Application/User_FoE_Impl.c ****     return 0;
+ 283              	 .loc 2 64 0 is_stmt 1
+ 284 0050 0023     	 movs r3,#0
+ 285              	.L14:
+  65:../Application/User_FoE_Impl.c **** }
+ 286              	 .loc 2 65 0
+ 287 0052 1846     	 mov r0,r3
+ 288 0054 1037     	 adds r7,r7,#16
+ 289              	.LCFI11:
+ 290              	 .cfi_def_cfa_offset 8
+ 291 0056 BD46     	 mov sp,r7
+ 292              	.LCFI12:
+ 293              	 .cfi_def_cfa_register 13
+ 294              	 
+ 295 0058 80BD     	 pop {r7,pc}
+ 296              	.L17:
+ 297 005a 00BF     	 .align 2
+ 298              	.L16:
+ 299 005c 00000000 	 .word g_PageBufOffset
+ 300 0060 00000000 	 .word g_PageBuf
+ 301              	 .cfi_endproc
+ 302              	.LFE480:
+ 304              	 .section .text.UpdateSharedConfig,"ax",%progbits
+ 305              	 .align 2
+ 306              	 .global UpdateSharedConfig
+ 307              	 .thumb
+ 308              	 .thumb_func
+ 310              	UpdateSharedConfig:
+ 311              	.LFB481:
+  66:../Application/User_FoE_Impl.c **** 
+  67:../Application/User_FoE_Impl.c **** /* 更新 EEPROM 中的 SharedConfig */
+  68:../Application/User_FoE_Impl.c **** uint8_t UpdateSharedConfig(uint32_t appSize, uint32_t crc)
+  69:../Application/User_FoE_Impl.c **** {
+ 312              	 .loc 2 69 0
+ 313              	 .cfi_startproc
+ 314              	 
+ 315              	 
+ 316 0000 80B5     	 push {r7,lr}
+ 317              	.LCFI13:
+ 318              	 .cfi_def_cfa_offset 8
+ 319              	 .cfi_offset 7,-8
+ 320              	 .cfi_offset 14,-4
+ 321 0002 8AB0     	 sub sp,sp,#40
+ 322              	.LCFI14:
+ 323              	 .cfi_def_cfa_offset 48
+ 324 0004 00AF     	 add r7,sp,#0
+ 325              	.LCFI15:
+ 326              	 .cfi_def_cfa_register 7
+ 327 0006 7860     	 str r0,[r7,#4]
+ 328 0008 3960     	 str r1,[r7]
+  70:../Application/User_FoE_Impl.c ****     SharedConfig_t cfg;
+  71:../Application/User_FoE_Impl.c **** 
+  72:../Application/User_FoE_Impl.c ****     /* 准备配置数据 */
+  73:../Application/User_FoE_Impl.c ****     cfg.MagicHeader = SHARED_MAGIC_VALID;
+ 329              	 .loc 2 73 0
+ 330 000a 1A4B     	 ldr r3,.L23
+ 331 000c BB61     	 str r3,[r7,#24]
+  74:../Application/User_FoE_Impl.c ****     cfg.AppActualSize = appSize;
+ 332              	 .loc 2 74 0
+ 333 000e 7B68     	 ldr r3,[r7,#4]
+ 334 0010 FB61     	 str r3,[r7,#28]
+  75:../Application/User_FoE_Impl.c ****     cfg.AppCRC32 = crc;
+ 335              	 .loc 2 75 0
+ 336 0012 3B68     	 ldr r3,[r7]
+ 337 0014 3B62     	 str r3,[r7,#32]
+  76:../Application/User_FoE_Impl.c ****     cfg.Checksum = SharedConfig_CalcChecksum(&cfg);
+ 338              	 .loc 2 76 0
+ 339 0016 07F11803 	 add r3,r7,#24
+ 340 001a 1846     	 mov r0,r3
+ 341 001c FFF7FEFF 	 bl SharedConfig_CalcChecksum
+ 342 0020 0346     	 mov r3,r0
+ 343 0022 87F82430 	 strb r3,[r7,#36]
+  77:../Application/User_FoE_Impl.c **** 
+  78:../Application/User_FoE_Impl.c ****     /* 写入 EEPROM RAM 缓冲区 */
+  79:../Application/User_FoE_Impl.c ****     E_EEPROM_XMC4_WriteArray(SHARED_CONFIG_EEPROM_OFFSET, (uint8_t*)&cfg, sizeof(SharedConfig_t));
+ 344              	 .loc 2 79 0
+ 345 0026 07F11803 	 add r3,r7,#24
+ 346 002a 4FF48050 	 mov r0,#4096
+ 347 002e 1946     	 mov r1,r3
+ 348 0030 0D22     	 movs r2,#13
+ 349 0032 FFF7FEFF 	 bl E_EEPROM_XMC4_WriteArray
+  80:../Application/User_FoE_Impl.c **** 
+  81:../Application/User_FoE_Impl.c ****     /* 刷新到 Flash */
+  82:../Application/User_FoE_Impl.c ****     E_EEPROM_XMC4_STATUS_t status = E_EEPROM_XMC4_UpdateFlashContents();
+ 350              	 .loc 2 82 0
+ 351 0036 FFF7FEFF 	 bl E_EEPROM_XMC4_UpdateFlashContents
+ 352 003a 0346     	 mov r3,r0
+ 353 003c 87F82730 	 strb r3,[r7,#39]
+  83:../Application/User_FoE_Impl.c ****     if (status != E_EEPROM_XMC4_STATUS_OK)
+ 354              	 .loc 2 83 0
+ 355 0040 97F82730 	 ldrb r3,[r7,#39]
+ 356 0044 002B     	 cmp r3,#0
+ 357 0046 01D0     	 beq .L19
+  84:../Application/User_FoE_Impl.c ****     {
+  85:../Application/User_FoE_Impl.c ****         return 1;
+ 358              	 .loc 2 85 0
+ 359 0048 0123     	 movs r3,#1
+ 360 004a 0EE0     	 b .L22
+ 361              	.L19:
+  86:../Application/User_FoE_Impl.c ****     }
+  87:../Application/User_FoE_Impl.c **** 
+  88:../Application/User_FoE_Impl.c ****     /* 验证写入 */
+  89:../Application/User_FoE_Impl.c ****     SharedConfig_t verifyCfg;
+  90:../Application/User_FoE_Impl.c ****     E_EEPROM_XMC4_ReadArray(SHARED_CONFIG_EEPROM_OFFSET, (uint8_t*)&verifyCfg, sizeof(SharedConfig_
+ 362              	 .loc 2 90 0
+ 363 004c 07F10803 	 add r3,r7,#8
+ 364 0050 4FF48050 	 mov r0,#4096
+ 365 0054 1946     	 mov r1,r3
+ 366 0056 0D22     	 movs r2,#13
+ 367 0058 FFF7FEFF 	 bl E_EEPROM_XMC4_ReadArray
+  91:../Application/User_FoE_Impl.c ****     if (verifyCfg.MagicHeader != SHARED_MAGIC_VALID)
+ 368              	 .loc 2 91 0
+ 369 005c BB68     	 ldr r3,[r7,#8]
+ 370 005e 054A     	 ldr r2,.L23
+ 371 0060 9342     	 cmp r3,r2
+ 372 0062 01D0     	 beq .L21
+  92:../Application/User_FoE_Impl.c ****     {
+  93:../Application/User_FoE_Impl.c ****         return 2;
+ 373              	 .loc 2 93 0
+ 374 0064 0223     	 movs r3,#2
+ 375 0066 00E0     	 b .L22
+ 376              	.L21:
+  94:../Application/User_FoE_Impl.c ****     }
+  95:../Application/User_FoE_Impl.c **** 
+  96:../Application/User_FoE_Impl.c ****     return 0;
+ 377              	 .loc 2 96 0
+ 378 0068 0023     	 movs r3,#0
+ 379              	.L22:
+  97:../Application/User_FoE_Impl.c **** }
+ 380              	 .loc 2 97 0 discriminator 1
+ 381 006a 1846     	 mov r0,r3
+ 382 006c 2837     	 adds r7,r7,#40
+ 383              	.LCFI16:
+ 384              	 .cfi_def_cfa_offset 8
+ 385 006e BD46     	 mov sp,r7
+ 386              	.LCFI17:
+ 387              	 .cfi_def_cfa_register 13
+ 388              	 
+ 389 0070 80BD     	 pop {r7,pc}
+ 390              	.L24:
+ 391 0072 00BF     	 .align 2
+ 392              	.L23:
+ 393 0074 5AA5A55A 	 .word 1520805210
+ 394              	 .cfi_endproc
+ 395              	.LFE481:
+ 397              	 .section .text.CalcCRC32,"ax",%progbits
+ 398              	 .align 2
+ 399              	 .thumb
+ 400              	 .thumb_func
+ 402              	CalcCRC32:
+ 403              	.LFB482:
+  98:../Application/User_FoE_Impl.c **** 
+  99:../Application/User_FoE_Impl.c **** /* CRC32 计算 (与 CAN 协议/上位机一致的算法)
+ 100:../Application/User_FoE_Impl.c ****  * 按 32 位字处理，多项式 0x04C11DB7 */
+ 101:../Application/User_FoE_Impl.c **** static uint32_t CalcCRC32(const uint8_t *data, uint32_t len)
+ 102:../Application/User_FoE_Impl.c **** {
+ 404              	 .loc 2 102 0
+ 405              	 .cfi_startproc
+ 406              	 
+ 407              	 
+ 408              	 
+ 409 0000 80B4     	 push {r7}
+ 410              	.LCFI18:
+ 411              	 .cfi_def_cfa_offset 4
+ 412              	 .cfi_offset 7,-4
+ 413 0002 8BB0     	 sub sp,sp,#44
+ 414              	.LCFI19:
+ 415              	 .cfi_def_cfa_offset 48
+ 416 0004 00AF     	 add r7,sp,#0
+ 417              	.LCFI20:
+ 418              	 .cfi_def_cfa_register 7
+ 419 0006 7860     	 str r0,[r7,#4]
+ 420 0008 3960     	 str r1,[r7]
+ 103:../Application/User_FoE_Impl.c ****     uint32_t crc = 0xFFFFFFFF;
+ 421              	 .loc 2 103 0
+ 422 000a 4FF0FF33 	 mov r3,#-1
+ 423 000e 7B62     	 str r3,[r7,#36]
+ 104:../Application/User_FoE_Impl.c ****     const uint32_t CRC_POLY = 0x04C11DB7;
+ 424              	 .loc 2 104 0
+ 425 0010 214B     	 ldr r3,.L34
+ 426 0012 7B61     	 str r3,[r7,#20]
+ 105:../Application/User_FoE_Impl.c ****     const uint32_t *words = (const uint32_t *)data;
+ 427              	 .loc 2 105 0
+ 428 0014 7B68     	 ldr r3,[r7,#4]
+ 429 0016 3B61     	 str r3,[r7,#16]
+ 106:../Application/User_FoE_Impl.c ****     uint32_t wordCount = len / 4;
+ 430              	 .loc 2 106 0
+ 431 0018 3B68     	 ldr r3,[r7]
+ 432 001a 9B08     	 lsrs r3,r3,#2
+ 433 001c FB60     	 str r3,[r7,#12]
+ 434              	.LBB4:
+ 107:../Application/User_FoE_Impl.c **** 
+ 108:../Application/User_FoE_Impl.c ****     for (uint32_t i = 0; i < wordCount; i++)
+ 435              	 .loc 2 108 0
+ 436 001e 0023     	 movs r3,#0
+ 437 0020 3B62     	 str r3,[r7,#32]
+ 438 0022 2EE0     	 b .L26
+ 439              	.L32:
+ 440              	.LBB5:
+ 109:../Application/User_FoE_Impl.c ****     {
+ 110:../Application/User_FoE_Impl.c ****         uint32_t word = words[i];
+ 441              	 .loc 2 110 0
+ 442 0024 3B6A     	 ldr r3,[r7,#32]
+ 443 0026 9B00     	 lsls r3,r3,#2
+ 444 0028 3A69     	 ldr r2,[r7,#16]
+ 445 002a 1344     	 add r3,r3,r2
+ 446 002c 1B68     	 ldr r3,[r3]
+ 447 002e BB60     	 str r3,[r7,#8]
+ 111:../Application/User_FoE_Impl.c ****         uint32_t xbit = 1U << 31;
+ 448              	 .loc 2 111 0
+ 449 0030 4FF00043 	 mov r3,#-2147483648
+ 450 0034 FB61     	 str r3,[r7,#28]
+ 451              	.LBB6:
+ 112:../Application/User_FoE_Impl.c **** 
+ 113:../Application/User_FoE_Impl.c ****         for (int bits = 0; bits < 32; bits++)
+ 452              	 .loc 2 113 0
+ 453 0036 0023     	 movs r3,#0
+ 454 0038 BB61     	 str r3,[r7,#24]
+ 455 003a 1CE0     	 b .L27
+ 456              	.L31:
+ 114:../Application/User_FoE_Impl.c ****         {
+ 115:../Application/User_FoE_Impl.c ****             if (crc & 0x80000000)
+ 457              	 .loc 2 115 0
+ 458 003c 7B6A     	 ldr r3,[r7,#36]
+ 459 003e 002B     	 cmp r3,#0
+ 460 0040 07DA     	 bge .L28
+ 116:../Application/User_FoE_Impl.c ****             {
+ 117:../Application/User_FoE_Impl.c ****                 crc <<= 1;
+ 461              	 .loc 2 117 0
+ 462 0042 7B6A     	 ldr r3,[r7,#36]
+ 463 0044 5B00     	 lsls r3,r3,#1
+ 464 0046 7B62     	 str r3,[r7,#36]
+ 118:../Application/User_FoE_Impl.c ****                 crc ^= CRC_POLY;
+ 465              	 .loc 2 118 0
+ 466 0048 7A6A     	 ldr r2,[r7,#36]
+ 467 004a 7B69     	 ldr r3,[r7,#20]
+ 468 004c 5340     	 eors r3,r3,r2
+ 469 004e 7B62     	 str r3,[r7,#36]
+ 470 0050 02E0     	 b .L29
+ 471              	.L28:
+ 119:../Application/User_FoE_Impl.c ****             }
+ 120:../Application/User_FoE_Impl.c ****             else
+ 121:../Application/User_FoE_Impl.c ****             {
+ 122:../Application/User_FoE_Impl.c ****                 crc <<= 1;
+ 472              	 .loc 2 122 0
+ 473 0052 7B6A     	 ldr r3,[r7,#36]
+ 474 0054 5B00     	 lsls r3,r3,#1
+ 475 0056 7B62     	 str r3,[r7,#36]
+ 476              	.L29:
+ 123:../Application/User_FoE_Impl.c ****             }
+ 124:../Application/User_FoE_Impl.c ****             if (word & xbit)
+ 477              	 .loc 2 124 0
+ 478 0058 BA68     	 ldr r2,[r7,#8]
+ 479 005a FB69     	 ldr r3,[r7,#28]
+ 480 005c 1340     	 ands r3,r3,r2
+ 481 005e 002B     	 cmp r3,#0
+ 482 0060 03D0     	 beq .L30
+ 125:../Application/User_FoE_Impl.c ****             {
+ 126:../Application/User_FoE_Impl.c ****                 crc ^= CRC_POLY;
+ 483              	 .loc 2 126 0
+ 484 0062 7A6A     	 ldr r2,[r7,#36]
+ 485 0064 7B69     	 ldr r3,[r7,#20]
+ 486 0066 5340     	 eors r3,r3,r2
+ 487 0068 7B62     	 str r3,[r7,#36]
+ 488              	.L30:
+ 127:../Application/User_FoE_Impl.c ****             }
+ 128:../Application/User_FoE_Impl.c ****             xbit >>= 1;
+ 489              	 .loc 2 128 0 discriminator 2
+ 490 006a FB69     	 ldr r3,[r7,#28]
+ 491 006c 5B08     	 lsrs r3,r3,#1
+ 492 006e FB61     	 str r3,[r7,#28]
+ 113:../Application/User_FoE_Impl.c **** FoE_Impl.c
+ 493              	 .loc 2 113 0 discriminator 2
+ 494 0070 BB69     	 ldr r3,[r7,#24]
+ 495 0072 0133     	 adds r3,r3,#1
+ 496 0074 BB61     	 str r3,[r7,#24]
+ 497              	.L27:
+ 113:../Application/User_FoE_Impl.c **** FoE_Impl.c
+ 498              	 .loc 2 113 0 is_stmt 0 discriminator 1
+ 499 0076 BB69     	 ldr r3,[r7,#24]
+ 500 0078 1F2B     	 cmp r3,#31
+ 501 007a DFDD     	 ble .L31
+ 502              	.LBE6:
+ 503              	.LBE5:
+ 108:../Application/User_FoE_Impl.c **** FoE_Impl.c
+ 504              	 .loc 2 108 0 is_stmt 1 discriminator 2
+ 505 007c 3B6A     	 ldr r3,[r7,#32]
+ 506 007e 0133     	 adds r3,r3,#1
+ 507 0080 3B62     	 str r3,[r7,#32]
+ 508              	.L26:
+ 108:../Application/User_FoE_Impl.c **** FoE_Impl.c
+ 509              	 .loc 2 108 0 is_stmt 0 discriminator 1
+ 510 0082 3A6A     	 ldr r2,[r7,#32]
+ 511 0084 FB68     	 ldr r3,[r7,#12]
+ 512 0086 9A42     	 cmp r2,r3
+ 513 0088 CCD3     	 bcc .L32
+ 514              	.LBE4:
+ 129:../Application/User_FoE_Impl.c ****         }
+ 130:../Application/User_FoE_Impl.c ****     }
+ 131:../Application/User_FoE_Impl.c ****     return crc;
+ 515              	 .loc 2 131 0 is_stmt 1
+ 516 008a 7B6A     	 ldr r3,[r7,#36]
+ 132:../Application/User_FoE_Impl.c **** }
+ 517              	 .loc 2 132 0
+ 518 008c 1846     	 mov r0,r3
+ 519 008e 2C37     	 adds r7,r7,#44
+ 520              	.LCFI21:
+ 521              	 .cfi_def_cfa_offset 4
+ 522 0090 BD46     	 mov sp,r7
+ 523              	.LCFI22:
+ 524              	 .cfi_def_cfa_register 13
+ 525              	 
+ 526 0092 5DF8047B 	 ldr r7,[sp],#4
+ 527              	.LCFI23:
+ 528              	 .cfi_restore 7
+ 529              	 .cfi_def_cfa_offset 0
+ 530 0096 7047     	 bx lr
+ 531              	.L35:
+ 532              	 .align 2
+ 533              	.L34:
+ 534 0098 B71DC104 	 .word 79764919
+ 535              	 .cfi_endproc
+ 536              	.LFE482:
+ 538              	 .section .text.FOE_Write,"ax",%progbits
+ 539              	 .align 2
+ 540              	 .global FOE_Write
+ 541              	 .thumb
+ 542              	 .thumb_func
+ 544              	FOE_Write:
+ 545              	.LFB483:
+ 133:../Application/User_FoE_Impl.c **** 
+ 134:../Application/User_FoE_Impl.c **** /* ==============================================================
+ 135:../Application/User_FoE_Impl.c ****  * FoE 接口实现
+ 136:../Application/User_FoE_Impl.c ****  * ============================================================== */
+ 137:../Application/User_FoE_Impl.c **** 
+ 138:../Application/User_FoE_Impl.c **** UINT16 FOE_Write(UINT16 MBXMEM *pName, UINT16 nameSize, UINT32 password)
+ 139:../Application/User_FoE_Impl.c **** {
+ 546              	 .loc 2 139 0
+ 547              	 .cfi_startproc
+ 548              	 
+ 549              	 
+ 550 0000 80B5     	 push {r7,lr}
+ 551              	.LCFI24:
+ 552              	 .cfi_def_cfa_offset 8
+ 553              	 .cfi_offset 7,-8
+ 554              	 .cfi_offset 14,-4
+ 555 0002 84B0     	 sub sp,sp,#16
+ 556              	.LCFI25:
+ 557              	 .cfi_def_cfa_offset 24
+ 558 0004 00AF     	 add r7,sp,#0
+ 559              	.LCFI26:
+ 560              	 .cfi_def_cfa_register 7
+ 561 0006 F860     	 str r0,[r7,#12]
+ 562 0008 0B46     	 mov r3,r1
+ 563 000a 7A60     	 str r2,[r7,#4]
+ 564 000c 7B81     	 strh r3,[r7,#10]
+ 140:../Application/User_FoE_Impl.c **** 	FWUPDATE_InvalidateAppFlag();
+ 565              	 .loc 2 140 0
+ 566 000e FFF7FEFF 	 bl FWUPDATE_InvalidateAppFlag
+ 141:../Application/User_FoE_Impl.c ****     g_u32FlashWriteAddr = APP_START_ADDR;
+ 567              	 .loc 2 141 0
+ 568 0012 174B     	 ldr r3,.L39
+ 569 0014 174A     	 ldr r2,.L39+4
+ 570 0016 1A60     	 str r2,[r3]
+ 142:../Application/User_FoE_Impl.c ****     g_u32TotalReceived = 0;
+ 571              	 .loc 2 142 0
+ 572 0018 174B     	 ldr r3,.L39+8
+ 573 001a 0022     	 movs r2,#0
+ 574 001c 1A60     	 str r2,[r3]
+ 143:../Application/User_FoE_Impl.c ****     g_PageBufOffset = 0;
+ 575              	 .loc 2 143 0
+ 576 001e 174B     	 ldr r3,.L39+12
+ 577 0020 0022     	 movs r2,#0
+ 578 0022 1A80     	 strh r2,[r3]
+ 144:../Application/User_FoE_Impl.c ****     g_bResetRequest = 0;
+ 579              	 .loc 2 144 0
+ 580 0024 164B     	 ldr r3,.L39+16
+ 581 0026 0022     	 movs r2,#0
+ 582 0028 1A70     	 strb r2,[r3]
+ 145:../Application/User_FoE_Impl.c ****     g_bFoeActive = 1;
+ 583              	 .loc 2 145 0
+ 584 002a 164B     	 ldr r3,.L39+20
+ 585 002c 0122     	 movs r2,#1
+ 586 002e 1A70     	 strb r2,[r3]
+ 146:../Application/User_FoE_Impl.c ****     memset(g_PageBuf, 0xFF, 256);
+ 587              	 .loc 2 146 0
+ 588 0030 1548     	 ldr r0,.L39+24
+ 589 0032 FF21     	 movs r1,#255
+ 590 0034 4FF48072 	 mov r2,#256
+ 591 0038 FFF7FEFF 	 bl memset
+ 147:../Application/User_FoE_Impl.c **** 
+ 148:../Application/User_FoE_Impl.c ****     XMC_FLASH_ClearStatus();
+ 592              	 .loc 2 148 0
+ 593 003c FFF7FEFF 	 bl XMC_FLASH_ClearStatus
+ 149:../Application/User_FoE_Impl.c ****     XMC_FLASH_EraseSector((uint32_t *)APP_START_ADDR);
+ 594              	 .loc 2 149 0
+ 595 0040 0C48     	 ldr r0,.L39+4
+ 596 0042 FFF7FEFF 	 bl XMC_FLASH_EraseSector
+ 150:../Application/User_FoE_Impl.c **** 
+ 151:../Application/User_FoE_Impl.c ****     if (FLASH0->FSR & (XMC_FLASH_STATUS_VERIFY_ERROR | XMC_FLASH_STATUS_PROTECTION_ERROR | XMC_FLAS
+ 597              	 .loc 2 151 0
+ 598 0046 114B     	 ldr r3,.L39+28
+ 599 0048 03F58053 	 add r3,r3,#4096
+ 600 004c 1033     	 adds r3,r3,#16
+ 601 004e 1A68     	 ldr r2,[r3]
+ 602 0050 0F4B     	 ldr r3,.L39+32
+ 603 0052 1340     	 ands r3,r3,r2
+ 604 0054 002B     	 cmp r3,#0
+ 605 0056 05D0     	 beq .L37
+ 152:../Application/User_FoE_Impl.c ****     {
+ 153:../Application/User_FoE_Impl.c ****         g_bFoeActive = 0;
+ 606              	 .loc 2 153 0
+ 607 0058 0A4B     	 ldr r3,.L39+20
+ 608 005a 0022     	 movs r2,#0
+ 609 005c 1A70     	 strb r2,[r3]
+ 154:../Application/User_FoE_Impl.c ****         return ECAT_FOE_ERRCODE_DISKFULL;
+ 610              	 .loc 2 154 0
+ 611 005e 48F20303 	 movw r3,#32771
+ 612 0062 00E0     	 b .L38
+ 613              	.L37:
+ 155:../Application/User_FoE_Impl.c ****     }
+ 156:../Application/User_FoE_Impl.c **** 
+ 157:../Application/User_FoE_Impl.c ****     return 0;
+ 614              	 .loc 2 157 0
+ 615 0064 0023     	 movs r3,#0
+ 616              	.L38:
+ 158:../Application/User_FoE_Impl.c **** }
+ 617              	 .loc 2 158 0
+ 618 0066 1846     	 mov r0,r3
+ 619 0068 1037     	 adds r7,r7,#16
+ 620              	.LCFI27:
+ 621              	 .cfi_def_cfa_offset 8
+ 622 006a BD46     	 mov sp,r7
+ 623              	.LCFI28:
+ 624              	 .cfi_def_cfa_register 13
+ 625              	 
+ 626 006c 80BD     	 pop {r7,pc}
+ 627              	.L40:
+ 628 006e 00BF     	 .align 2
+ 629              	.L39:
+ 630 0070 00000000 	 .word g_u32FlashWriteAddr
+ 631 0074 0000020C 	 .word 201457664
+ 632 0078 00000000 	 .word g_u32TotalReceived
+ 633 007c 00000000 	 .word g_PageBufOffset
+ 634 0080 00000000 	 .word g_bResetRequest
+ 635 0084 00000000 	 .word g_bFoeActive
+ 636 0088 00000000 	 .word g_PageBuf
+ 637 008c 00100058 	 .word 1476399104
+ 638 0090 00090080 	 .word -2147481344
+ 639              	 .cfi_endproc
+ 640              	.LFE483:
+ 642              	 .section .text.FOE_Data,"ax",%progbits
+ 643              	 .align 2
+ 644              	 .global FOE_Data
+ 645              	 .thumb
+ 646              	 .thumb_func
+ 648              	FOE_Data:
+ 649              	.LFB484:
+ 159:../Application/User_FoE_Impl.c **** 
+ 160:../Application/User_FoE_Impl.c **** UINT16 FOE_Data(UINT16 MBXMEM *pData, UINT16 Size)
+ 161:../Application/User_FoE_Impl.c **** {
+ 650              	 .loc 2 161 0
+ 651              	 .cfi_startproc
+ 652              	 
+ 653              	 
+ 654 0000 80B5     	 push {r7,lr}
+ 655              	.LCFI29:
+ 656              	 .cfi_def_cfa_offset 8
+ 657              	 .cfi_offset 7,-8
+ 658              	 .cfi_offset 14,-4
+ 659 0002 84B0     	 sub sp,sp,#16
+ 660              	.LCFI30:
+ 661              	 .cfi_def_cfa_offset 24
+ 662 0004 00AF     	 add r7,sp,#0
+ 663              	.LCFI31:
+ 664              	 .cfi_def_cfa_register 7
+ 665 0006 7860     	 str r0,[r7,#4]
+ 666 0008 0B46     	 mov r3,r1
+ 667 000a 7B80     	 strh r3,[r7,#2]
+ 162:../Application/User_FoE_Impl.c ****     if (!g_bFoeActive)
+ 668              	 .loc 2 162 0
+ 669 000c 284B     	 ldr r3,.L47
+ 670 000e 1B78     	 ldrb r3,[r3]
+ 671 0010 002B     	 cmp r3,#0
+ 672 0012 02D1     	 bne .L42
+ 163:../Application/User_FoE_Impl.c ****     {
+ 164:../Application/User_FoE_Impl.c ****         return ECAT_FOE_ERRCODE_ILLEGAL;
+ 673              	 .loc 2 164 0
+ 674 0014 48F20403 	 movw r3,#32772
+ 675 0018 46E0     	 b .L43
+ 676              	.L42:
+ 165:../Application/User_FoE_Impl.c ****     }
+ 166:../Application/User_FoE_Impl.c **** 
+ 167:../Application/User_FoE_Impl.c ****     BOOL bDataFollowing = (Size == (u16ReceiveMbxSize - MBX_HEADER_SIZE - FOE_HEADER_SIZE));
+ 677              	 .loc 2 167 0
+ 678 001a 7A88     	 ldrh r2,[r7,#2]
+ 679 001c 254B     	 ldr r3,.L47+4
+ 680 001e 1B88     	 ldrh r3,[r3]
+ 681 0020 0C3B     	 subs r3,r3,#12
+ 682 0022 9A42     	 cmp r2,r3
+ 683 0024 0CBF     	 ite eq
+ 684 0026 0123     	 moveq r3,#1
+ 685 0028 0023     	 movne r3,#0
+ 686 002a FB73     	 strb r3,[r7,#15]
+ 168:../Application/User_FoE_Impl.c **** 
+ 169:../Application/User_FoE_Impl.c ****     if (BufferData((const uint8_t *)pData, Size))
+ 687              	 .loc 2 169 0
+ 688 002c 7B88     	 ldrh r3,[r7,#2]
+ 689 002e 7868     	 ldr r0,[r7,#4]
+ 690 0030 1946     	 mov r1,r3
+ 691 0032 FFF7FEFF 	 bl BufferData
+ 692 0036 0346     	 mov r3,r0
+ 693 0038 002B     	 cmp r3,#0
+ 694 003a 05D0     	 beq .L44
+ 170:../Application/User_FoE_Impl.c ****     {
+ 171:../Application/User_FoE_Impl.c ****         g_bFoeActive = 0;
+ 695              	 .loc 2 171 0
+ 696 003c 1C4B     	 ldr r3,.L47
+ 697 003e 0022     	 movs r2,#0
+ 698 0040 1A70     	 strb r2,[r3]
+ 172:../Application/User_FoE_Impl.c ****         return ECAT_FOE_ERRCODE_DISKFULL;
+ 699              	 .loc 2 172 0
+ 700 0042 48F20303 	 movw r3,#32771
+ 701 0046 2FE0     	 b .L43
+ 702              	.L44:
+ 173:../Application/User_FoE_Impl.c ****     }
+ 174:../Application/User_FoE_Impl.c **** 
+ 175:../Application/User_FoE_Impl.c ****     g_u32TotalReceived += Size;
+ 703              	 .loc 2 175 0
+ 704 0048 7A88     	 ldrh r2,[r7,#2]
+ 705 004a 1B4B     	 ldr r3,.L47+8
+ 706 004c 1B68     	 ldr r3,[r3]
+ 707 004e 1344     	 add r3,r3,r2
+ 708 0050 194A     	 ldr r2,.L47+8
+ 709 0052 1360     	 str r3,[r2]
+ 176:../Application/User_FoE_Impl.c **** 
+ 177:../Application/User_FoE_Impl.c ****     if (!bDataFollowing)
+ 710              	 .loc 2 177 0
+ 711 0054 FB7B     	 ldrb r3,[r7,#15]
+ 712 0056 83F00103 	 eor r3,r3,#1
+ 713 005a DBB2     	 uxtb r3,r3
+ 714 005c 002B     	 cmp r3,#0
+ 715 005e 22D0     	 beq .L45
+ 716              	.LBB7:
+ 178:../Application/User_FoE_Impl.c ****     {
+ 179:../Application/User_FoE_Impl.c ****         FlushPageBuffer();
+ 717              	 .loc 2 179 0
+ 718 0060 FFF7FEFF 	 bl FlushPageBuffer
+ 180:../Application/User_FoE_Impl.c **** 
+ 181:../Application/User_FoE_Impl.c ****         uint32_t crc = CalcCRC32((uint8_t *)APP_START_ADDR, g_u32TotalReceived);
+ 719              	 .loc 2 181 0
+ 720 0064 144B     	 ldr r3,.L47+8
+ 721 0066 1B68     	 ldr r3,[r3]
+ 722 0068 1448     	 ldr r0,.L47+12
+ 723 006a 1946     	 mov r1,r3
+ 724 006c FFF7FEFF 	 bl CalcCRC32
+ 725 0070 B860     	 str r0,[r7,#8]
+ 182:../Application/User_FoE_Impl.c **** 
+ 183:../Application/User_FoE_Impl.c ****         if (UpdateSharedConfig(g_u32TotalReceived, crc))
+ 726              	 .loc 2 183 0
+ 727 0072 114B     	 ldr r3,.L47+8
+ 728 0074 1B68     	 ldr r3,[r3]
+ 729 0076 1846     	 mov r0,r3
+ 730 0078 B968     	 ldr r1,[r7,#8]
+ 731 007a FFF7FEFF 	 bl UpdateSharedConfig
+ 732 007e 0346     	 mov r3,r0
+ 733 0080 002B     	 cmp r3,#0
+ 734 0082 05D0     	 beq .L46
+ 184:../Application/User_FoE_Impl.c ****         {
+ 185:../Application/User_FoE_Impl.c ****             g_bFoeActive = 0;
+ 735              	 .loc 2 185 0
+ 736 0084 0A4B     	 ldr r3,.L47
+ 737 0086 0022     	 movs r2,#0
+ 738 0088 1A70     	 strb r2,[r3]
+ 186:../Application/User_FoE_Impl.c ****             return ECAT_FOE_ERRCODE_DISKFULL;
+ 739              	 .loc 2 186 0
+ 740 008a 48F20303 	 movw r3,#32771
+ 741 008e 0BE0     	 b .L43
+ 742              	.L46:
+ 187:../Application/User_FoE_Impl.c ****         }
+ 188:../Application/User_FoE_Impl.c **** 
+ 189:../Application/User_FoE_Impl.c ****         g_bFoeActive = 0;
+ 743              	 .loc 2 189 0
+ 744 0090 074B     	 ldr r3,.L47
+ 745 0092 0022     	 movs r2,#0
+ 746 0094 1A70     	 strb r2,[r3]
+ 190:../Application/User_FoE_Impl.c ****         g_bResetRequest = 1;
+ 747              	 .loc 2 190 0
+ 748 0096 0A4B     	 ldr r3,.L47+16
+ 749 0098 0122     	 movs r2,#1
+ 750 009a 1A70     	 strb r2,[r3]
+ 191:../Application/User_FoE_Impl.c ****         g_u32ResetStartTime = Get_Time_Ms();
+ 751              	 .loc 2 191 0
+ 752 009c FFF7FEFF 	 bl Get_Time_Ms
+ 753 00a0 0246     	 mov r2,r0
+ 754 00a2 084B     	 ldr r3,.L47+20
+ 755 00a4 1A60     	 str r2,[r3]
+ 756              	.L45:
+ 757              	.LBE7:
+ 192:../Application/User_FoE_Impl.c ****     }
+ 193:../Application/User_FoE_Impl.c **** 
+ 194:../Application/User_FoE_Impl.c ****     return 0;
+ 758              	 .loc 2 194 0
+ 759 00a6 0023     	 movs r3,#0
+ 760              	.L43:
+ 195:../Application/User_FoE_Impl.c **** }
+ 761              	 .loc 2 195 0
+ 762 00a8 1846     	 mov r0,r3
+ 763 00aa 1037     	 adds r7,r7,#16
+ 764              	.LCFI32:
+ 765              	 .cfi_def_cfa_offset 8
+ 766 00ac BD46     	 mov sp,r7
+ 767              	.LCFI33:
+ 768              	 .cfi_def_cfa_register 13
+ 769              	 
+ 770 00ae 80BD     	 pop {r7,pc}
+ 771              	.L48:
+ 772              	 .align 2
+ 773              	.L47:
+ 774 00b0 00000000 	 .word g_bFoeActive
+ 775 00b4 00000000 	 .word u16ReceiveMbxSize
+ 776 00b8 00000000 	 .word g_u32TotalReceived
+ 777 00bc 0000020C 	 .word 201457664
+ 778 00c0 00000000 	 .word g_bResetRequest
+ 779 00c4 00000000 	 .word g_u32ResetStartTime
+ 780              	 .cfi_endproc
+ 781              	.LFE484:
+ 783              	 .section .text.FOE_Read,"ax",%progbits
+ 784              	 .align 2
+ 785              	 .global FOE_Read
+ 786              	 .thumb
+ 787              	 .thumb_func
+ 789              	FOE_Read:
+ 790              	.LFB485:
+ 196:../Application/User_FoE_Impl.c **** 
+ 197:../Application/User_FoE_Impl.c **** UINT16 FOE_Read(UINT16 MBXMEM *pName, UINT16 nameSize, UINT16 MBXMEM *pData, UINT32 password)
+ 198:../Application/User_FoE_Impl.c **** {
+ 791              	 .loc 2 198 0
+ 792              	 .cfi_startproc
+ 793              	 
+ 794              	 
+ 795              	 
+ 796 0000 80B4     	 push {r7}
+ 797              	.LCFI34:
+ 798              	 .cfi_def_cfa_offset 4
+ 799              	 .cfi_offset 7,-4
+ 800 0002 85B0     	 sub sp,sp,#20
+ 801              	.LCFI35:
+ 802              	 .cfi_def_cfa_offset 24
+ 803 0004 00AF     	 add r7,sp,#0
+ 804              	.LCFI36:
+ 805              	 .cfi_def_cfa_register 7
+ 806 0006 F860     	 str r0,[r7,#12]
+ 807 0008 7A60     	 str r2,[r7,#4]
+ 808 000a 3B60     	 str r3,[r7]
+ 809 000c 0B46     	 mov r3,r1
+ 810 000e 7B81     	 strh r3,[r7,#10]
+ 199:../Application/User_FoE_Impl.c ****     return ECAT_FOE_ERRCODE_NOTFOUND;
+ 811              	 .loc 2 199 0
+ 812 0010 48F20103 	 movw r3,#32769
+ 200:../Application/User_FoE_Impl.c **** }
+ 813              	 .loc 2 200 0
+ 814 0014 1846     	 mov r0,r3
+ 815 0016 1437     	 adds r7,r7,#20
+ 816              	.LCFI37:
+ 817              	 .cfi_def_cfa_offset 4
+ 818 0018 BD46     	 mov sp,r7
+ 819              	.LCFI38:
+ 820              	 .cfi_def_cfa_register 13
+ 821              	 
+ 822 001a 5DF8047B 	 ldr r7,[sp],#4
+ 823              	.LCFI39:
+ 824              	 .cfi_restore 7
+ 825              	 .cfi_def_cfa_offset 0
+ 826 001e 7047     	 bx lr
+ 827              	 .cfi_endproc
+ 828              	.LFE485:
+ 830              	 .section .text.FOE_Ack,"ax",%progbits
+ 831              	 .align 2
+ 832              	 .global FOE_Ack
+ 833              	 .thumb
+ 834              	 .thumb_func
+ 836              	FOE_Ack:
+ 837              	.LFB486:
+ 201:../Application/User_FoE_Impl.c **** 
+ 202:../Application/User_FoE_Impl.c **** UINT16 FOE_Ack(UINT32 fileOffset, UINT16 MBXMEM *pData)
+ 203:../Application/User_FoE_Impl.c **** {
+ 838              	 .loc 2 203 0
+ 839              	 .cfi_startproc
+ 840              	 
+ 841              	 
+ 842              	 
+ 843 0000 80B4     	 push {r7}
+ 844              	.LCFI40:
+ 845              	 .cfi_def_cfa_offset 4
+ 846              	 .cfi_offset 7,-4
+ 847 0002 83B0     	 sub sp,sp,#12
+ 848              	.LCFI41:
+ 849              	 .cfi_def_cfa_offset 16
+ 850 0004 00AF     	 add r7,sp,#0
+ 851              	.LCFI42:
+ 852              	 .cfi_def_cfa_register 7
+ 853 0006 7860     	 str r0,[r7,#4]
+ 854 0008 3960     	 str r1,[r7]
+ 204:../Application/User_FoE_Impl.c ****     return 0;
+ 855              	 .loc 2 204 0
+ 856 000a 0023     	 movs r3,#0
+ 205:../Application/User_FoE_Impl.c **** }
+ 857              	 .loc 2 205 0
+ 858 000c 1846     	 mov r0,r3
+ 859 000e 0C37     	 adds r7,r7,#12
+ 860              	.LCFI43:
+ 861              	 .cfi_def_cfa_offset 4
+ 862 0010 BD46     	 mov sp,r7
+ 863              	.LCFI44:
+ 864              	 .cfi_def_cfa_register 13
+ 865              	 
+ 866 0012 5DF8047B 	 ldr r7,[sp],#4
+ 867              	.LCFI45:
+ 868              	 .cfi_restore 7
+ 869              	 .cfi_def_cfa_offset 0
+ 870 0016 7047     	 bx lr
+ 871              	 .cfi_endproc
+ 872              	.LFE486:
+ 874              	 .section .text.FOE_Busy,"ax",%progbits
+ 875              	 .align 2
+ 876              	 .global FOE_Busy
+ 877              	 .thumb
+ 878              	 .thumb_func
+ 880              	FOE_Busy:
+ 881              	.LFB487:
+ 206:../Application/User_FoE_Impl.c **** 
+ 207:../Application/User_FoE_Impl.c **** UINT16 FOE_Busy(UINT16 done, UINT32 fileOffset, UINT16 MBXMEM *pData)
+ 208:../Application/User_FoE_Impl.c **** {
+ 882              	 .loc 2 208 0
+ 883              	 .cfi_startproc
+ 884              	 
+ 885              	 
+ 886              	 
+ 887 0000 80B4     	 push {r7}
+ 888              	.LCFI46:
+ 889              	 .cfi_def_cfa_offset 4
+ 890              	 .cfi_offset 7,-4
+ 891 0002 85B0     	 sub sp,sp,#20
+ 892              	.LCFI47:
+ 893              	 .cfi_def_cfa_offset 24
+ 894 0004 00AF     	 add r7,sp,#0
+ 895              	.LCFI48:
+ 896              	 .cfi_def_cfa_register 7
+ 897 0006 0346     	 mov r3,r0
+ 898 0008 B960     	 str r1,[r7,#8]
+ 899 000a 7A60     	 str r2,[r7,#4]
+ 900 000c FB81     	 strh r3,[r7,#14]
+ 209:../Application/User_FoE_Impl.c ****     return 0;
+ 901              	 .loc 2 209 0
+ 902 000e 0023     	 movs r3,#0
+ 210:../Application/User_FoE_Impl.c **** }
+ 903              	 .loc 2 210 0
+ 904 0010 1846     	 mov r0,r3
+ 905 0012 1437     	 adds r7,r7,#20
+ 906              	.LCFI49:
+ 907              	 .cfi_def_cfa_offset 4
+ 908 0014 BD46     	 mov sp,r7
+ 909              	.LCFI50:
+ 910              	 .cfi_def_cfa_register 13
+ 911              	 
+ 912 0016 5DF8047B 	 ldr r7,[sp],#4
+ 913              	.LCFI51:
+ 914              	 .cfi_restore 7
+ 915              	 .cfi_def_cfa_offset 0
+ 916 001a 7047     	 bx lr
+ 917              	 .cfi_endproc
+ 918              	.LFE487:
+ 920              	 .section .text.FOE_Error,"ax",%progbits
+ 921              	 .align 2
+ 922              	 .global FOE_Error
+ 923              	 .thumb
+ 924              	 .thumb_func
+ 926              	FOE_Error:
+ 927              	.LFB488:
+ 211:../Application/User_FoE_Impl.c **** 
+ 212:../Application/User_FoE_Impl.c **** void FOE_Error(UINT32 errorCode)
+ 213:../Application/User_FoE_Impl.c **** {
+ 928              	 .loc 2 213 0
+ 929              	 .cfi_startproc
+ 930              	 
+ 931              	 
+ 932              	 
+ 933 0000 80B4     	 push {r7}
+ 934              	.LCFI52:
+ 935              	 .cfi_def_cfa_offset 4
+ 936              	 .cfi_offset 7,-4
+ 937 0002 83B0     	 sub sp,sp,#12
+ 938              	.LCFI53:
+ 939              	 .cfi_def_cfa_offset 16
+ 940 0004 00AF     	 add r7,sp,#0
+ 941              	.LCFI54:
+ 942              	 .cfi_def_cfa_register 7
+ 943 0006 7860     	 str r0,[r7,#4]
+ 214:../Application/User_FoE_Impl.c ****     g_bFoeActive = 0;
+ 944              	 .loc 2 214 0
+ 945 0008 054B     	 ldr r3,.L56
+ 946 000a 0022     	 movs r2,#0
+ 947 000c 1A70     	 strb r2,[r3]
+ 215:../Application/User_FoE_Impl.c ****     g_u32TotalReceived = 0;
+ 948              	 .loc 2 215 0
+ 949 000e 054B     	 ldr r3,.L56+4
+ 950 0010 0022     	 movs r2,#0
+ 951 0012 1A60     	 str r2,[r3]
+ 216:../Application/User_FoE_Impl.c **** }
+ 952              	 .loc 2 216 0
+ 953 0014 0C37     	 adds r7,r7,#12
+ 954              	.LCFI55:
+ 955              	 .cfi_def_cfa_offset 4
+ 956 0016 BD46     	 mov sp,r7
+ 957              	.LCFI56:
+ 958              	 .cfi_def_cfa_register 13
+ 959              	 
+ 960 0018 5DF8047B 	 ldr r7,[sp],#4
+ 961              	.LCFI57:
+ 962              	 .cfi_restore 7
+ 963              	 .cfi_def_cfa_offset 0
+ 964 001c 7047     	 bx lr
+ 965              	.L57:
+ 966 001e 00BF     	 .align 2
+ 967              	.L56:
+ 968 0020 00000000 	 .word g_bFoeActive
+ 969 0024 00000000 	 .word g_u32TotalReceived
+ 970              	 .cfi_endproc
+ 971              	.LFE488:
+ 973              	 .section .text.FoE_ProcessStateMachine,"ax",%progbits
+ 974              	 .align 2
+ 975              	 .global FoE_ProcessStateMachine
+ 976              	 .thumb
+ 977              	 .thumb_func
+ 979              	FoE_ProcessStateMachine:
+ 980              	.LFB489:
+ 217:../Application/User_FoE_Impl.c **** 
+ 218:../Application/User_FoE_Impl.c **** void FoE_ProcessStateMachine(void)
+ 219:../Application/User_FoE_Impl.c **** {
+ 981              	 .loc 2 219 0
+ 982              	 .cfi_startproc
+ 983              	 
+ 984              	 
+ 985              	 
+ 986 0000 80B4     	 push {r7}
+ 987              	.LCFI58:
+ 988              	 .cfi_def_cfa_offset 4
+ 989              	 .cfi_offset 7,-4
+ 990 0002 00AF     	 add r7,sp,#0
+ 991              	.LCFI59:
+ 992              	 .cfi_def_cfa_register 7
+ 220:../Application/User_FoE_Impl.c **** }
+ 993              	 .loc 2 220 0
+ 994 0004 BD46     	 mov sp,r7
+ 995              	.LCFI60:
+ 996              	 .cfi_def_cfa_register 13
+ 997              	 
+ 998 0006 5DF8047B 	 ldr r7,[sp],#4
+ 999              	.LCFI61:
+ 1000              	 .cfi_restore 7
+ 1001              	 .cfi_def_cfa_offset 0
+ 1002 000a 7047     	 bx lr
+ 1003              	 .cfi_endproc
+ 1004              	.LFE489:
+ 1006              	 .section .text.FoE_GetState,"ax",%progbits
+ 1007              	 .align 2
+ 1008              	 .global FoE_GetState
+ 1009              	 .thumb
+ 1010              	 .thumb_func
+ 1012              	FoE_GetState:
+ 1013              	.LFB490:
+ 221:../Application/User_FoE_Impl.c **** 
+ 222:../Application/User_FoE_Impl.c **** uint8_t FoE_GetState(void)
+ 223:../Application/User_FoE_Impl.c **** {
+ 1014              	 .loc 2 223 0
+ 1015              	 .cfi_startproc
+ 1016              	 
+ 1017              	 
+ 1018              	 
+ 1019 0000 80B4     	 push {r7}
+ 1020              	.LCFI62:
+ 1021              	 .cfi_def_cfa_offset 4
+ 1022              	 .cfi_offset 7,-4
+ 1023 0002 00AF     	 add r7,sp,#0
+ 1024              	.LCFI63:
+ 1025              	 .cfi_def_cfa_register 7
+ 224:../Application/User_FoE_Impl.c ****     return g_bFoeActive ? 1 : 0;
+ 1026              	 .loc 2 224 0
+ 1027 0004 054B     	 ldr r3,.L61
+ 1028 0006 1B78     	 ldrb r3,[r3]
+ 1029 0008 002B     	 cmp r3,#0
+ 1030 000a 14BF     	 ite ne
+ 1031 000c 0123     	 movne r3,#1
+ 1032 000e 0023     	 moveq r3,#0
+ 1033 0010 DBB2     	 uxtb r3,r3
+ 225:../Application/User_FoE_Impl.c **** }
+ 1034              	 .loc 2 225 0
+ 1035 0012 1846     	 mov r0,r3
+ 1036 0014 BD46     	 mov sp,r7
+ 1037              	.LCFI64:
+ 1038              	 .cfi_def_cfa_register 13
+ 1039              	 
+ 1040 0016 5DF8047B 	 ldr r7,[sp],#4
+ 1041              	.LCFI65:
+ 1042              	 .cfi_restore 7
+ 1043              	 .cfi_def_cfa_offset 0
+ 1044 001a 7047     	 bx lr
+ 1045              	.L62:
+ 1046              	 .align 2
+ 1047              	.L61:
+ 1048 001c 00000000 	 .word g_bFoeActive
+ 1049              	 .cfi_endproc
+ 1050              	.LFE490:
+ 1052              	 .text
+ 1053              	.Letext0:
+ 1054              	 .file 3 "d:\\infineon\\tools\\dave ide\\4.5.0.202105191637\\eclipse\\arm-gcc-49\\arm-none-eabi\\include\\machine\\_default_types.h"
+ 1055              	 .file 4 "d:\\infineon\\tools\\dave ide\\4.5.0.202105191637\\eclipse\\arm-gcc-49\\arm-none-eabi\\include\\stdint.h"
+ 1056              	 .file 5 "D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/CMSIS/Infineon/XMC4300_series/Include/XMC4300.h"
+ 1057              	 .file 6 "D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc/xmc4_flash.h"
+ 1058              	 .file 7 "D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Dave/Generated/E_EEPROM_XMC4/e_eeprom_xmc4.h"
+ 1059              	 .file 8 "D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/XMCLib/inc/xmc_usic.h"
+ 1060              	 .file 9 "D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/CMSIS/Include/cmsis_gcc.h"
+ 1061              	 .file 10 "D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/CMSIS/Include/core_cm4.h"
+ 1062              	 .file 11 "D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/Libraries/CMSIS/Infineon/XMC4300_series/Include/system_XMC4300.h"
+ 1063              	 .file 12 "D:/Infineon/Tools/DAVE IDE/4.5.0.202105191637/eclipse/workspace/XMC4300-boot/SSC/Src/mailbox.h"
+DEFINED SYMBOLS
+                            *ABS*:00000000 User_FoE_Impl.c
+    {standard input}:20     .text.SharedConfig_CalcChecksum:00000000 $t
+    {standard input}:24     .text.SharedConfig_CalcChecksum:00000000 SharedConfig_CalcChecksum
+    {standard input}:93     .bss.g_u32FlashWriteAddr:00000000 $d
+    {standard input}:96     .bss.g_u32FlashWriteAddr:00000000 g_u32FlashWriteAddr
+    {standard input}:99     .bss.g_u32TotalReceived:00000000 $d
+    {standard input}:102    .bss.g_u32TotalReceived:00000000 g_u32TotalReceived
+    {standard input}:105    .bss.g_PageBuf:00000000 $d
+    {standard input}:108    .bss.g_PageBuf:00000000 g_PageBuf
+    {standard input}:111    .bss.g_PageBufOffset:00000000 $d
+    {standard input}:114    .bss.g_PageBufOffset:00000000 g_PageBufOffset
+    {standard input}:119    .bss.g_bFoeActive:00000000 g_bFoeActive
+    {standard input}:120    .bss.g_bFoeActive:00000000 $d
+    {standard input}:125    .bss.g_bResetRequest:00000000 g_bResetRequest
+    {standard input}:126    .bss.g_bResetRequest:00000000 $d
+    {standard input}:132    .bss.g_u32ResetStartTime:00000000 g_u32ResetStartTime
+    {standard input}:129    .bss.g_u32ResetStartTime:00000000 $d
+    {standard input}:135    .text.FlushPageBuffer:00000000 $t
+    {standard input}:139    .text.FlushPageBuffer:00000000 FlushPageBuffer
+    {standard input}:207    .text.FlushPageBuffer:00000058 $d
+    {standard input}:214    .text.BufferData:00000000 $t
+    {standard input}:218    .text.BufferData:00000000 BufferData
+    {standard input}:299    .text.BufferData:0000005c $d
+    {standard input}:305    .text.UpdateSharedConfig:00000000 $t
+    {standard input}:310    .text.UpdateSharedConfig:00000000 UpdateSharedConfig
+    {standard input}:393    .text.UpdateSharedConfig:00000074 $d
+    {standard input}:398    .text.CalcCRC32:00000000 $t
+    {standard input}:402    .text.CalcCRC32:00000000 CalcCRC32
+    {standard input}:534    .text.CalcCRC32:00000098 $d
+    {standard input}:539    .text.FOE_Write:00000000 $t
+    {standard input}:544    .text.FOE_Write:00000000 FOE_Write
+    {standard input}:630    .text.FOE_Write:00000070 $d
+    {standard input}:643    .text.FOE_Data:00000000 $t
+    {standard input}:648    .text.FOE_Data:00000000 FOE_Data
+    {standard input}:774    .text.FOE_Data:000000b0 $d
+    {standard input}:784    .text.FOE_Read:00000000 $t
+    {standard input}:789    .text.FOE_Read:00000000 FOE_Read
+    {standard input}:831    .text.FOE_Ack:00000000 $t
+    {standard input}:836    .text.FOE_Ack:00000000 FOE_Ack
+    {standard input}:875    .text.FOE_Busy:00000000 $t
+    {standard input}:880    .text.FOE_Busy:00000000 FOE_Busy
+    {standard input}:921    .text.FOE_Error:00000000 $t
+    {standard input}:926    .text.FOE_Error:00000000 FOE_Error
+    {standard input}:968    .text.FOE_Error:00000020 $d
+    {standard input}:974    .text.FoE_ProcessStateMachine:00000000 $t
+    {standard input}:979    .text.FoE_ProcessStateMachine:00000000 FoE_ProcessStateMachine
+    {standard input}:1007   .text.FoE_GetState:00000000 $t
+    {standard input}:1012   .text.FoE_GetState:00000000 FoE_GetState
+    {standard input}:1048   .text.FoE_GetState:0000001c $d
+                     .debug_frame:00000010 $d
+
+UNDEFINED SYMBOLS
+memset
+XMC_FLASH_ProgramPage
+E_EEPROM_XMC4_WriteArray
+E_EEPROM_XMC4_UpdateFlashContents
+E_EEPROM_XMC4_ReadArray
+FWUPDATE_InvalidateAppFlag
+XMC_FLASH_ClearStatus
+XMC_FLASH_EraseSector
+Get_Time_Ms
+u16ReceiveMbxSize
