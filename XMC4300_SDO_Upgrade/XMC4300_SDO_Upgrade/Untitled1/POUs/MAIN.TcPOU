@@ -1,0 +1,458 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1">
+  <POU Name="MAIN" Id="{7f05a858-700f-4585-a65c-6f29ffc38200}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM MAIN
+VAR
+    (* ================= 控制变量 ================= *)
+    bStartUpdate    : BOOL;             
+    bReset          : BOOL;             
+    sFileName       : T_MaxString := 'D:\work\Firmware\firmware_final1.bin'; 
+    sMasterNetId    : T_AmsNetId := '192.168.110.52.2.1'; 
+    nSlaveAddr      : UINT := 1001;     
+    
+    (* ================= 状态指示 ================= *)
+    sStatus         : STRING := 'Ready';
+    sFullErrorMsg   : STRING(255); (* 【新增】详细错误诊断信息 *)
+    nProgress       : UINT;             
+    bBusy           : BOOL;
+    bError          : BOOL;
+    nErrId          : UDINT;
+    nErrStep        : INT := 0;    (* 【新增】记录报错时的步骤号 *)
+
+    (* ================= 内部变量 ================= *)
+    nState          : INT := 0;         
+    fbFileOpen      : FB_FileOpen;
+    fbFileRead      : FB_FileRead;
+    fbFileClose     : FB_FileClose;
+    hFile           : UINT := 0;        
+    aFileBuffer     : ARRAY[0..1000000] OF BYTE; 
+    nFileSize       : UDINT;            
+
+    fbSdoWrite      : FB_EcCoESdoWrite;
+    fbSdoRead       : FB_EcCoESdoRead;
+    nObjIndex       : WORD := 16#9000;  
+    nRxIndex        : UINT := 0;
+    nTxIndexRead    : UINT;
+	nRxIdRead		: UINT;
+    nOffset         : UDINT;
+    nChunkSize      : UDINT;
+    aTxBuffer       : ARRAY[0..63] OF BYTE; 
+	aRxBuffer       : ARRAY[0..63] OF BYTE; 
+    nTxLen          : UDINT;
+    
+    MAX_PAYLOAD     : UDINT := 59;
+    CMD_START       : BYTE := 16#F1;
+    CMD_DATA        : BYTE := 16#F2;
+    CMD_END         : BYTE := 16#F3;
+	pwdLow			: BYTE := 16#34;
+    pwdHigh			: BYTE := 16#12;
+	
+    nCrc32          : UDINT;
+    pSrcPtr         : POINTER TO BYTE;
+    pDestPtr        : POINTER TO BYTE;
+    
+    rtStart         : R_TRIG;
+    fbTimer         : TON;
+    nRetryCount     : DINT := 0; 
+	nSlaveState AT %I* : UINT;
+	nPrevState: INT;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[(* 捕捉开始信号 *)
+rtStart(CLK := bStartUpdate);
+
+IF bReset THEN
+    nState := 0; bError := FALSE; nErrId := 0; bBusy := FALSE; 
+    sStatus := 'Reset Done'; sFullErrorMsg := ''; nErrStep := 0; (* 复位 *)
+    bReset := FALSE;
+END_IF
+
+CASE nState OF
+    0: (* 等待 *)
+        IF rtStart.Q THEN
+            (* === 状态标志位初始化 === *)
+            bBusy := TRUE; 
+            bError := FALSE; 
+            nErrId := 0; 
+            sFullErrorMsg := '';
+            bStartUpdate := FALSE; (* 自动复位按钮信号 *)
+
+            (* === 流程控制变量清零 === *)
+            nProgress := 0;
+            nOffset := 0;       (* 文件偏移量必须归零 *)
+            nRxIndex := 0;      (* 握手序号必须归零，否则 MCU 会认为丢包 *)
+            nRetryCount := 0;   (* 计数器归零，否则第二次直接超时 *)
+            nCrc32 := 0;        (* CRC 归零 *)
+            
+            (* === 界面提示 === *)
+            nState := 5; 
+            sStatus := 'Opening File...';
+        END_IF
+		
+		5: (* 等待 EtherCAT 从站在线 *)
+       sStatus := 'Waiting for Slave (Pre-Op)...';
+
+       (* 1. 启动计时器，设置超时时间为 10秒 *)
+       fbTimer(IN := TRUE, PT := T#10S);
+
+       (* 2. 检查从站状态 *)
+       (* 0=None, 1=Init, 2=Pre-Op, 4=Safe-Op, 8=Op *)
+       (* 只有状态 >= 2 (至少是 Pre-Op) 时，SDO 通讯才是可用的 *)
+       IF (nSlaveState AND 16#000F) >= 2 THEN 
+           (* === 成功 === *)
+           fbTimer(IN := FALSE); (* 这里的复位很重要，方便下次使用 *)
+           nState := 10;         (* 状态好了，去打开文件 *)
+           
+       ELSIF fbTimer.Q THEN
+           (* === 超时报错 === *)
+           nErrStep := nState; 
+           nState := 999;        (* 跳转到错误处理 *)
+           nErrId := 16#FF01;    (* 自定义一个错误码，表示从站离线 *)
+           sStatus := 'Error: Slave Offline (Timeout)';
+           fbTimer(IN := FALSE); (* 复位计时器 *)
+       END_IF
+
+    (* ================= 文件操作 ================= *)
+    10: (* 打开 *)
+        fbFileOpen(bExecute := TRUE, sNetId := '', sPathName := sFileName, nMode := FOPEN_MODEREAD OR FOPEN_MODEBINARY);
+        IF NOT fbFileOpen.bBusy THEN
+            IF fbFileOpen.bError THEN 
+                nErrStep := nState; nState := 999;
+                nErrId := fbFileOpen.nErrId; sStatus := 'File Open Error';
+            ELSE hFile := fbFileOpen.hFile; nState := 20; sStatus := 'Reading File...'; fbFileOpen(bExecute := FALSE); END_IF
+        END_IF
+
+    20: (* 读取 *)
+        fbFileRead(bExecute := TRUE, sNetId := '', hFile := hFile, pReadBuff := ADR(aFileBuffer), cbReadLen := SIZEOF(aFileBuffer));
+        IF NOT fbFileRead.bBusy THEN
+            IF fbFileRead.bError THEN 
+                nErrStep := nState; nState := 999; 
+                nErrId := fbFileRead.nErrId; sStatus := 'File Read Error';
+            ELSE 
+                nFileSize := fbFileRead.cbRead;
+                IF nFileSize = 0 THEN 
+                    nErrStep := nState; nState := 999; sStatus := 'File is Empty';
+                ELSE 
+                    nState := 30; 
+                END_IF
+                fbFileRead(bExecute := FALSE);
+            END_IF
+        END_IF
+
+    30: (* 关闭 *)
+        fbFileClose(bExecute := TRUE, sNetId := '', hFile := hFile);
+        IF NOT fbFileClose.bBusy THEN
+            nState := 50; sStatus := 'File Ready. Handshaking...'; fbFileClose(bExecute := FALSE);
+        END_IF
+
+    (* ================= 第一次握手 ================= *)
+    50: (* RxID *)
+        aTxBuffer[0] := 254;
+        fbSdoWrite(sNetId := sMasterNetId, nSlaveAddr := nSlaveAddr, nIndex := nObjIndex, nSubIndex := 6, pSrcBuf := ADR(aTxBuffer[0]), cbBufLen := 2, bExecute := TRUE);
+        IF NOT fbSdoWrite.bBusy THEN
+           nState := 51; fbSdoWrite(bExecute := FALSE);
+        END_IF
+    51: (* RxLen *)
+        aTxBuffer[0] := 7; 
+        fbSdoWrite(sNetId := sMasterNetId, nSlaveAddr := nSlaveAddr, nIndex := nObjIndex, nSubIndex := 7, pSrcBuf := ADR(aTxBuffer[0]), cbBufLen := 2, bExecute := TRUE);
+        IF NOT fbSdoWrite.bBusy THEN
+            nState := 52; fbSdoWrite(bExecute := FALSE);
+        END_IF
+
+    52: (* RxIndex *)
+        nRxIndex := 1; 
+        fbSdoWrite(sNetId := sMasterNetId, nSlaveAddr := nSlaveAddr, nIndex := nObjIndex, nSubIndex := 5, pSrcBuf := ADR(nRxIndex), cbBufLen := 2, bExecute := TRUE);
+        IF NOT fbSdoWrite.bBusy THEN
+            nState := 53; fbSdoWrite(bExecute := FALSE);
+        END_IF
+
+    53: (* 发送 START (F1 + Pwd) *)
+        sStatus := 'Sending START (Check Status)...';
+        MEMSET(ADR(aTxBuffer), 0, SIZEOF(aTxBuffer));
+        aTxBuffer[0] := CMD_START; (* F1 *)
+        aTxBuffer[1] := UDINT_TO_BYTE(nFileSize AND 16#FF);
+        aTxBuffer[2] := UDINT_TO_BYTE(SHR(nFileSize, 8) AND 16#FF);
+        aTxBuffer[3] := UDINT_TO_BYTE(SHR(nFileSize, 16) AND 16#FF);
+        aTxBuffer[4] := pwdLow; 
+		aTxBuffer[5] := pwdHigh; 
+		aTxBuffer[6] := 64; 
+        
+        fbSdoWrite(sNetId := sMasterNetId, nSlaveAddr := nSlaveAddr, nIndex := nObjIndex, nSubIndex := 8, pSrcBuf := ADR(aTxBuffer), cbBufLen := 7, bExecute := TRUE);
+        IF NOT fbSdoWrite.bBusy THEN
+			MEMSET(ADR(aTxBuffer), 0, SIZEOF(aTxBuffer));
+			nRetryCount := 0;
+			fbTimer(IN := FALSE);
+			nState := 54; 
+			fbSdoWrite(bExecute := FALSE); 
+        END_IF
+
+    54: (* 检查状态 *)
+        sStatus := 'Checking Status...';
+        fbTimer(IN := TRUE, PT := T#10S);
+        
+        IF fbTimer.Q THEN
+            nErrStep := nState; nState := 999; 
+            sStatus := 'Handshake Timeout'; 
+            fbTimer(IN := FALSE);
+        ELSE
+            fbSdoRead(sNetId := sMasterNetId, nSlaveAddr := nSlaveAddr, nIndex := nObjIndex, nSubIndex := 4, pDstBuf := ADR(aRxBuffer), cbBufLen := 64, bExecute := TRUE);
+            
+            IF NOT fbSdoRead.bBusy THEN
+				IF aRxBuffer[0] = 16#F1 THEN
+					CASE aRxBuffer[1] OF
+						0: nErrStep := nState; nState := 53; pwdLow := aRxBuffer[2];pwdHigh := aRxBuffer[3];sStatus := 'Error: Password Wrong';
+						1: nState := 60; sStatus := 'In App. Jumping...'; fbTimer(IN := FALSE);
+						2: nState := 100; sStatus := 'In Boot (Ready). Starting...'; fbTimer(IN := FALSE);
+						4: nState := 113; sStatus := 'In Boot (Erasing). Wait...'; fbTimer(IN := FALSE);
+						5: nState := 100; sStatus := 'In Boot (Done). Starting...'; fbTimer(IN := FALSE);
+						3: nErrStep := nState; nState := 999; sStatus := 'Error: Memory Full';
+						ELSE nErrStep := nState; nState := 999; sStatus := 'Unknown Status Code';
+					END_CASE
+				END_IF
+                fbSdoRead(bExecute := FALSE);
+            END_IF
+        END_IF
+
+    60: (* 等待重启 *)
+        fbTimer(IN := TRUE, PT := T#4S); 
+        IF fbTimer.Q THEN
+            nState := 61; sStatus := 'Connecting to Bootloader...'; fbTimer(IN := FALSE);
+        END_IF
+		
+	61: (* 等待重启完成，直到从站进入 Pre-Op 或更高状态 *)
+		(* 首次进入启动计时器 *)
+		IF nState <> nPrevState THEN
+			fbTimer(IN := TRUE, PT := T#5S);
+			nPrevState := nState;
+		END_IF
+		
+		(* 检查超时 *)
+		IF fbTimer.Q THEN
+			nErrStep := 61;
+			nState := 999;
+			sStatus := 'Slave Reboot Timeout';
+			fbTimer(IN := FALSE);
+			
+		(* 检查从站是否 >= Pre-Op (状态 2, 4, 8) *)
+		ELSIF (nSlaveState AND 16#000F) >= 2 THEN
+			(* 成功：从站已就绪 *)
+			nState := 100;
+			sStatus := 'Slave Online, connecting...';
+			fbTimer(IN := FALSE);
+		END_IF
+    (* ================= 第二次握手 ================= *)
+    100: 
+        nOffset := 0; nRxIndex := 0; nProgress := 0; nState := 101; 
+
+    101: (* RxID *)
+        aTxBuffer[0] := 254;
+        fbSdoWrite(sNetId := sMasterNetId, nSlaveAddr := nSlaveAddr, nIndex := nObjIndex, nSubIndex := 6, pSrcBuf := ADR(aTxBuffer[0]), cbBufLen := 2, bExecute := TRUE);
+        IF NOT fbSdoWrite.bBusy THEN
+           nState := 102; fbSdoWrite(bExecute := FALSE);
+        END_IF		
+    102: (* RxLen=0 *)
+        aTxBuffer[0] := 7; 
+        fbSdoWrite(sNetId := sMasterNetId, nSlaveAddr := nSlaveAddr, nIndex := nObjIndex, nSubIndex := 7, pSrcBuf := ADR(aTxBuffer[0]), cbBufLen := 2, bExecute := TRUE);
+        IF NOT fbSdoWrite.bBusy THEN
+            nState := 110; fbSdoWrite(bExecute := FALSE);
+        END_IF
+
+    110: (* 发送 START *)
+        sStatus := 'Sending START to Boot...';
+        nRxIndex := 0; 
+        MEMSET(ADR(aTxBuffer), 0, SIZEOF(aTxBuffer));
+        aTxBuffer[0] := CMD_START; 
+        aTxBuffer[1] := UDINT_TO_BYTE(nFileSize AND 16#FF);
+        aTxBuffer[2] := UDINT_TO_BYTE(SHR(nFileSize, 8) AND 16#FF);
+        aTxBuffer[3] := UDINT_TO_BYTE(SHR(nFileSize, 16) AND 16#FF);
+        aTxBuffer[4] := pwdLow; aTxBuffer[5] := pwdHigh; aTxBuffer[6] := 64; 
+        nState := 111;
+
+    111: (* RxIndex *)
+        fbSdoWrite(sNetId := sMasterNetId, nSlaveAddr := nSlaveAddr, nIndex := nObjIndex, nSubIndex := 5, pSrcBuf := ADR(nRxIndex), cbBufLen := 2, bExecute := TRUE);
+        IF NOT fbSdoWrite.bBusy THEN
+            nState := 112; fbSdoWrite(bExecute := FALSE);
+        END_IF
+
+    112: (* RxData (START) *)
+        fbSdoWrite(sNetId := sMasterNetId, nSlaveAddr := nSlaveAddr, nIndex := nObjIndex, nSubIndex := 8, pSrcBuf := ADR(aTxBuffer), cbBufLen := 7, bExecute := TRUE);
+        IF NOT fbSdoWrite.bBusy THEN
+            nState := 113; 
+			fbSdoWrite(bExecute := FALSE); 
+			fbTimer(IN := FALSE); (* 进入 113 前先复位计时器 *)
+        END_IF
+		
+    113: (* 轮询等待 Bootloader 状态，超时机制 *)
+        (* 1. 启动超时计时器 *)
+        fbTimer(IN := TRUE, PT := T#15S);
+
+        (* 2. 检查是否超时 *)
+        IF fbTimer.Q THEN
+            (* 时间到了还没有成功 -> 报错 *)
+            nErrStep := nState; nState := 999; 
+            sStatus := 'Boot Status Error'; (* 超时后统一报这个错 *)
+            nErrId := 0; 
+            fbTimer(IN := FALSE); (* 关掉计时器 *)
+        ELSE
+            (* 3. 执行读取 *)
+            fbSdoRead(sNetId := sMasterNetId, nSlaveAddr := nSlaveAddr, nIndex := nObjIndex, nSubIndex := 4, pDstBuf := ADR(aRxBuffer), cbBufLen := 64, bExecute := TRUE);
+            
+            IF NOT fbSdoRead.bBusy THEN
+				(* 4. 判断数据内容 *)
+				(* 只要读到了 F1 且 状态是 5 或 2，就算成功 *)
+				(*IF aRxBuffer[0] = 16#F1 AND (aRxBuffer[1] = 5 OR aRxBuffer[1] = 2) THEN
+					(* 【成功】 *)
+					nRxIndex := 1; 
+					nState := 120; 
+					fbTimer(IN := FALSE); (* 成功后关闭计时器 *)
+				ELSE
+					(* 【重试】 *)
+					MEMSET(ADR(aRxBuffer), 0, SIZEOF(aRxBuffer));
+					fbSdoRead(bExecute := FALSE); 
+				END_IF *)
+				IF aRxBuffer[0] = 16#F1 THEN
+					CASE aRxBuffer[1] OF
+						0: nErrStep := nState; nState := 50; pwdLow := aRxBuffer[2];pwdHigh := aRxBuffer[3];sStatus := 'Error: Password Wrong';
+						1: nState := 50; sStatus := 'In App. Jumping...'; fbTimer(IN := FALSE);
+						2: nState := 120; sStatus := 'In Boot (Ready). Starting...'; fbTimer(IN := FALSE);nRxIndex := 1; 
+						4: nState := 113; sStatus := 'In Boot (Erasing). Wait...'; fbTimer(IN := FALSE);
+						5: nState := 120; sStatus := 'In Boot (Done). Starting...'; fbTimer(IN := FALSE);nRxIndex := 1; 
+						3: nErrStep := nState; nState := 999; sStatus := 'Error: Memory Full';
+						ELSE nErrStep := nState; nState := 999; sStatus := 'Unknown Status Code';
+					END_CASE
+				END_IF     
+               (* 复位 Read 功能块，准备下一次轮询 *)
+               IF nState = 113 THEN fbSdoRead(bExecute := FALSE); END_IF 
+            END_IF
+        END_IF
+
+    (* ================= 数据传输 ================= *)
+    120: 
+        IF nOffset >= nFileSize THEN nState := 130; 
+        ELSE
+            sStatus := 'Uploading...';
+            nChunkSize := nFileSize - nOffset;
+            IF nChunkSize > MAX_PAYLOAD THEN nChunkSize := MAX_PAYLOAD; END_IF
+            MEMSET(ADR(aTxBuffer), 0, SIZEOF(aTxBuffer));
+            aTxBuffer[0] := CMD_DATA; 
+            MEMCPY(ADR(aTxBuffer[1]), ADR(nOffset), 4);
+            pSrcPtr := ADR(aFileBuffer) + nOffset; pDestPtr := ADR(aTxBuffer[5]);
+            MEMCPY(pDestPtr, pSrcPtr, UDINT_TO_UINT(nChunkSize));
+            nTxLen := 5 + nChunkSize;
+            nState := 121;
+        END_IF
+
+    121: (* RxIndex *)
+        fbSdoWrite(sNetId := sMasterNetId, nSlaveAddr := nSlaveAddr, nIndex := nObjIndex, nSubIndex := 5, pSrcBuf := ADR(nRxIndex), cbBufLen := 2, bExecute := TRUE);
+        IF NOT fbSdoWrite.bBusy THEN
+             nState := 122; fbSdoWrite(bExecute := FALSE);
+        END_IF
+
+    122: (* RxData *)
+        fbSdoWrite(sNetId := sMasterNetId, nSlaveAddr := nSlaveAddr, nIndex := nObjIndex, nSubIndex := 8, pSrcBuf := ADR(aTxBuffer), cbBufLen := nTxLen, bExecute := TRUE);
+        IF NOT fbSdoWrite.bBusy THEN
+             nState := 123; fbSdoWrite(bExecute := FALSE);
+        END_IF
+ 	123: (* 读取 (RxData) *)
+		fbSdoRead(sNetId := sMasterNetId, nSlaveAddr := nSlaveAddr, 
+				  nIndex := nObjIndex, nSubIndex := 4,
+				  pDstBuf := ADR(aRxBuffer), cbBufLen := 64, 
+				  bExecute := TRUE);
+		
+		IF NOT fbSdoRead.bBusy THEN
+			IF fbSdoRead.bError THEN
+				(* 错误处理... *)
+				sStatus := 'read RxData erro...';
+				nState := 999;
+			ELSIF aRxBuffer[0] = CMD_DATA THEN
+				nState := 124;  // 进入下一步
+			ELSE
+				(* 等待 F2... *)
+			END_IF
+			fbSdoRead(bExecute := FALSE);
+		END_IF
+    124: (* Wait ACK *)
+        fbSdoRead(sNetId := sMasterNetId, nSlaveAddr := nSlaveAddr, nIndex := nObjIndex, nSubIndex := 1, pDstBuf := ADR(nTxIndexRead), cbBufLen := 2, bExecute := TRUE);
+        IF NOT fbSdoRead.bBusy THEN
+			IF nTxIndexRead = nRxIndex THEN
+				nOffset := nOffset + nChunkSize; nRxIndex := nRxIndex + 1;
+				nProgress := UDINT_TO_UINT((nOffset * 100) / nFileSize);
+				nState := 120; 
+			ELSE fbSdoRead(bExecute := FALSE); 
+            END_IF
+        END_IF
+
+    (* ================= 结束校验 ================= *)
+    130: 
+        sStatus := 'Verifying CRC...';
+        nCrc32 := F_DATA_CRC32(ADR(aFileBuffer), nFileSize);
+        MEMSET(ADR(aTxBuffer), 0, SIZEOF(aTxBuffer));
+        aTxBuffer[0] := CMD_END; 
+        MEMCPY(ADR(aTxBuffer[1]), ADR(nCrc32), 4);
+        nState := 131;
+
+    131: (* RxIndex *)
+        fbSdoWrite(sNetId := sMasterNetId, nSlaveAddr := nSlaveAddr, nIndex := nObjIndex, nSubIndex := 5, pSrcBuf := ADR(nRxIndex), cbBufLen := 2, bExecute := TRUE);
+        IF NOT fbSdoWrite.bBusy THEN
+            nState := 132; fbSdoWrite(bExecute := FALSE); 
+        END_IF
+
+    132: (* RxData *)
+        fbSdoWrite(sNetId := sMasterNetId, nSlaveAddr := nSlaveAddr, nIndex := nObjIndex, nSubIndex := 8, pSrcBuf := ADR(aTxBuffer), cbBufLen := 5, bExecute := TRUE);
+        IF NOT fbSdoWrite.bBusy THEN
+            nState := 133; fbSdoWrite(bExecute := FALSE);
+        END_IF
+
+    133: (* Check Result *)
+        fbSdoRead(sNetId := sMasterNetId, nSlaveAddr := nSlaveAddr, nIndex := nObjIndex, nSubIndex := 4, pDstBuf := ADR(aRxBuffer), cbBufLen := 64, bExecute := TRUE);
+        IF NOT fbSdoRead.bBusy THEN
+			IF aRxBuffer[0] = 16#F3 THEN
+				IF aRxBuffer[1] = 0 THEN nState := 200; sStatus := 'Update Success!';
+				ELSE nErrStep := nState; nState := 999; sStatus := 'CRC/Flash Error'; nErrId := 16#E000 + aTxBuffer[1]; END_IF
+			ELSE
+				nRetryCount := nRetryCount + 1;
+				IF nRetryCount > 5000 THEN 
+					nErrStep := nState; nState := 999; sStatus := 'Final Result Timeout';
+				ELSE fbSdoRead(bExecute := FALSE); END_IF
+			END_IF
+            
+            IF nState <> 133 AND nState <> 200 AND nState <> 999 THEN fbSdoRead(bExecute := FALSE); END_IF
+        END_IF
+
+    200: (* 完成 *)
+        bBusy := FALSE;
+		IF NOT bStartUpdate THEN 
+            nState := 0; (* 回到原点，等待下一次 rtStart.Q *)
+            
+            (* 可选：顺便把进度条也清零，看起来更直观 *)
+            (* nProgress := 0; *)
+        END_IF
+
+    999: (* 错误处理 *)
+        bError := TRUE; 
+        bBusy := FALSE;
+        
+        (* 拼接错误信息  *)
+        IF sFullErrorMsg = '' THEN
+            sFullErrorMsg := CONCAT('Step: ', INT_TO_STRING(nErrStep));
+            sFullErrorMsg := CONCAT(sFullErrorMsg, ', ErrId: 16#');
+            sFullErrorMsg := CONCAT(sFullErrorMsg, DWORD_TO_HEXSTR(nErrId, 4, FALSE));
+            sFullErrorMsg := CONCAT(sFullErrorMsg, ' | ');
+            sFullErrorMsg := CONCAT(sFullErrorMsg, sStatus);
+        END_IF
+        
+        (* 确保文件句柄被关闭 *)
+        IF hFile <> 0 THEN 
+            fbFileClose(bExecute := TRUE, sNetId := '', hFile := hFile); 
+            hFile := 0; 
+        END_IF
+
+        (* 不要直接 nState := 0，而是等待用户松开启动按钮 *)
+        (* 这样可以防止：用户按住按钮不放 -> 报错 -> 瞬间回0 -> 瞬间又触发 Start -> 死循环 *)
+        IF NOT bStartUpdate THEN
+            nState := 0;
+        END_IF
+END_CASE]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

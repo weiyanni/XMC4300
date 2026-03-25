@@ -1,0 +1,54 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1">
+  <POU Name="F_DATA_CRC32" Id="{8cd4c25a-7cbf-49ee-9ef4-e796f8351036}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION F_DATA_CRC32 : UDINT
+VAR_INPUT
+    pData       : POINTER TO UDINT; (* 修改为 UDINT 指针，匹配 uint32_t *)
+    nSize       : UDINT;            (* 注意：这里的 nSize 依然建议是字节数 *)
+END_VAR
+VAR
+    i           : UDINT;
+    bits        : INT;
+    nCrc        : UDINT := 16#FFFFFFFF;
+    nPoly       : UDINT := 16#04C11DB7; (* 正向多项式 *)
+    nWord       : UDINT;
+    nWordCount  : UDINT;
+    pCurrent    : POINTER TO UDINT;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF pData = 0 OR nSize < 4 THEN
+    F_DATA_CRC32 := 16#FFFFFFFF; (* 对应原函数初始值 *)
+    RETURN;
+END_IF
+
+(* 计算 32 位字的个数，与 C 代码 uint32_t wordCount = dataSize / 4 一致 *)
+nWordCount := nSize / 4;
+pCurrent := pData;
+
+FOR i := 0 TO nWordCount - 1 DO
+    nWord := pCurrent^;
+    
+    (* 内部 32 位位循环逻辑，完全模拟 C 代码的内层 loop *)
+    FOR bits := 0 TO 31 DO
+        (* 判断 CRC 最高位 *)
+        IF (nCrc AND 16#80000000) <> 0 THEN
+            nCrc := SHL(nCrc, 1) XOR nPoly;
+        ELSE
+            nCrc := SHL(nCrc, 1);
+        END_IF
+        
+        (* 判断当前数据的对应位，使用 MSB-first 顺序 *)
+        (* 16#80000000 >> bits *)
+        IF (nWord AND SHR(16#80000000, bits)) <> 0 THEN
+            nCrc := nCrc XOR nPoly;
+        END_IF
+    END_FOR
+    
+    pCurrent := pCurrent + 4; (* 移动 4 个字节到下一个 UDINT *)
+END_FOR
+
+(* 关键：去掉原算法末尾的 NOT 取反，直接返回 nCrc *)
+F_DATA_CRC32 := nCrc;]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>
